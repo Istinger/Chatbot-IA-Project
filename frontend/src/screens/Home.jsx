@@ -7,6 +7,7 @@ import Carousel from '../components/Carousel';
 import JobCard from '../components/JobCard';
 import JobModal from '../components/JobModal';
 import Icon from '../components/Icon';
+import Refrescar from '../components/Refrescar';
 
 function Esqueleto() {
   // Reservar el espacio evita el salto de layout (CLS) cuando llegan los datos.
@@ -27,6 +28,7 @@ export default function Home() {
   const [locales, setLocales] = useState(null);
   const [sinPerfil, setSinPerfil] = useState(false);
   const [abierta, setAbierta] = useState(null);
+  const [version, recargar] = useState(0);
 
   useEffect(() => {
     let vivo = true;
@@ -48,7 +50,7 @@ export default function Home() {
     return () => {
       vivo = false;
     };
-  }, []);
+  }, [version]);
 
   const verBusqueda = (
     <Link to="/buscar" className="btn btn--texto">
@@ -61,6 +63,9 @@ export default function Home() {
       <header className="saludo">
         <h1>Hola {nombreDe(perfil?.email) || 'de nuevo'}</h1>
         <p className="saludo__sub">Esto es lo que encontramos para ti hoy.</p>
+        {/* Al terminar una ingesta se recargan los carruseles: si no, el usuario
+            ve el mensaje "listo, 900 ofertas" pero la pantalla sigue igual. */}
+        <Refrescar onFin={() => recargar((n) => n + 1)} />
       </header>
 
       {sinPerfil && (

@@ -80,6 +80,12 @@ export const api = {
 
   historialChat: (sessionId) => request(`/chat/${sessionId}`),
 
+  /** Estado de las ofertas: cuantas hay y cuando se refrescaron. */
+  estadoOfertas: () => request('/jobs/stats'),
+
+  /** Refrescar ofertas ahora. Encola el trabajo: responde al instante. */
+  refrescarOfertas: () => request('/jobs/ingest', { method: 'POST' }),
+
   pitch: (jobId) => request('/cv/pitch', { method: 'POST', body: { jobId } }),
 
   resumenCv: () => request('/cv/summary', { method: 'POST' }),

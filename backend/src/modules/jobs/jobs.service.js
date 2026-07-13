@@ -1,6 +1,7 @@
 const env = require('../../config/env');
 const repo = require('./jobs.repository');
 const { SOURCES } = require('./sources');
+const { esRelevante } = require('./relevancia');
 
 /**
  * Plan de ingesta.
@@ -10,11 +11,14 @@ const { SOURCES } = require('./sources');
  * backend), porque el usuario del producto puede ser de datos, QA, soporte,
  * diseno o redes, no solo desarrollador.
  *
- * NOTA SOBRE ECUADOR: ninguna de las fuentes actuales cubre Ecuador.
- *   - Adzuna no soporta el pais (404).
- *   - La clave de Jooble esta atada al indice de EE.UU.; ec.jooble.org da 403.
- * El enfoque es REMOTO: ofertas a las que se puede postular desde Ecuador.
- * Para desbloquear ofertas locales hay que conseguir credenciales (ver DEPLOY.md).
+ * Reparto de fuentes:
+ *   - JOOBLE  -> ofertas LOCALES de Ecuador (la clave apunta a ec.jooble.org).
+ *   - ADZUNA  -> exterior. NO soporta Ecuador (404), asi que cubre US/ES/MX.
+ *   - REMOTEOK / ARBEITNOW -> remoto internacional.
+ *   - CAREERJET -> Ecuador tambien, si se configura CAREERJET_AFFID.
+ *
+ * Asi el producto tiene las dos caras que pide DESIGN.md: "Cerca de ti" y
+ * "En el exterior".
  */
 const BUSQUEDAS = [
   'backend developer',
@@ -60,13 +64,50 @@ function planAdzuna() {
   return pasos;
 }
 
+/**
+ * Jooble es ahora la fuente de las ofertas LOCALES: la clave apunta al indice de
+ * Ecuador (ec.jooble.org), asi que devuelve empresas ecuatorianas reales (NEORIS,
+ * BGR, EXPALSA...) en Quito, Guayaquil y Pichincha.
+ *
+ * Como JOOBLE_COUNTRY=Ecuador, la normalizacion las marca con isForeign=false y
+ * caen solas en el carrusel "Cerca de ti".
+ *
+ * Las busquedas van en ESPANOL y sin filtro "remote": aqui lo que se quiere es
+ * precisamente el mercado local.
+ */
+const BUSQUEDAS_EC = [
+  'desarrollador',
+  'programador',
+  'ingeniero de software',
+  'analista de sistemas',
+  'soporte tecnico',
+  'analista de datos',
+  'base de datos',
+  'redes',
+  'ciberseguridad',
+  'qa testing',
+  'diseñador ux',
+  'pasante sistemas',
+];
+
+const CIUDADES_EC = ['', 'Quito', 'Guayaquil', 'Cuenca'];
+
 function planJooble() {
   const pasos = [];
-  for (const what of [...BUSQUEDAS.slice(0, 5), ...BUSQUEDAS_ES.slice(0, 2)]) {
+
+  for (const what of BUSQUEDAS_EC) {
     for (const page of [1, 2]) {
-      pasos.push({ source: 'jooble', query: { what, location: 'remote', page } });
+      pasos.push({ source: 'jooble', query: { what, page } });
     }
   }
+
+  // Y una barrida por ciudad, que trae ofertas que la busqueda general no saca.
+  for (const location of CIUDADES_EC.slice(1)) {
+    for (const what of ['sistemas', 'tecnologia', 'desarrollador']) {
+      pasos.push({ source: 'jooble', query: { what, location, page: 1 } });
+    }
+  }
+
   return pasos;
 }
 
@@ -124,7 +165,11 @@ async function ingest({ plan = PLAN } = {}) {
         .map((r) => source.normalize(r))
         // Una oferta sin enlace es inutil: el usuario no puede postular. Se
         // descarta en vez de mostrarla y frustrarlo.
-        .filter((j) => j.url && j.title);
+        .filter((j) => j.url && j.title)
+        // Jooble devuelve resultados laxos: buscando "sistemas" en Ecuador trae
+        // operadores de montacarga y farmaceuticos. Fuera: esto es un agente de
+        // empleo TECH.
+        .filter(esRelevante);
 
       // Deduplicar por (titulo, empresa). La ubicacion se excluye a proposito:
       // un mismo puesto remoto llega repetido en decenas de ciudades.
