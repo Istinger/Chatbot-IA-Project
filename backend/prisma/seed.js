@@ -7,6 +7,7 @@
  *   docker compose exec api npm run seed
  */
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 const MATCHING_URL = process.env.MATCHING_URL || 'http://matching:8000';
@@ -37,6 +38,7 @@ const DEMO = {
   userId: '11111111-1111-1111-1111-111111111111',
   profileId: '22222222-2222-2222-2222-222222222222',
   email: 'demo@jobia.ec',
+  password: 'demo1234',
   skills: ['node.js', 'express', 'javascript', 'postgresql', 'git', 'docker'],
   cvText:
     'Egresado de Ingenieria en Software. He construido APIs REST con Node.js y Express, ' +
@@ -74,11 +76,14 @@ async function main() {
   }
   console.log(`[seed] ${JOBS.length} ofertas listas (salarios anualizados)`);
 
+  // Contrasena hasheada con bcrypt, igual que en el registro real, para poder
+  // iniciar sesion con el usuario demo: demo@jobia.ec / demo1234
+  const hash = await bcrypt.hash(DEMO.password, 10);
+
   await prisma.user.upsert({
     where: { id: DEMO.userId },
-    update: {},
-    // Password de relleno: el modulo de auth (con hash) llega en la Parte 3.
-    create: { id: DEMO.userId, email: DEMO.email, password: 'demo-sin-hash' },
+    update: { password: hash },
+    create: { id: DEMO.userId, email: DEMO.email, password: hash },
   });
 
   await prisma.profile.upsert({

@@ -8,11 +8,13 @@ Responsable de TODO lo vectorial:
 Node nunca toca vectores: solo llama a este servicio por HTTP.
 """
 
+import io
 import os
 
 import psycopg
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
+from pypdf import PdfReader
 
 import embeddings as emb
 
@@ -128,6 +130,31 @@ def embed_profile(profile_id: str) -> dict:
         conn.commit()
 
     return {"profile_id": profile_id, "dim": emb.DIM}
+
+
+# --------------------------------------------------------------------------- #
+# Extraccion de texto de PDFs (CV)
+# --------------------------------------------------------------------------- #
+@app.post("/extract-text")
+async def extract_text(request: Request) -> dict:
+    """Recibe los bytes crudos de un PDF y devuelve su texto.
+
+    Vive aqui y no en Node porque pdf-parse (la libreria obvia de Node) esta
+    abandonada y falla de forma intermitente sobre PDFs validos.
+    """
+    data = await request.body()
+    if not data:
+        raise HTTPException(400, "Cuerpo vacio: se esperaban los bytes del PDF")
+
+    try:
+        lector = PdfReader(io.BytesIO(data))
+        texto = "\n".join(pagina.extract_text() or "" for pagina in lector.pages)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, f"No se pudo leer el PDF: {exc}") from exc
+
+    texto = " ".join(texto.split())
+
+    return {"text": texto, "chars": len(texto), "pages": len(lector.pages)}
 
 
 # --------------------------------------------------------------------------- #
