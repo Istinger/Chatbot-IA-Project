@@ -11,6 +11,9 @@ module.exports = {
   redisUrl: required('REDIS_URL'),
   matchingUrl: process.env.MATCHING_URL || 'http://matching:8000',
 
+  jwtSecret: required('JWT_SECRET'),
+  jwtExpira: process.env.JWT_EXPIRA || '7d',
+
   // epsilon-greedy: 0.15 => 15% de las ranuras se reservan a exploracion.
   epsilon: Number(process.env.MATCHING_EPSILON ?? 0.15),
 

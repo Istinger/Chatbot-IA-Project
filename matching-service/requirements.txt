@@ -3,6 +3,12 @@ fastapi==0.115.0
 uvicorn[standard]==0.31.0
 psycopg[binary]==3.2.3
 pydantic==2.9.2
+python-multipart==0.0.12
+
+# Extraccion de texto de PDFs (CV). Se hace aqui y no en Node porque pdf-parse
+# (la opcion obvia en Node) esta sin mantener y es INESTABLE: con el mismo PDF
+# valido fallaba 2 de cada 3 veces con "bad XRef entry".
+pypdf==5.1.0
 
 # Embeddings locales via ONNX Runtime (sin PyTorch: imagen liviana).
 # Modelo: paraphrase-multilingual-MiniLM-L12-v2 -> 384 dims, ~0.22 GB, espanol.

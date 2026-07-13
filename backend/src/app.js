@@ -39,6 +39,8 @@ api.get('/health', async (_req, res) => {
   return healthy ? ok(res, body) : fail(res, JSON.stringify(body), 502);
 });
 
+api.use('/auth', require('./modules/auth/auth.controller'));
+api.use('/profile', require('./modules/profile/profile.controller'));
 api.use('/jobs', require('./modules/jobs/jobs.controller'));
 api.use('/matching', require('./modules/matching/matching.controller'));
 

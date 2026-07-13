@@ -3,92 +3,160 @@
 #
 # La pila debe estar levantada:
 #   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml exec api npm run seed
 
 @api = http://localhost:8080/api
 @matching = http://localhost:8000
-@profileId = 22222222-2222-2222-2222-222222222222
+
+# Usuario demo creado por el seed.
+@email = demo@jobia.ec
+@password = demo1234
 
 
 ### ---------------------------------------------------------------------------
-### API PUBLICA (Node) — lo que consume el navegador
+### 1. AUTENTICACION
 ### ---------------------------------------------------------------------------
 
-### Health: la API alcanza a Postgres, Redis y al matching-service?
-GET {{api}}/health
+### Registro. Devuelve el token y crea el perfil vacio de una vez.
+POST {{api}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "nuevo@test.ec",
+  "password": "micontrasena123"
+}
 
 
-### Ofertas recomendadas para el perfil demo (cosine + epsilon-greedy).
-### Fijate en el campo "explored": true = oferta inyectada por exploracion.
-GET {{api}}/matching/jobs?profileId={{profileId}}&limit=6
+### Login. El token de la respuesta se reutiliza abajo con {{login.response.body.$.data.token}}
+# @name login
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
 
 
-### Busqueda por lenguaje natural (no hace falta perfil ni login).
+### Contrasena corta -> 400
+POST {{api}}/auth/register
+Content-Type: application/json
+
+{ "email": "corta@test.ec", "password": "123" }
+
+
+### Credenciales incorrectas -> 401
+### (mismo mensaje que si el correo no existiera: no se filtra que usuarios hay)
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{email}}", "password": "equivocada" }
+
+
+### ---------------------------------------------------------------------------
+### 2. PERFIL (requiere sesion)
+### ---------------------------------------------------------------------------
+
+### Mi perfil.
+GET {{api}}/profile
+Authorization: Bearer {{login.response.body.$.data.token}}
+
+
+### Sin token -> 401
+GET {{api}}/profile
+
+
+### Subir el CV en PDF. El texto se extrae, se detectan las skills con el
+### catalogo estatico (sin IA) y el perfil se revectoriza solo.
+### OJO: cambia la ruta del archivo por la de tu CV.
+POST {{api}}/profile/cv
+Authorization: Bearer {{login.response.body.$.data.token}}
+Content-Type: multipart/form-data; boundary=----Limite
+
+------Limite
+Content-Disposition: form-data; name="cv"; filename="cv.pdf"
+Content-Type: application/pdf
+
+< ./cv.pdf
+------Limite--
+
+
+### Confirmar / corregir las skills (paso 2 del onboarding).
+### Cambiarlas revectoriza el perfil: el matching cambia al instante.
+PUT {{api}}/profile/skills
+Authorization: Bearer {{login.response.body.$.data.token}}
+Content-Type: application/json
+
+{
+  "skills": ["node.js", "express", "postgresql", "docker", "react"]
+}
+
+
+### ---------------------------------------------------------------------------
+### 3. MATCHING
+### ---------------------------------------------------------------------------
+
+### Ofertas afines A MI PERFIL (usa la sesion, no hace falta pasar ningun id).
+### `explored: true` = oferta inyectada por la exploracion del epsilon-greedy.
+GET {{api}}/matching/jobs?limit=8
+Authorization: Bearer {{login.response.body.$.data.token}}
+
+
+### Busqueda por lenguaje natural. NO necesita sesion.
 GET {{api}}/matching/jobs?text=remoto junior backend sin ingles&limit=5
 
 
-### Prueba semantica: ninguna oferta contiene las palabras "nube" ni "contenedores",
-### pero deberia devolver las de Kubernetes / Docker / Azure.
+### Prueba semantica: ninguna oferta contiene las palabras "nube" ni
+### "contenedores", pero debe devolver las de Kubernetes / Docker / AWS.
 GET {{api}}/matching/jobs?text=trabajo en la nube con contenedores&limit=3
 
 
-### Error 400: sin profileId ni text.
+### Sin sesion y sin texto -> 401
 GET {{api}}/matching/jobs
 
 
-### Error 404: perfil inexistente.
-GET {{api}}/matching/jobs?profileId=00000000-0000-0000-0000-000000000000
+### ---------------------------------------------------------------------------
+### 4. OFERTAS
+### ---------------------------------------------------------------------------
+
+### Listado. scope=local (Ecuador) | foreign (exterior).
+### OJO: para comparar sueldos usa salaryUsd*, NUNCA salaryMin/Max (cada uno
+### esta en la moneda de su pais). `salaryPredicted: true` = estimado, no publicado.
+GET {{api}}/jobs?scope=foreign&limit=5
 
 
-### Error 404: ruta que no existe (comprueba el envelope { ok, data, error }).
-GET {{api}}/no-existe
+### Filtrar por skill o texto.
+GET {{api}}/jobs?q=react&limit=5
+
+
+### Cuantas ofertas hay, por fuente, y cuantas sin vectorizar.
+GET {{api}}/jobs/stats
+
+
+### Disparar la ingesta a mano (en produccion la hace el worker cada 6 h).
+### Tarda ~30-60 s.
+POST {{api}}/jobs/ingest
+
+
+### Estado de las dependencias.
+GET {{api}}/health
 
 
 ### ---------------------------------------------------------------------------
-### API INTERNA (Python / FastAPI) — normalmente solo la llama el backend.
-### Expuesta en local (:8000) unicamente para depurar.
+### 5. API INTERNA (Python). Solo expuesta en local, para depurar.
+###    Documentacion interactiva: http://localhost:8000/docs
 ### ---------------------------------------------------------------------------
 
-### Health: confirma el modelo cargado y la dimension del vector.
+### Health: modelo cargado y dimension del vector.
 GET {{matching}}/health
 
 
-### Vectorizar texto suelto -> 384 floats. Coste $0 (modelo local).
+### Texto -> vector de 384 floats. Modelo local, coste $0.
 POST {{matching}}/embed
 Content-Type: application/json
 
-{
-  "texts": ["desarrollador backend con node y postgresql"]
-}
+{ "texts": ["desarrollador backend con node y postgresql"] }
 
 
-### Vectorizar las ofertas que aun no tienen embedding.
-### Idempotente: se puede llamar despues de cada ingesta.
+### Vectorizar las ofertas pendientes (idempotente).
 POST {{matching}}/embed/jobs
-
-
-### (Re)vectorizar un perfil. Solo al cambiar el CV o las skills.
-POST {{matching}}/embed/profile/{{profileId}}
-
-
-### Matching crudo, sin epsilon-greedy (esto es lo que Node envuelve).
-POST {{matching}}/match
-Content-Type: application/json
-
-{
-  "profile_id": "22222222-2222-2222-2222-222222222222",
-  "limit": 5
-}
-
-
-### Matching crudo por texto libre.
-POST {{matching}}/match
-Content-Type: application/json
-
-{
-  "text": "quiero analizar datos con python y estadistica",
-  "limit": 5
-}
-
-
-### Documentacion interactiva de FastAPI (abrelo en el navegador):
-### http://localhost:8000/docs

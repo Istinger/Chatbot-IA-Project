@@ -86,8 +86,14 @@ const CATALOG = {
 
 /**
  * Detecta skills en un texto libre (titulo + descripcion + tags).
- * Coincidencia por limites de palabra para evitar falsos positivos
- * (que "go" no dispare dentro de "algo", ni "ml" dentro de "html").
+ *
+ * La frontera se comprueba con lookarounds contra [a-z0-9], NO contra un
+ * conjunto de caracteres literales. Es importante: excluir el punto de la
+ * frontera (para proteger "node.js") hacia que cualquier skill al final de una
+ * frase —"...con Django." o "...y PostgreSQL."— dejara de detectarse en silencio.
+ *
+ * Los lookarounds tambien evitan los falsos positivos: "go" no dispara dentro de
+ * "algo", ni "ml" dentro de "html", ni "react" dentro de "reactivo".
  */
 function detectSkills(text) {
   if (!text) return [];
@@ -98,7 +104,7 @@ function detectSkills(text) {
     for (const alias of aliases) {
       // Escapar los caracteres especiales de regex (., #, /, +)
       const safe = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      if (new RegExp(`(^|[^a-z0-9+#.])${safe}([^a-z0-9+#.]|$)`, 'i').test(haystack)) {
+      if (new RegExp(`(?<![a-z0-9])${safe}(?![a-z0-9])`, 'i').test(haystack)) {
         found.add(skill);
         break;
       }
