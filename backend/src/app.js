@@ -39,6 +39,9 @@ api.get('/health', async (_req, res) => {
   return healthy ? ok(res, body) : fail(res, JSON.stringify(body), 502);
 });
 
+api.use('/jobs', require('./modules/jobs/jobs.controller'));
+api.use('/matching', require('./modules/matching/matching.controller'));
+
 app.use('/api', api);
 
 app.use((_req, res) => fail(res, 'Ruta no encontrada', 404));

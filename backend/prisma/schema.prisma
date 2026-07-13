@@ -24,7 +24,7 @@ model Profile {
   user      User                         @relation(fields: [userId], references: [id])
   cvText    String?
   skills    String[]
-  embedding Unsupported("vector(1536)")?
+  embedding Unsupported("vector(384)")?
   updatedAt DateTime                     @updatedAt
 }
 
@@ -36,12 +36,21 @@ model Job {
   company     String
   location    String?
   country     String?
+  // Salario TAL COMO LO PUBLICA la fuente, en su moneda original.
   salaryMin   Float?
   salaryMax   Float?
+  currency    String?                      // "USD" | "EUR" | "MXN" | "GBP" | ...
+  // Equivalente ANUAL EN USD. Es el unico campo comparable entre paises:
+  // se usa para ordenar, filtrar y para la exploracion del epsilon-greedy.
+  salaryUsdMin Float?
+  salaryUsdMax Float?
+  // true = el importe es una ESTIMACION de la fuente, no una cifra publicada por
+  // la empresa (Adzuna lo hace con `salary_is_predicted`). La UI debe decirlo.
+  salaryPredicted Boolean @default(false)
   description String?
   url         String
   skills      String[]
-  embedding   Unsupported("vector(1536)")?
+  embedding   Unsupported("vector(384)")?
   isForeign   Boolean                      @default(false)
   createdAt   DateTime                     @default(now())
 }

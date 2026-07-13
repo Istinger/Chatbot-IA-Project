@@ -1,0 +1,117 @@
+# Fuentes de ofertas EXTERNAS (Adzuna, Jooble, ArbeitNow).
+# Extension "REST Client" de VS Code (humao.rest-client).
+#
+# Las claves se leen del .env con {{$dotenv NOMBRE}}: NO se escriben aqui, asi
+# que este archivo se puede subir a git sin filtrar nada.
+#
+# NOTA: el .env debe estar en la raiz del workspace (lo esta).
+
+@adzunaId  = {{$dotenv ADZUNA_APP_ID}}
+@adzunaKey = {{$dotenv ADZUNA_APP_KEY}}
+@joobleKey = {{$dotenv JOOBLE_API_KEY}}
+
+# Jooble emite UNA CLAVE POR PAIS. La actual es del indice de EE.UU.
+# Cuando consigas la de Ecuador, cambia este host a ec.jooble.org.
+@joobleHost = jooble.org
+
+
+### ---------------------------------------------------------------------------
+### ADZUNA — la mejor fuente: trae salario NUMERICO (salary_min / salary_max)
+###
+### Paises soportados: at au be br ca ch de es fr gb in it mx nl nz pl sg us za
+### Ecuador NO esta (devuelve 404). Por eso Adzuna cubre solo el EXTERIOR.
+### ---------------------------------------------------------------------------
+
+### Remoto backend en EE.UU.
+GET https://api.adzuna.com/v1/api/jobs/us/search/1
+  ?app_id={{adzunaId}}
+  &app_key={{adzunaKey}}
+  &results_per_page=5
+  &what=remote backend developer
+  &content-type=application/json
+
+
+### Solo ofertas por encima de cierto salario (filtro del propio Adzuna).
+GET https://api.adzuna.com/v1/api/jobs/us/search/1
+  ?app_id={{adzunaId}}
+  &app_key={{adzunaKey}}
+  &results_per_page=5
+  &what=remote developer
+  &salary_min=100000
+  &content-type=application/json
+
+
+### Espana (mercado hispanohablante, util para un egresado ecuatoriano).
+GET https://api.adzuna.com/v1/api/jobs/es/search/1
+  ?app_id={{adzunaId}}
+  &app_key={{adzunaKey}}
+  &results_per_page=5
+  &what=desarrollador backend remoto
+  &content-type=application/json
+
+
+### Mexico.
+GET https://api.adzuna.com/v1/api/jobs/mx/search/1
+  ?app_id={{adzunaId}}
+  &app_key={{adzunaKey}}
+  &results_per_page=5
+  &what=desarrollador remoto
+  &content-type=application/json
+
+
+### Prueba de que Ecuador NO existe en Adzuna -> HTTP 404.
+### La respuesta lista los paises soportados.
+GET https://api.adzuna.com/v1/api/jobs/ec/search/1
+  ?app_id={{adzunaId}}
+  &app_key={{adzunaKey}}
+  &results_per_page=1
+  &content-type=application/json
+
+
+### ---------------------------------------------------------------------------
+### JOOBLE — POST con la clave EN LA URL. El salario viene como STRING libre
+### (a menudo vacio) -> habra que parsearlo en la normalizacion.
+### ---------------------------------------------------------------------------
+
+### Remoto backend.
+POST https://{{joobleHost}}/api/{{joobleKey}}
+Content-Type: application/json
+
+{
+  "keywords": "remote backend developer",
+  "location": "remote"
+}
+
+
+### Paginacion (20 resultados por pagina).
+POST https://{{joobleHost}}/api/{{joobleKey}}
+Content-Type: application/json
+
+{
+  "keywords": "desarrollador",
+  "page": "2"
+}
+
+
+### Ecuador: hoy devuelve 0 porque la clave es del indice de EE.UU.
+### Cuando tengas la clave de EC, pon @joobleHost = ec.jooble.org y esto revivira.
+POST https://{{joobleHost}}/api/{{joobleKey}}
+Content-Type: application/json
+
+{
+  "keywords": "desarrollador",
+  "location": "Quito"
+}
+
+
+### ---------------------------------------------------------------------------
+### ARBEITNOW — publica, SIN CLAVE. Remotas de Europa (mayoria en aleman).
+### No trae salario, pero trae `remote: true/false` y `tags` (utiles como skills).
+### ---------------------------------------------------------------------------
+
+### Tablon completo (100 por pagina).
+GET https://www.arbeitnow.com/api/job-board-api
+
+
+### Pagina 2.
+GET https://www.arbeitnow.com/api/job-board-api?page=2

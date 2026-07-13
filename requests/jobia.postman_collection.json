@@ -1,0 +1,183 @@
+{
+  "info": {
+    "name": "Jobia — Agente de Empleo",
+    "description": "Coleccion de pruebas del backend. Requiere la pila levantada en local:\n\n    docker compose -f docker-compose.yml -f docker-compose.local.yml up -d\n    docker compose -f docker-compose.yml -f docker-compose.local.yml exec api npm run seed\n\nVariables: baseUrl (Node, via nginx), matchingUrl (Python), profileId (perfil demo del seed).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api" },
+    { "key": "matchingUrl", "value": "http://localhost:8000" },
+    { "key": "profileId", "value": "22222222-2222-2222-2222-222222222222" }
+  ],
+  "item": [
+    {
+      "name": "API publica (Node)",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] },
+            "description": "Confirma que la API alcanza a Postgres, Redis y al matching-service."
+          }
+        },
+        {
+          "name": "Matching por perfil (epsilon-greedy)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/matching/jobs?profileId={{profileId}}&limit=6",
+              "host": ["{{baseUrl}}"],
+              "path": ["matching", "jobs"],
+              "query": [
+                { "key": "profileId", "value": "{{profileId}}" },
+                { "key": "limit", "value": "6" }
+              ]
+            },
+            "description": "Ofertas rankeadas por similitud de coseno. El campo `explored: true` marca las ofertas inyectadas por exploracion (epsilon-greedy)."
+          }
+        },
+        {
+          "name": "Busqueda por lenguaje natural",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/matching/jobs?text=remoto junior backend sin ingles&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["matching", "jobs"],
+              "query": [
+                { "key": "text", "value": "remoto junior backend sin ingles" },
+                { "key": "limit", "value": "5" }
+              ]
+            },
+            "description": "No requiere perfil ni login: vectoriza el texto al vuelo."
+          }
+        },
+        {
+          "name": "Prueba semantica (sin keywords literales)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/matching/jobs?text=trabajo en la nube con contenedores&limit=3",
+              "host": ["{{baseUrl}}"],
+              "path": ["matching", "jobs"],
+              "query": [
+                { "key": "text", "value": "trabajo en la nube con contenedores" },
+                { "key": "limit", "value": "3" }
+              ]
+            },
+            "description": "Ninguna oferta contiene las palabras 'nube' ni 'contenedores', pero debe devolver las de Kubernetes / Docker / Azure."
+          }
+        },
+        {
+          "name": "Error 400 — sin profileId ni text",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/matching/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["matching", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "Error 404 — perfil inexistente",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/matching/jobs?profileId=00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["matching", "jobs"],
+              "query": [
+                { "key": "profileId", "value": "00000000-0000-0000-0000-000000000000" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Error 404 — ruta inexistente",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/no-existe", "host": ["{{baseUrl}}"], "path": ["no-existe"] },
+            "description": "Comprueba el envelope { ok, data, error }."
+          }
+        }
+      ]
+    },
+    {
+      "name": "API interna (Python / FastAPI)",
+      "description": "Normalmente solo la llama el backend. Expuesta en :8000 en local para depurar.",
+      "item": [
+        {
+          "name": "Health (modelo + dimension)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{matchingUrl}}/health", "host": ["{{matchingUrl}}"], "path": ["health"] }
+          }
+        },
+        {
+          "name": "Embed — texto a vector (384)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texts\": [\"desarrollador backend con node y postgresql\"]\n}"
+            },
+            "url": { "raw": "{{matchingUrl}}/embed", "host": ["{{matchingUrl}}"], "path": ["embed"] },
+            "description": "Modelo local (fastembed / ONNX). Coste $0."
+          }
+        },
+        {
+          "name": "Embed jobs — vectorizar ofertas pendientes",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{matchingUrl}}/embed/jobs",
+              "host": ["{{matchingUrl}}"],
+              "path": ["embed", "jobs"]
+            },
+            "description": "Idempotente: solo toca las ofertas con embedding NULL."
+          }
+        },
+        {
+          "name": "Embed profile — vectorizar perfil",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{matchingUrl}}/embed/profile/{{profileId}}",
+              "host": ["{{matchingUrl}}"],
+              "path": ["embed", "profile", "{{profileId}}"]
+            },
+            "description": "Solo al cambiar el CV o las skills del usuario."
+          }
+        },
+        {
+          "name": "Match crudo por perfil",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile_id\": \"{{profileId}}\",\n  \"limit\": 5\n}"
+            },
+            "url": { "raw": "{{matchingUrl}}/match", "host": ["{{matchingUrl}}"], "path": ["match"] },
+            "description": "Cosine en pgvector, sin epsilon-greedy (eso lo agrega Node)."
+          }
+        },
+        {
+          "name": "Match crudo por texto",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"quiero analizar datos con python y estadistica\",\n  \"limit\": 5\n}"
+            },
+            "url": { "raw": "{{matchingUrl}}/match", "host": ["{{matchingUrl}}"], "path": ["match"] }
+          }
+        }
+      ]
+    }
+  ]
+}
