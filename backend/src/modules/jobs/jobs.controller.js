@@ -1,8 +1,15 @@
 const express = require('express');
+const { Queue } = require('bullmq');
+const { connection } = require('../../config/redis');
 const { ok, fail } = require('../../shared/envelope');
 const service = require('./jobs.service');
 
 const router = express.Router();
+
+// Misma cola que escucha el worker.
+const cola = new Queue('ingesta', { connection });
+
+const encolarIngesta = () => cola.add('ingesta-manual', {});
 
 /**
  * GET /api/jobs?scope=local|foreign&q=react&limit=20&page=1
@@ -38,13 +45,26 @@ router.get('/stats', async (_req, res) => {
 /**
  * POST /api/jobs/ingest — dispara la ingesta a mano.
  *
- * En produccion esto lo hace el worker de forma programada; el endpoint existe
- * para poder demostrarlo y depurarlo. Tarda decenas de segundos.
+ * ENCOLA el trabajo y responde al instante. No lo ejecuta dentro del request:
+ * la ingesta hace ~45 llamadas a APIs externas y vectoriza cientos de ofertas,
+ * asi que tarda minutos y reventaba el timeout del proxy. Ademas, dejar una
+ * peticion HTTP abierta esperando a APIs de terceros es una forma excelente de
+ * tumbar el servidor.
+ *
+ * El progreso se sigue con GET /api/jobs/stats o en los logs del worker.
  */
 router.post('/ingest', async (_req, res) => {
   try {
-    const resumen = await service.ingest();
-    return ok(res, resumen);
+    const job = await encolarIngesta();
+    return ok(
+      res,
+      {
+        encolado: true,
+        jobId: job.id,
+        mensaje: 'Ingesta encolada. Sigue el progreso con GET /api/jobs/stats.',
+      },
+      202,
+    );
   } catch (err) {
     return fail(res, err.message, 502);
   }

@@ -3,21 +3,88 @@ const repo = require('./jobs.repository');
 const { SOURCES } = require('./sources');
 
 /**
- * Que se busca en cada ingesta. Como no hay fuente para Ecuador (ni Adzuna ni
- * Jooble lo cubren hoy), el foco es REMOTO: ofertas a las que un egresado
- * ecuatoriano puede postular desde casa.
+ * Plan de ingesta.
+ *
+ * Objetivo: VOLUMEN y VARIEDAD reales. Antes se traian ~110 ofertas con una
+ * consulta por fuente; ahora se pagina y se cubren varias areas (no solo
+ * backend), porque el usuario del producto puede ser de datos, QA, soporte,
+ * diseno o redes, no solo desarrollador.
+ *
+ * NOTA SOBRE ECUADOR: ninguna de las fuentes actuales cubre Ecuador.
+ *   - Adzuna no soporta el pais (404).
+ *   - La clave de Jooble esta atada al indice de EE.UU.; ec.jooble.org da 403.
+ * El enfoque es REMOTO: ofertas a las que se puede postular desde Ecuador.
+ * Para desbloquear ofertas locales hay que conseguir credenciales (ver DEPLOY.md).
  */
+const BUSQUEDAS = [
+  'backend developer',
+  'frontend developer',
+  'full stack developer',
+  'data analyst',
+  'qa tester',
+  'devops',
+  'soporte tecnico',
+  'diseñador ux',
+];
+
+const BUSQUEDAS_ES = [
+  'desarrollador',
+  'programador',
+  'analista de datos',
+  'soporte tecnico',
+];
+
+/** Adzuna: varias areas x varios paises x varias paginas. 50 resultados por pagina. */
+function planAdzuna() {
+  const pasos = [];
+
+  for (const what of BUSQUEDAS) {
+    for (const page of [1, 2]) {
+      pasos.push({
+        source: 'adzuna',
+        query: { what: `remote ${what}`, country: 'us', page, resultsPerPage: 50 },
+      });
+    }
+  }
+
+  // Mercado hispanohablante: mas afin a un egresado ecuatoriano.
+  for (const what of BUSQUEDAS_ES) {
+    for (const country of ['es', 'mx']) {
+      pasos.push({
+        source: 'adzuna',
+        query: { what: `${what} remoto`, country, page: 1, resultsPerPage: 50 },
+      });
+    }
+  }
+
+  return pasos;
+}
+
+function planJooble() {
+  const pasos = [];
+  for (const what of [...BUSQUEDAS.slice(0, 5), ...BUSQUEDAS_ES.slice(0, 2)]) {
+    for (const page of [1, 2]) {
+      pasos.push({ source: 'jooble', query: { what, location: 'remote', page } });
+    }
+  }
+  return pasos;
+}
+
 const PLAN = [
-  { source: 'adzuna', query: { what: 'remote backend developer', country: 'us' } },
-  { source: 'adzuna', query: { what: 'remote frontend developer', country: 'us' } },
-  { source: 'adzuna', query: { what: 'remote data analyst', country: 'us' } },
-  { source: 'adzuna', query: { what: 'desarrollador remoto', country: 'es' } },
-  { source: 'adzuna', query: { what: 'desarrollador remoto', country: 'mx' } },
-  { source: 'jooble', query: { what: 'remote developer', location: 'remote' } },
-  { source: 'jooble', query: { what: 'desarrollador remoto' } },
-  { source: 'arbeitnow', query: { what: 'developer engineer', onlyRemote: true } },
-  // RemoteOK: 100% remoto y sin clave. Portado del backend de Alan.
-  { source: 'remoteok', query: { what: 'developer engineer data' } },
+  ...planAdzuna(),
+  ...planJooble(),
+  // ArbeitNow: tablon paginado, sin filtro de busqueda en la API.
+  { source: 'arbeitnow', query: { page: 1, onlyRemote: true } },
+  { source: 'arbeitnow', query: { page: 2, onlyRemote: true } },
+  { source: 'arbeitnow', query: { page: 3, onlyRemote: true } },
+  // RemoteOK: devuelve el tablon completo de una vez. Sin `what` = todas.
+  { source: 'remoteok', query: {} },
+
+  // Careerjet: la unica fuente con ofertas de ECUADOR. Si falta CAREERJET_AFFID
+  // lanza un error que la ingesta registra y sigue: no rompe nada.
+  { source: 'careerjet', query: { what: 'desarrollador', location: 'Ecuador' } },
+  { source: 'careerjet', query: { what: 'sistemas', location: 'Quito' } },
+  { source: 'careerjet', query: { what: 'tecnologia', location: 'Guayaquil' } },
 ];
 
 /**
@@ -27,7 +94,7 @@ const PLAN = [
 async function vectorizar() {
   const res = await fetch(`${env.matchingUrl}/embed/jobs`, {
     method: 'POST',
-    signal: AbortSignal.timeout(120000), // vectorizar un lote grande tarda
+    signal: AbortSignal.timeout(300000), // un lote grande tarda
   });
   if (!res.ok) throw new Error(`matching-service respondio ${res.status}`);
   return res.json();
@@ -36,11 +103,13 @@ async function vectorizar() {
 /**
  * Ingesta completa: fuentes -> normalizar -> guardar -> vectorizar.
  *
- * Corre en el worker (programada), NUNCA en el request de un usuario.
+ * Corre en el worker (programada), NUNCA en el request de un usuario: por eso el
+ * chatbot y la busqueda no llaman jamas a una API externa. Todo sale de Postgres.
+ *
  * Si una fuente falla, las demas siguen: una API caida no debe tumbar la ingesta.
  */
 async function ingest({ plan = PLAN } = {}) {
-  const resumen = { fuentes: {}, creadas: 0, actualizadas: 0, errores: [] };
+  const resumen = { fuentes: {}, creadas: 0, actualizadas: 0, duplicadas: 0, errores: [] };
 
   for (const paso of plan) {
     const source = SOURCES[paso.source];
@@ -51,7 +120,11 @@ async function ingest({ plan = PLAN } = {}) {
 
     try {
       const crudas = await source.fetchJobs(paso.query);
-      const normalizadas = crudas.map((r) => source.normalize(r));
+      const normalizadas = crudas
+        .map((r) => source.normalize(r))
+        // Una oferta sin enlace es inutil: el usuario no puede postular. Se
+        // descarta en vez de mostrarla y frustrarlo.
+        .filter((j) => j.url && j.title);
 
       // Deduplicar por (titulo, empresa). La ubicacion se excluye a proposito:
       // un mismo puesto remoto llega repetido en decenas de ciudades.
@@ -74,9 +147,9 @@ async function ingest({ plan = PLAN } = {}) {
 
       resumen.creadas += creadas;
       resumen.actualizadas += actualizadas;
-      resumen.duplicadas = (resumen.duplicadas || 0) + duplicadas;
+      resumen.duplicadas += duplicadas;
     } catch (err) {
-      resumen.errores.push(`${paso.source} (${paso.query.what}): ${err.message}`);
+      resumen.errores.push(`${paso.source} (${paso.query.what || 'sin filtro'}): ${err.message}`);
     }
   }
 

@@ -11,7 +11,8 @@ const adzuna = require('./adzuna');
 const jooble = require('./jooble');
 const arbeitnow = require('./arbeitnow');
 const remoteok = require('./remoteok');
+const careerjet = require('./careerjet');
 
-const SOURCES = { adzuna, jooble, arbeitnow, remoteok };
+const SOURCES = { adzuna, jooble, arbeitnow, remoteok, careerjet };
 
-module.exports = { SOURCES, adzuna, jooble, arbeitnow, remoteok };
+module.exports = { SOURCES, adzuna, jooble, arbeitnow, remoteok, careerjet };
