@@ -16,11 +16,31 @@ const worker = new Worker(
   QUEUE,
   async (job) => {
     console.log(`[worker] ${job.name}: arrancando ingesta…`);
-    const resumen = await jobs.ingest();
-    console.log('[worker] ingesta terminada:', JSON.stringify(resumen));
-    return resumen;
+
+    // Marcar que hay una ingesta EN CURSO: la UI lo muestra y el endpoint la usa
+    // para no encolar dos a la vez.
+    await connection.set('ingesta:enCurso', '1', 'EX', 60 * 30);
+
+    try {
+      const resumen = await jobs.ingest();
+      console.log('[worker] ingesta terminada:', JSON.stringify(resumen));
+
+      await connection.set(
+        'ingesta:ultima',
+        JSON.stringify({ fecha: new Date().toISOString(), resumen }),
+      );
+
+      return resumen;
+    } finally {
+      await connection.del('ingesta:enCurso');
+    }
   },
-  { connection },
+  {
+    connection,
+    // Una sola ingesta a la vez: dos en paralelo se pisarian en la base y
+    // duplicarian las llamadas a las APIs externas.
+    concurrency: 1,
+  },
 );
 
 worker.on('ready', () => console.log(`[worker] escuchando la cola "${QUEUE}"`));

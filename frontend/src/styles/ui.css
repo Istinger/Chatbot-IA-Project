@@ -1242,3 +1242,39 @@
     max-width: 100%;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Estado de las ofertas + refresco manual
+--------------------------------------------------------------------------- */
+.refrescar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.refrescar__info {
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.refrescar__msg {
+  color: var(--glow);
+  font-size: 13px;
+}
+
+.btn--peq {
+  min-height: 40px;
+  padding: 0 var(--sp-2);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.girando {
+  animation: girar 1.1s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}

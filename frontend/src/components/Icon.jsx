@@ -23,6 +23,7 @@ const RUTAS = {
   enviar: <><path d="M4 12h15" /><path d="m13 6 6 6-6 6" /></>,
   chispa2: <><path d="M12 3v18" /><path d="M3 12h18" /></>,
   asistente: <><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="9" opacity=".4" /></>,
+  refrescar: <><path d="M20 12a8 8 0 1 1-2.3-5.6" /><path d="M20 4v5h-5" /></>,
 };
 
 export default function Icon({ name, size = 20, className = '' }) {
