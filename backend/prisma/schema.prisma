@@ -1,0 +1,66 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  password     String
+  profile      Profile?
+  applications Application[]
+  createdAt    DateTime      @default(now())
+}
+
+model Profile {
+  id        String                       @id @default(uuid())
+  userId    String                       @unique
+  user      User                         @relation(fields: [userId], references: [id])
+  cvText    String?
+  skills    String[]
+  embedding Unsupported("vector(1536)")?
+  updatedAt DateTime                     @updatedAt
+}
+
+model Job {
+  id          String                       @id @default(uuid())
+  externalId  String                       @unique
+  source      String
+  title       String
+  company     String
+  location    String?
+  country     String?
+  salaryMin   Float?
+  salaryMax   Float?
+  description String?
+  url         String
+  skills      String[]
+  embedding   Unsupported("vector(1536)")?
+  isForeign   Boolean                      @default(false)
+  createdAt   DateTime                     @default(now())
+}
+
+model Application {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  jobId     String
+  status    String    @default("guardada")
+  appliedAt DateTime?
+  updatedAt DateTime  @updatedAt
+}
+
+model QuestionBank {
+  id       String  @id @default(uuid())
+  type     String
+  skill    String?
+  question String
+  options  Json?
+  answer   String?
+}

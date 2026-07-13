@@ -1,0 +1,75 @@
+# Compose de produccion (VPS). No publica puertos: solo NPM da cara a internet.
+# Para desarrollo local, ver docker-compose.local.yml
+services:
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - proxy
+      - app
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app
+
+  matching:
+    build: ./matching-service
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app
+
+  worker:
+    build: ./backend
+    command: node src/worker.js
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    command: postgres -c shared_buffers=256MB -c work_mem=16MB
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    networks:
+      - app
+
+volumes:
+  pgdata:
+
+networks:
+  proxy:
+    external: true
+  app:

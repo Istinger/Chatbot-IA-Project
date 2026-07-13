@@ -1,0 +1,22 @@
+# Overlay SOLO para desarrollo local. Publica puertos para poder inspeccionar
+# los servicios sin Nginx Proxy Manager.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+#
+# En el VPS NO se usa este archivo.
+services:
+  frontend:
+    ports:
+      - "8080:80"
+
+  api:
+    ports:
+      - "3000:3000"
+
+  matching:
+    ports:
+      - "8000:8000"
+
+  postgres:
+    ports:
+      - "5432:5432"

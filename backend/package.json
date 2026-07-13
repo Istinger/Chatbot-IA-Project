@@ -1,0 +1,19 @@
+{
+  "name": "empleo-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/app.js",
+    "worker": "node src/worker.js",
+    "prisma:generate": "prisma generate",
+    "prisma:deploy": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bullmq": "^5.28.2",
+    "express": "^4.21.1",
+    "ioredis": "^5.4.1",
+    "prisma": "^5.22.0"
+  }
+}
