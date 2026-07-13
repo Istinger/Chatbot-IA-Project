@@ -1,0 +1,94 @@
+# Peticiones de prueba — extension "REST Client" de VS Code (humao.rest-client).
+# Pulsa "Send Request" sobre cualquier bloque.
+#
+# La pila debe estar levantada:
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+
+@api = http://localhost:8080/api
+@matching = http://localhost:8000
+@profileId = 22222222-2222-2222-2222-222222222222
+
+
+### ---------------------------------------------------------------------------
+### API PUBLICA (Node) — lo que consume el navegador
+### ---------------------------------------------------------------------------
+
+### Health: la API alcanza a Postgres, Redis y al matching-service?
+GET {{api}}/health
+
+
+### Ofertas recomendadas para el perfil demo (cosine + epsilon-greedy).
+### Fijate en el campo "explored": true = oferta inyectada por exploracion.
+GET {{api}}/matching/jobs?profileId={{profileId}}&limit=6
+
+
+### Busqueda por lenguaje natural (no hace falta perfil ni login).
+GET {{api}}/matching/jobs?text=remoto junior backend sin ingles&limit=5
+
+
+### Prueba semantica: ninguna oferta contiene las palabras "nube" ni "contenedores",
+### pero deberia devolver las de Kubernetes / Docker / Azure.
+GET {{api}}/matching/jobs?text=trabajo en la nube con contenedores&limit=3
+
+
+### Error 400: sin profileId ni text.
+GET {{api}}/matching/jobs
+
+
+### Error 404: perfil inexistente.
+GET {{api}}/matching/jobs?profileId=00000000-0000-0000-0000-000000000000
+
+
+### Error 404: ruta que no existe (comprueba el envelope { ok, data, error }).
+GET {{api}}/no-existe
+
+
+### ---------------------------------------------------------------------------
+### API INTERNA (Python / FastAPI) — normalmente solo la llama el backend.
+### Expuesta en local (:8000) unicamente para depurar.
+### ---------------------------------------------------------------------------
+
+### Health: confirma el modelo cargado y la dimension del vector.
+GET {{matching}}/health
+
+
+### Vectorizar texto suelto -> 384 floats. Coste $0 (modelo local).
+POST {{matching}}/embed
+Content-Type: application/json
+
+{
+  "texts": ["desarrollador backend con node y postgresql"]
+}
+
+
+### Vectorizar las ofertas que aun no tienen embedding.
+### Idempotente: se puede llamar despues de cada ingesta.
+POST {{matching}}/embed/jobs
+
+
+### (Re)vectorizar un perfil. Solo al cambiar el CV o las skills.
+POST {{matching}}/embed/profile/{{profileId}}
+
+
+### Matching crudo, sin epsilon-greedy (esto es lo que Node envuelve).
+POST {{matching}}/match
+Content-Type: application/json
+
+{
+  "profile_id": "22222222-2222-2222-2222-222222222222",
+  "limit": 5
+}
+
+
+### Matching crudo por texto libre.
+POST {{matching}}/match
+Content-Type: application/json
+
+{
+  "text": "quiero analizar datos con python y estadistica",
+  "limit": 5
+}
+
+
+### Documentacion interactiva de FastAPI (abrelo en el navegador):
+### http://localhost:8000/docs

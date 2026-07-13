@@ -1,4 +1,4 @@
--- pgvector: necesario para las columnas `vector(1536)`.
+-- pgvector: necesario para las columnas `vector(384)`.
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE "User" (
@@ -16,7 +16,7 @@ CREATE TABLE "Profile" (
     "userId" TEXT NOT NULL,
     "cvText" TEXT,
     "skills" TEXT[],
-    "embedding" vector(1536),
+    "embedding" vector(384),
     "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")
 );
@@ -36,7 +36,7 @@ CREATE TABLE "Job" (
     "description" TEXT,
     "url" TEXT NOT NULL,
     "skills" TEXT[],
-    "embedding" vector(1536),
+    "embedding" vector(384),
     "isForeign" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Job_pkey" PRIMARY KEY ("id")

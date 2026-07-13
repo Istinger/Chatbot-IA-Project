@@ -1,6 +1,9 @@
 # matching-service/requirements.txt
 fastapi==0.115.0
 uvicorn[standard]==0.31.0
-requests==2.32.3
 psycopg[binary]==3.2.3
 pydantic==2.9.2
+
+# Embeddings locales via ONNX Runtime (sin PyTorch: imagen liviana).
+# Modelo: paraphrase-multilingual-MiniLM-L12-v2 -> 384 dims, ~0.22 GB, espanol.
+fastembed==0.4.2
