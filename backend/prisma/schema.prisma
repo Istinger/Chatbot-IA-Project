@@ -65,6 +65,19 @@ model Application {
   updatedAt DateTime  @updatedAt
 }
 
+/// Historial del chatbot. `userId` es opcional a proposito: un visitante puede
+/// conversar sin registrarse (igual que puede buscar sin sesion).
+model Message {
+  id        String   @id @default(uuid())
+  sessionId String
+  userId    String?
+  role      String // "user" | "assistant"
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([sessionId, createdAt])
+}
+
 model QuestionBank {
   id       String  @id @default(uuid())
   type     String

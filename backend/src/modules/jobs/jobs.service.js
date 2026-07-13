@@ -16,6 +16,8 @@ const PLAN = [
   { source: 'jooble', query: { what: 'remote developer', location: 'remote' } },
   { source: 'jooble', query: { what: 'desarrollador remoto' } },
   { source: 'arbeitnow', query: { what: 'developer engineer', onlyRemote: true } },
+  // RemoteOK: 100% remoto y sin clave. Portado del backend de Alan.
+  { source: 'remoteok', query: { what: 'developer engineer data' } },
 ];
 
 /**

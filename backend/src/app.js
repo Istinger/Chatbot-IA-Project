@@ -43,6 +43,8 @@ api.use('/auth', require('./modules/auth/auth.controller'));
 api.use('/profile', require('./modules/profile/profile.controller'));
 api.use('/jobs', require('./modules/jobs/jobs.controller'));
 api.use('/matching', require('./modules/matching/matching.controller'));
+api.use('/chat', require('./modules/chat/chat.controller'));
+api.use('/cv', require('./modules/cv/cv.controller'));
 
 app.use('/api', api);
 
