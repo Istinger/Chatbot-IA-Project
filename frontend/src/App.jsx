@@ -1,44 +1,58 @@
-import { useEffect, useState } from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider, useAuth } from './lib/auth';
+import AmbientBackground from './components/AmbientBackground';
+import Shell from './components/Shell';
+import Login from './screens/Login';
+import Onboarding from './screens/Onboarding';
+import Home from './screens/Home';
+import Search from './screens/Search';
+import Profile from './screens/Profile';
 
-// Pantalla de diagnostico de la Parte 1: prueba que el navegador llega al
-// frontend, que Nginx enruta /api a la API, y que la API alcanza a Postgres,
-// Redis y al microservicio de matching. Se reemplaza por la UI real despues.
-export default function App() {
-  const [state, setState] = useState({ status: 'cargando' });
+/** Ruta protegida: sin sesion, al login. */
+function Privada({ children }) {
+  const { autenticado, cargando } = useAuth();
 
-  useEffect(() => {
-    fetch('/api/health')
-      .then((r) => r.json())
-      .then((body) => setState({ status: 'listo', body }))
-      .catch((err) => setState({ status: 'error', message: err.message }));
-  }, []);
+  // Mientras se valida el token guardado no se decide nada: redirigir aqui
+  // expulsaria al usuario en cada recarga de pagina.
+  if (cargando) return <div className="cargando">Iniciando…</div>;
+  if (!autenticado) return <Navigate to="/login" replace />;
+  return children;
+}
 
-  const services = state.body?.data ?? {};
+/** Si ya hay sesion, el login no tiene sentido. */
+function Publica({ children }) {
+  const { autenticado, cargando } = useAuth();
+  if (cargando) return <div className="cargando">Iniciando…</div>;
+  if (autenticado) return <Navigate to="/" replace />;
+  return children;
+}
 
+function Rutas() {
   return (
-    <main className="shell">
-      <div className="orb" />
-      <h1>Agente de Empleo</h1>
-      <p className="sub">Verificacion del ciclo completo</p>
+    <Routes>
+      <Route path="/login" element={<Publica><Login modo="login" /></Publica>} />
+      <Route path="/registro" element={<Publica><Login modo="registro" /></Publica>} />
 
-      {state.status === 'cargando' && <p className="sub">Consultando /api/health…</p>}
+      <Route path="/onboarding" element={<Privada><Onboarding /></Privada>} />
 
-      {state.status === 'error' && (
-        <p className="down">No se pudo contactar la API: {state.message}</p>
-      )}
+      <Route element={<Privada><Shell /></Privada>}>
+        <Route path="/" element={<Home />} />
+        <Route path="/buscar" element={<Search />} />
+        <Route path="/perfil" element={<Profile />} />
+      </Route>
 
-      {state.status === 'listo' && (
-        <ul className="checks">
-          {Object.entries(services)
-            .filter(([key]) => key !== 'service')
-            .map(([name, value]) => (
-              <li key={name} className={value === 'up' ? 'up' : 'down'}>
-                <span>{name}</span>
-                <span>{value}</span>
-              </li>
-            ))}
-        </ul>
-      )}
-    </main>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AmbientBackground />
+        <Rutas />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

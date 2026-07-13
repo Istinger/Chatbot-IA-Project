@@ -90,6 +90,7 @@ async function list({ scope, q, limit = 20, page = 1 }) {
         salaryUsdMin: true,
         salaryUsdMax: true,
         salaryPredicted: true,
+        description: true,
         url: true,
         skills: true,
         isForeign: true,

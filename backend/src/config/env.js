@@ -17,6 +17,12 @@ module.exports = {
   // epsilon-greedy: 0.15 => 15% de las ranuras se reservan a exploracion.
   epsilon: Number(process.env.MATCHING_EPSILON ?? 0.15),
 
+  // Umbrales contra el fallo silencioso del coseno (ver matching.service.js).
+  // Calibrados con datos reales: consultas validas superan 0.57; las absurdas
+  // no pasan de 0.50.
+  minTopScore: Number(process.env.MATCHING_MIN_TOP ?? 0.52),
+  minItemScore: Number(process.env.MATCHING_MIN_ITEM ?? 0.42),
+
   adzuna: {
     appId: process.env.ADZUNA_APP_ID,
     appKey: process.env.ADZUNA_APP_KEY,

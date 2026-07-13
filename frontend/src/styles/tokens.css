@@ -1,0 +1,66 @@
+/* Tokens de diseño. Fuente de verdad: DESIGN.md.
+   Ningun componente escribe un hex a pelo: todo sale de aqui. */
+:root {
+  /* Superficies */
+  --bg: #071421;
+  --bg-2: #0b1e31;
+  --surface: #16283d;
+
+  /* Marca */
+  --blue: #4fa3ff;
+  --glow: #6ec8ff;
+
+  /* Texto */
+  --text: #ffffff;
+  --text-2: #d8dee9;
+  --text-3: #98a4b3;
+
+  /* Glass */
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-2: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-2: rgba(255, 255, 255, 0.14);
+
+  /* Semanticos */
+  --danger: #ff8fa3;
+  --success: #6ee7b7;
+
+  /* Escala tipografica de DESIGN.md */
+  --fs-1: 48px;
+  --fs-2: 32px;
+  --fs-3: 24px;
+  --fs-4: 18px;
+  --fs-5: 14px;
+
+  /* Espaciado: multiplos de 8 */
+  --sp-1: 8px;
+  --sp-2: 16px;
+  --sp-3: 24px;
+  --sp-4: 32px;
+  --sp-5: 48px;
+  --sp-6: 64px;
+
+  /* Radios: DESIGN.md pide 20-24px en tarjetas */
+  --r-sm: 12px;
+  --r-md: 20px;
+  --r-lg: 24px;
+  --r-full: 999px;
+
+  /* Movimiento: 150-300ms en microinteracciones */
+  --t-fast: 160ms;
+  --t-base: 240ms;
+  --t-slow: 400ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+
+  /* Capas */
+  --z-bg: 0;
+  --z-content: 10;
+  --z-nav: 40;
+  --z-modal: 100;
+  --z-toast: 1000;
+
+  /* Sombras */
+  --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 0 1px rgba(110, 200, 255, 0.25), 0 12px 48px rgba(79, 163, 255, 0.25);
+}
