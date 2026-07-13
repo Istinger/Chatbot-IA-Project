@@ -1,0 +1,1015 @@
+/* ---------------------------------------------------------------------------
+   Fondo ambiental
+   El canvas va detras de todo, con un blur fuerte encima: convierte 4 blobs
+   burdos en neblina creible por casi cero coste de CPU.
+--------------------------------------------------------------------------- */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-bg);
+  pointer-events: none;
+  background: radial-gradient(1400px 700px at 50% -20%, var(--bg-2), var(--bg) 70%);
+}
+
+.ambient__canvas {
+  width: 100%;
+  height: 100%;
+  filter: blur(60px);
+  opacity: 0.9;
+}
+
+/* Grano muy sutil: rompe el banding de los degradados en pantallas de 8 bits. */
+.ambient__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.025;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.4) 0 1px,
+    transparent 1px 3px
+  );
+  mix-blend-mode: overlay;
+}
+
+/* ---------------------------------------------------------------------------
+   Orb: el punto focal cinematografico de la entrada
+--------------------------------------------------------------------------- */
+.orb {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--glow), var(--blue) 55%, transparent 72%);
+  filter: blur(10px);
+  opacity: 0.85;
+  /* Solo transform y opacity: nunca disparan reflow. */
+  animation: flotar 7s ease-in-out infinite;
+}
+
+.orb--peq {
+  width: 110px;
+  height: 110px;
+}
+
+@keyframes flotar {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+  50%      { transform: translateY(-14px) scale(1.05); opacity: 1; }
+}
+
+/* ---------------------------------------------------------------------------
+   Botones
+--------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  /* 48px de alto: por encima del minimo tactil de 44px. */
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-full);
+  font-size: var(--fs-5);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: transform var(--t-fast) var(--ease-out),
+              box-shadow var(--t-fast) var(--ease-out),
+              background var(--t-fast) var(--ease-out);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn--primario {
+  background: linear-gradient(180deg, var(--glow), var(--blue));
+  color: #04121f; /* texto oscuro sobre azul claro: contraste muy por encima de 4.5:1 */
+  box-shadow: 0 8px 32px rgba(79, 163, 255, 0.35);
+}
+
+.btn--primario:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 44px rgba(110, 200, 255, 0.5);
+}
+
+.btn--glass {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  color: var(--text);
+  backdrop-filter: blur(12px);
+}
+
+.btn--glass:hover:not(:disabled) {
+  background: var(--glass-2);
+  border-color: var(--border-2);
+}
+
+.btn--texto {
+  color: var(--text-3);
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  font-weight: 400;
+}
+
+.btn--texto:hover {
+  color: var(--glow);
+}
+
+.iconbtn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--text-2);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  transition: background var(--t-fast), color var(--t-fast), opacity var(--t-fast);
+}
+
+.iconbtn:hover:not(:disabled) {
+  background: var(--glass-2);
+  color: var(--glow);
+}
+
+.iconbtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------------
+   Formularios
+--------------------------------------------------------------------------- */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+/* Etiqueta VISIBLE, no solo placeholder: el placeholder desaparece al escribir
+   y el usuario pierde el contexto del campo. */
+.campo label {
+  font-size: var(--fs-5);
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.campo input,
+.buscar__barra input,
+.onb__manual input {
+  min-height: 52px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  color: var(--text);
+  /* 16px evita el zoom automatico de iOS al enfocar un input. */
+  font-size: 16px;
+  backdrop-filter: blur(12px);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.campo input::placeholder,
+.buscar__barra input::placeholder {
+  color: var(--text-3);
+  opacity: 0.6;
+}
+
+.campo input:focus,
+.buscar__barra input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(79, 163, 255, 0.2);
+}
+
+.campo__ayuda {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.alerta,
+.exito {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 12px var(--sp-2);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-5);
+}
+
+/* El color nunca es el unico indicador: siempre va acompanado de un icono. */
+.alerta {
+  color: var(--danger);
+  background: rgba(255, 143, 163, 0.08);
+  border: 1px solid rgba(255, 143, 163, 0.25);
+}
+
+.exito {
+  color: var(--success);
+  background: rgba(110, 231, 183, 0.08);
+  border: 1px solid rgba(110, 231, 183, 0.25);
+}
+
+/* ---------------------------------------------------------------------------
+   Entrada (login / registro)
+--------------------------------------------------------------------------- */
+.entrada {
+  position: relative;
+  z-index: var(--z-content);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3);
+}
+
+.entrada__caja {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  text-align: center;
+  animation: entrar var(--t-slow) var(--ease-out) both;
+}
+
+/* Solo opacity y transform. Animar `filter: blur()` obliga al navegador a
+   rasterizar de nuevo en cada frame (caro en portatiles modestos) y, si la
+   animacion no llega a correr, el contenido se queda BORROSO de forma
+   permanente. La sensacion cinematografica la da el desenfoque del fondo, no
+   la del texto. */
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.entrada__titulo {
+  font-size: var(--fs-1);
+}
+
+.entrada__sub {
+  color: var(--text-3);
+  font-size: var(--fs-4);
+}
+
+.entrada__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.entrada__pie {
+  color: var(--text-3);
+  font-size: var(--fs-5);
+}
+
+/* ---------------------------------------------------------------------------
+   Onboarding
+--------------------------------------------------------------------------- */
+.onb {
+  position: relative;
+  z-index: var(--z-content);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+}
+
+.onb__pasos {
+  display: flex;
+  gap: 10px;
+  list-style: none;
+}
+
+.onb__pasos li {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-2);
+  transition: background var(--t-base), transform var(--t-base);
+}
+
+.onb__pasos li.on {
+  background: var(--glow);
+  transform: scale(1.3);
+  box-shadow: 0 0 12px var(--glow);
+}
+
+.onb__panel {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  text-align: center;
+  animation: entrar var(--t-slow) var(--ease-out) both;
+}
+
+.onb__panel h1 {
+  font-size: var(--fs-2);
+}
+
+.onb__sub {
+  color: var(--text-3);
+  font-size: var(--fs-5);
+  max-width: 46ch; /* medida legible: nunca parrafos de borde a borde */
+}
+
+.onb__ok {
+  color: var(--glow);
+}
+
+.drop {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--glass);
+  border: 1px dashed var(--border-2);
+  color: var(--text-2);
+  backdrop-filter: blur(16px);
+  transition: border-color var(--t-base), background var(--t-base), transform var(--t-base);
+}
+
+.drop--activo {
+  border-color: var(--glow);
+  background: rgba(110, 200, 255, 0.08);
+  transform: scale(1.02);
+  box-shadow: var(--shadow-glow);
+}
+
+.onb__manual {
+  display: flex;
+  gap: var(--sp-1);
+  width: 100%;
+}
+
+.onb__manual input {
+  flex: 1;
+}
+
+/* ---------------------------------------------------------------------------
+   Chips
+--------------------------------------------------------------------------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  list-style: none;
+  justify-content: center;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-full);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.chip--btn {
+  cursor: pointer;
+  min-height: 44px; /* pulsable: minimo tactil */
+  padding: 0 var(--sp-2);
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+
+.chip--btn:hover {
+  border-color: var(--border-2);
+  color: var(--text);
+}
+
+.chip--on {
+  background: rgba(79, 163, 255, 0.16);
+  border-color: var(--blue);
+  color: var(--glow);
+  box-shadow: 0 0 16px rgba(79, 163, 255, 0.2);
+}
+
+.chip--exterior { color: var(--glow); }
+.chip--local { color: var(--success); }
+
+.chip--explora {
+  color: #ffd79a;
+  border-color: rgba(255, 215, 154, 0.3);
+  background: rgba(255, 215, 154, 0.08);
+}
+
+/* ---------------------------------------------------------------------------
+   Shell: rail lateral (escritorio) / barra inferior (movil)
+--------------------------------------------------------------------------- */
+.shell {
+  position: relative;
+  z-index: var(--z-content);
+  min-height: 100dvh;
+  display: flex;
+}
+
+.rail {
+  position: fixed;
+  z-index: var(--z-nav);
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 108px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-1);
+  background: rgba(7, 20, 33, 0.6);
+  border-right: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+}
+
+.rail__marca {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--glow), var(--blue));
+  box-shadow: 0 0 20px rgba(79, 163, 255, 0.6);
+  flex: none;
+}
+
+.rail__lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  width: 100%;
+  margin-top: var(--sp-2);
+}
+
+.rail__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  width: 100%;
+  min-height: 56px;
+  border-radius: var(--r-sm);
+  color: var(--text-3);
+  font-size: 12px;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.rail__link:hover {
+  color: var(--text);
+  background: var(--glass);
+}
+
+/* El destino actual debe verse: no basta con el cambio de color del texto. */
+.rail__link.active {
+  color: var(--glow);
+  background: rgba(79, 163, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(79, 163, 255, 0.25);
+}
+
+.rail__salir {
+  margin-top: auto;
+  color: var(--text-3);
+}
+
+.rail__salir:hover {
+  color: var(--danger);
+  background: rgba(255, 143, 163, 0.08);
+}
+
+.lienzo {
+  flex: 1;
+  min-width: 0; /* sin esto, el carrusel desborda el flex y aparece scroll horizontal */
+  margin-left: 108px;
+  padding: var(--sp-5) 0 var(--sp-6) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+/* ---------------------------------------------------------------------------
+   Cabeceras y paneles
+--------------------------------------------------------------------------- */
+.saludo {
+  padding-right: var(--sp-4);
+  animation: entrar var(--t-slow) var(--ease-out) both;
+}
+
+.saludo h1 {
+  font-size: var(--fs-1);
+}
+
+.saludo__sub {
+  color: var(--text-3);
+  font-size: var(--fs-4);
+  margin-top: var(--sp-1);
+}
+
+.panel {
+  margin-right: var(--sp-4);
+  padding: var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.panel .chips {
+  justify-content: flex-start;
+}
+
+.aviso-panel {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-right: var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: rgba(255, 215, 154, 0.06);
+  border: 1px solid rgba(255, 215, 154, 0.25);
+  color: #ffd79a;
+}
+
+.aviso-panel p {
+  color: var(--text-3);
+  font-size: var(--fs-5);
+}
+
+.aviso-panel .btn {
+  margin-left: auto;
+}
+
+.cargando {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+}
+
+.vacio {
+  color: var(--text-3);
+  font-size: var(--fs-5);
+  padding: var(--sp-3) 0;
+  max-width: 52ch;
+}
+
+/* ---------------------------------------------------------------------------
+   Carrusel
+--------------------------------------------------------------------------- */
+.carrusel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.carrusel__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding-right: var(--sp-4);
+}
+
+.carrusel__title {
+  font-size: var(--fs-3);
+}
+
+.carrusel__sub {
+  color: var(--text-3);
+  font-size: var(--fs-5);
+  margin-top: 2px;
+}
+
+.carrusel__ctrl {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: none;
+}
+
+.carrusel__pista {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  /* El scroll nativo con snap: inercia, gesto tactil y teclado gratis. */
+  scroll-snap-type: x mandatory;
+  padding: var(--sp-1) var(--sp-4) var(--sp-3) 2px;
+  scrollbar-width: none;
+}
+
+.carrusel__pista::-webkit-scrollbar {
+  display: none;
+}
+
+.carrusel__pista > * {
+  scroll-snap-align: start;
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--sp-2);
+  padding-right: var(--sp-4);
+}
+
+/* ---------------------------------------------------------------------------
+   Tarjeta de oferta
+--------------------------------------------------------------------------- */
+.card {
+  flex: none;
+  width: 300px;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  text-align: left;
+  box-shadow: var(--shadow-card);
+  /* Solo transform / box-shadow / border: nada que provoque reflow. */
+  transition: transform var(--t-base) var(--ease-out),
+              box-shadow var(--t-base) var(--ease-out),
+              border-color var(--t-base) var(--ease-out);
+}
+
+.card:hover,
+.card:focus-visible {
+  /* DESIGN.md: scale 1.03 + glow azul. */
+  transform: scale(1.03);
+  border-color: rgba(110, 200, 255, 0.4);
+  box-shadow: var(--shadow-glow);
+}
+
+.card__top {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.card__title {
+  font-size: var(--fs-4);
+  font-weight: 600;
+  margin-top: 6px;
+  /* Truncar a 2 lineas: los titulos de Adzuna pueden ser larguisimos. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card__company {
+  color: var(--text-2);
+  font-size: var(--fs-5);
+}
+
+.card__meta {
+  color: var(--text-3);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.card__salary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: var(--sp-1);
+  color: var(--glow);
+  /* Cifras tabulares: los precios no bailan al cambiar de tarjeta. */
+  font-variant-numeric: tabular-nums;
+}
+
+.card__salary strong {
+  font-weight: 600;
+  font-size: var(--fs-4);
+}
+
+/* Marca visible de que el sueldo lo ESTIMA la fuente y no lo publica la empresa. */
+.card__estimado {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  background: var(--glass-2);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  letter-spacing: 0.03em;
+}
+
+.card__sinsalario {
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.card__skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+}
+
+.card__skills li {
+  padding: 3px 8px;
+  border-radius: var(--r-full);
+  background: var(--glass-2);
+  color: var(--text-3);
+  font-size: 11px;
+}
+
+.card__mas {
+  color: var(--blue) !important;
+}
+
+.card__score {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.card__bar {
+  flex: 1;
+  height: 3px;
+  border-radius: var(--r-full);
+  background: var(--border);
+  overflow: hidden;
+}
+
+.card__bar span {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--blue), var(--glow));
+}
+
+.card__pct {
+  font-size: 11px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Esqueleto: reserva el hueco exacto de la tarjeta para que no salte el layout. */
+.card--esqueleto {
+  background: linear-gradient(100deg, var(--glass) 30%, var(--glass-2) 50%, var(--glass) 70%);
+  background-size: 200% 100%;
+  animation: brillo 1.4s linear infinite;
+  border-color: var(--border);
+}
+
+@keyframes brillo {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* ---------------------------------------------------------------------------
+   Busqueda
+--------------------------------------------------------------------------- */
+.buscar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-right: var(--sp-4);
+  animation: entrar var(--t-slow) var(--ease-out) both;
+}
+
+.buscar h1 {
+  font-size: var(--fs-1);
+}
+
+.buscar__barra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: 760px;
+  padding: 8px 8px 8px var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  color: var(--text-3);
+  transition: border-color var(--t-base), box-shadow var(--t-base);
+}
+
+.buscar__barra:focus-within {
+  border-color: var(--blue);
+  box-shadow: var(--shadow-glow);
+}
+
+.buscar__barra input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  min-height: 44px;
+}
+
+.buscar__barra input:focus {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+
+.buscar__ejemplos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  list-style: none;
+}
+
+.resultados {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* ---------------------------------------------------------------------------
+   Modal
+--------------------------------------------------------------------------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--sp-2);
+  /* El scrim aisla el contenido: sin el, el fondo compite visualmente. */
+  background: rgba(4, 12, 20, 0.6);
+  backdrop-filter: blur(16px);
+  animation: aparecer var(--t-base) var(--ease-out);
+  overflow-y: auto;
+}
+
+@keyframes aparecer {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal__caja {
+  position: relative;
+  width: min(680px, 100%);
+  max-height: 88dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, rgba(22, 40, 61, 0.9), rgba(11, 30, 49, 0.9));
+  border: 1px solid var(--border-2);
+  box-shadow: var(--shadow-card);
+  animation: subir var(--t-base) var(--ease-out);
+}
+
+@keyframes subir {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.modal__cerrar {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+}
+
+.modal__titulo {
+  font-size: var(--fs-2);
+  margin-top: var(--sp-1);
+  padding-right: var(--sp-5);
+}
+
+.modal__empresa {
+  color: var(--text-2);
+  font-size: var(--fs-4);
+}
+
+.modal__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  width: 100%;
+  margin: var(--sp-2) 0;
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal__datos p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--glow);
+  font-size: var(--fs-4);
+  font-variant-numeric: tabular-nums;
+}
+
+.modal__etq {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-top: var(--sp-1);
+  margin-bottom: 6px;
+}
+
+.modal__desc {
+  color: var(--text-2);
+  font-size: var(--fs-5);
+  line-height: 1.7;
+  max-width: 68ch;
+}
+
+.modal__cta {
+  margin-top: var(--sp-3);
+  align-self: stretch;
+}
+
+/* ---------------------------------------------------------------------------
+   Movil: el rail lateral pasa a barra inferior
+--------------------------------------------------------------------------- */
+@media (max-width: 860px) {
+  .rail {
+    top: auto;
+    right: 0;
+    width: 100%;
+    height: 76px;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    gap: 0;
+    padding: 0 var(--sp-1);
+    /* Respetar la barra de gestos del movil. */
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    height: calc(76px + env(safe-area-inset-bottom, 0px));
+    border-right: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .rail__marca,
+  .rail__salir {
+    display: none; /* salir vive en /perfil en movil */
+  }
+
+  .rail__lista {
+    flex-direction: row;
+    justify-content: space-around;
+    margin: 0;
+  }
+
+  .rail__link {
+    min-width: 72px;
+  }
+
+  .lienzo {
+    margin-left: 0;
+    /* Reservar el hueco de la barra inferior: si no, tapa la ultima tarjeta. */
+    padding: var(--sp-4) 0 calc(96px + env(safe-area-inset-bottom, 0px)) var(--sp-2);
+    gap: var(--sp-5);
+  }
+
+  .saludo h1,
+  .buscar h1 {
+    font-size: var(--fs-2);
+  }
+
+  .card {
+    width: 78vw;
+    max-width: 300px;
+  }
+
+  .aviso-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .aviso-panel .btn {
+    margin-left: 0;
+  }
+
+  .modal__caja {
+    padding: var(--sp-3);
+  }
+}

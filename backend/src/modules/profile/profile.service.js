@@ -53,14 +53,21 @@ async function extraerTexto(buffer) {
 async function get(userId) {
   const profile = await prisma.profile.findUnique({
     where: { userId },
-    select: { id: true, cvText: true, skills: true, updatedAt: true },
+    select: {
+      id: true,
+      cvText: true,
+      skills: true,
+      updatedAt: true,
+      user: { select: { email: true } },
+    },
   });
 
   if (!profile) throw new ProfileError('Perfil no encontrado', 404);
 
-  // El cvText puede ser muy largo: se devuelve solo si lo piden explicitamente.
+  // El cvText puede ser muy largo: se devuelve solo su longitud, no el texto.
   return {
     id: profile.id,
+    email: profile.user.email,
     skills: profile.skills,
     tieneCv: Boolean(profile.cvText),
     cvLongitud: profile.cvText?.length ?? 0,

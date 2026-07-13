@@ -53,6 +53,38 @@ function epsilonGreedy(candidates, limit, epsilon) {
   return out;
 }
 
+/**
+ * Umbral de confianza: la defensa contra el FALLO SILENCIOSO.
+ *
+ * La similitud de coseno NUNCA devuelve vacio: siempre entrega las N ofertas
+ * "menos lejanas", por absurda que sea la consulta. Buscar "recetas de ceviche"
+ * devolvia Soporte Tecnico Nivel 1 con score 0.498, presentado como si fuera un
+ * resultado legitimo. El sistema no fallaba: mentia con confianza.
+ *
+ * Calibrado con datos reales:
+ *   - consultas legitimas   -> el mejor score cae entre 0.57 y 0.69
+ *   - consultas sin sentido -> el mejor score no pasa de 0.50
+ *
+ * Por eso hay dos umbrales:
+ *   MIN_TOP  si NI SIQUIERA el mejor resultado lo alcanza, no hay match: se
+ *            devuelve vacio y la UI dice honestamente que no encontro nada.
+ *   MIN_ITEM descarta los resultados flojos de una consulta por lo demas buena
+ *            (evita rellenar el carrusel con ruido para cuadrar el `limit`).
+ *
+ * LIMITACION CONOCIDA: los embeddings NO entienden la negacion. "remoto junior
+ * backend sin ingles" se parece vectorialmente a "...con ingles", y el ranking
+ * se degrada. Resolverlo bien exige busqueda hibrida (palabras clave + vector),
+ * que queda fuera del alcance actual.
+ */
+function filtrarPorConfianza(candidates) {
+  if (!candidates.length) return [];
+
+  const mejor = candidates[0].score ?? 0;
+  if (mejor < env.minTopScore) return [];
+
+  return candidates.filter((c) => (c.score ?? 0) >= env.minItemScore);
+}
+
 async function suggestJobs({ profileId, text, limit = 10 }) {
   // Se piden mas candidatos de los que se devuelven: el excedente alimenta la
   // exploracion.
@@ -62,7 +94,8 @@ async function suggestJobs({ profileId, text, limit = 10 }) {
     limit: limit * 3,
   });
 
-  return epsilonGreedy(candidates, limit, env.epsilon);
+  const fiables = filtrarPorConfianza(candidates);
+  return epsilonGreedy(fiables, limit, env.epsilon);
 }
 
 module.exports = { suggestJobs };

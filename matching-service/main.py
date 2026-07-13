@@ -161,9 +161,9 @@ async def extract_text(request: Request) -> dict:
 # Matching (el corazon: cosine en SQL, gratis, sin LLM)
 # --------------------------------------------------------------------------- #
 SELECT_JOBS = """
-    SELECT id, "externalId", title, company, location, country,
+    SELECT id, "externalId", source, title, company, location, country,
            "salaryMin", "salaryMax", currency, "salaryUsdMin", "salaryUsdMax",
-           "salaryPredicted", url, skills, "isForeign",
+           "salaryPredicted", description, url, skills, "isForeign",
            1 - (embedding <=> %(v)s::vector) AS score
     FROM "Job"
     WHERE embedding IS NOT NULL
@@ -206,23 +206,25 @@ def match(body: MatchIn) -> dict:
         {
             "id": r[0],
             "externalId": r[1],
-            "title": r[2],
-            "company": r[3],
-            "location": r[4],
-            "country": r[5],
+            "source": r[2],
+            "title": r[3],
+            "company": r[4],
+            "location": r[5],
+            "country": r[6],
             # Salario publicado, en su moneda original...
-            "salaryMin": r[6],
-            "salaryMax": r[7],
-            "currency": r[8],
+            "salaryMin": r[7],
+            "salaryMax": r[8],
+            "currency": r[9],
             # ...y el equivalente anual en USD, que es el comparable entre paises.
-            "salaryUsdMin": r[9],
-            "salaryUsdMax": r[10],
+            "salaryUsdMin": r[10],
+            "salaryUsdMax": r[11],
             # true = estimacion de la fuente, no cifra publicada por la empresa.
-            "salaryPredicted": r[11],
-            "url": r[12],
-            "skills": r[13],
-            "isForeign": r[14],
-            "score": round(float(r[15]), 4),
+            "salaryPredicted": r[12],
+            "description": r[13],
+            "url": r[14],
+            "skills": r[15],
+            "isForeign": r[16],
+            "score": round(float(r[17]), 4),
         }
         for r in rows
     ]
