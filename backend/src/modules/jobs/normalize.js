@@ -55,6 +55,29 @@ function aUsd(amount, currency) {
   return Math.round(amount * tasa);
 }
 
+/**
+ * Repara el "mojibake" (texto UTF-8 leido como latin-1).
+ *
+ * RemoteOK sirve el texto YA CORRUPTO desde su propia API: devuelve
+ * "Assistente de Gente e Cultura JÃºnior" en vez de "...Júnior". No es un fallo
+ * de nuestra decodificacion; llega asi en el JSON.
+ *
+ * La reparacion es reinterpretar los bytes: latin1 -> utf8. Solo se aplica si el
+ * texto TIENE pinta de mojibake ("Ã", "â€", "Â"): aplicarla a un texto correcto
+ * lo destrozaria.
+ */
+function repararTexto(texto) {
+  if (!texto || !/[ÃÂ]|â€/.test(texto)) return texto;
+
+  try {
+    const reparado = Buffer.from(texto, 'latin1').toString('utf8');
+    // Si la reparacion produce el caracter de reemplazo, es que no era mojibake.
+    return reparado.includes('�') ? texto : reparado;
+  } catch {
+    return texto;
+  }
+}
+
 /** Quita etiquetas HTML (ArbeitNow devuelve la descripcion en HTML). */
 function stripHtml(html) {
   if (!html) return null;
@@ -136,15 +159,15 @@ function toJob({
   url,
   extraSkillText = '',
 }) {
-  const limpia = stripHtml(description);
+  const limpia = repararTexto(stripHtml(description));
   const moneda = currency || (salaryMin != null ? monedaDe(country) : null);
 
   return {
     externalId: `${source}:${externalId}`,
     source,
-    title: (title || '').trim(),
-    company: (company || 'Sin empresa').trim(),
-    location: location || null,
+    title: repararTexto((title || '').trim()),
+    company: repararTexto((company || 'Sin empresa').trim()),
+    location: repararTexto(location) || null,
     country: country || null,
     salaryMin: salaryMin ?? null,
     salaryMax: salaryMax ?? null,
@@ -160,4 +183,13 @@ function toJob({
   };
 }
 
-module.exports = { toJob, stripHtml, parseSalaryString, monedaDe, aUsd, MONEDA_POR_PAIS, A_USD };
+module.exports = {
+  toJob,
+  stripHtml,
+  repararTexto,
+  parseSalaryString,
+  monedaDe,
+  aUsd,
+  MONEDA_POR_PAIS,
+  A_USD,
+};

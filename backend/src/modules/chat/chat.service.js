@@ -5,6 +5,7 @@ const llm = require('../../config/openrouter');
 const { consumir } = require('../../shared/ratelimit');
 const matching = require('../matching/matching.service');
 const { SYSTEM, bloqueOfertas, bloquePerfil } = require('./chat.prompt');
+const { esConsultaDeEmpleo } = require('./chat.intencion');
 
 /** Turnos de conversacion que viajan en el prompt. Ver `historial()`. */
 const TURNOS = 6;
@@ -41,20 +42,27 @@ async function historial(sessionId) {
 /**
  * Recupera ofertas relevantes para el mensaje (la "R" de RAG).
  *
- * Aqui esta el cambio de fondo respecto al backend original, que decidia si
- * buscar ofertas comparando el mensaje contra una LISTA FIJA de palabras
- * ("trabajo", "salario", "contrato"...). Eso hacia que "no me gusta mi trabajo
- * actual" disparara tres llamadas a APIs externas.
+ * Dos filtros en cadena, y hacen falta LOS DOS:
  *
- * Ahora la deteccion de intencion la hace el propio umbral semantico: se vectoriza
- * el mensaje y se busca. Si no es una consulta de empleo, ninguna oferta supera
- * el umbral de confianza y no se inyecta contexto. Sale gratis, es SQL, y no hay
- * ninguna lista que mantener.
+ *   1. ¿Va de empleo? -> lexico (chat.intencion.js). Los embeddings NO sirven
+ *      para esto: con 684 ofertas, "quien gano el mundial" puntuaba 0.645, por
+ *      encima de "remoto junior backend" (0.601). Ver la explicacion completa en
+ *      chat.intencion.js.
+ *
+ *   2. ¿Que oferta encaja? -> similitud de coseno. Para esto SI sirven los
+ *      embeddings, y muy bien.
+ *
+ * Sin el paso 1, preguntar por una receta de cocina devolvia cinco vacantes de
+ * portero y de atencion al cliente, presentadas como si vinieran a cuento.
+ *
+ * A diferencia del backend original, el paso 1 NO dispara llamadas a APIs
+ * externas: la busqueda es una consulta SQL local sobre ofertas ya ingeridas.
  */
-async function recuperar({ mensaje, profileId }) {
+async function recuperar({ mensaje }) {
+  if (!esConsultaDeEmpleo(mensaje)) return [];
+
   try {
-    const jobs = await matching.suggestJobs({ text: mensaje, limit: 5 });
-    return jobs;
+    return await matching.suggestJobs({ text: mensaje, limit: 5 });
   } catch {
     // Que el matching falle no debe tumbar la conversacion: el chat sigue,
     // simplemente sin ofertas. Y el prompt le prohibe inventarselas.
@@ -80,7 +88,7 @@ async function responder({ mensaje, sessionId, user, perfil }) {
 
   const [previos, jobs] = await Promise.all([
     historial(sesion),
-    recuperar({ mensaje: texto, profileId: perfil?.id }),
+    recuperar({ mensaje: texto }),
   ]);
 
   // El contexto recuperado va en un mensaje aparte, delimitado y anunciado como

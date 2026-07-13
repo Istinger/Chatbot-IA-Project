@@ -111,10 +111,21 @@ async function chat({ system, messages, maxTokens = 500, temperature = 0.7 }) {
         break; // fallo de red con este modelo: probar el siguiente
       }
 
-      if (r.ok) {
-        const texto = r.body?.choices?.[0]?.message?.content?.trim();
-        if (!texto) throw new LlmError('OpenRouter devolvio una respuesta vacia', 502);
+      const texto = r.ok ? r.body?.choices?.[0]?.message?.content?.trim() : null;
 
+      // Un 200 con contenido VACIO es un fallo del proveedor disfrazado de exito:
+      // pasa con los endpoints :free saturados. Se trata como reintentable (y, si
+      // insiste, se cambia de modelo) en vez de reventarle la peticion al usuario.
+      if (r.ok && !texto) {
+        console.warn(`[llm] ${model} devolvio contenido vacio; reintentando`);
+        if (intento === 0) {
+          await dormir(1200);
+          continue;
+        }
+        break; // siguiente modelo
+      }
+
+      if (r.ok) {
         const uso = r.body.usage || {};
         consumo.peticiones += 1;
         consumo.tokensEntrada += uso.prompt_tokens || 0;

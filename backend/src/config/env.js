@@ -70,6 +70,12 @@ module.exports = {
     url: process.env.REMOTEOK_URL || 'https://remoteok.com/api',
   },
 
+  careerjet: {
+    // La UNICA fuente que cubre Ecuador oficialmente. Registro gratuito en
+    // careerjet.com/partners. Sin affid, la fuente se salta sin romper nada.
+    affid: process.env.CAREERJET_AFFID || '',
+  },
+
   // Cada cuantas horas el worker vuelve a traer ofertas.
   ingestaHoras: Number(process.env.INGESTA_HORAS ?? 6),
 };
