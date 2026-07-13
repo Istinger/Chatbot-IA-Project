@@ -6,6 +6,7 @@ import Login from './screens/Login';
 import Onboarding from './screens/Onboarding';
 import Home from './screens/Home';
 import Search from './screens/Search';
+import Chat from './screens/Chat';
 import Profile from './screens/Profile';
 
 /** Ruta protegida: sin sesion, al login. */
@@ -38,6 +39,7 @@ function Rutas() {
       <Route element={<Privada><Shell /></Privada>}>
         <Route path="/" element={<Home />} />
         <Route path="/buscar" element={<Search />} />
+        <Route path="/asistente" element={<Chat />} />
         <Route path="/perfil" element={<Profile />} />
       </Route>
 

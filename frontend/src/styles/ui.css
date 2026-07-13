@@ -1013,3 +1013,232 @@
     padding: var(--sp-3);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Chatbot (DESIGN.md: modo escucha + modo escritura)
+--------------------------------------------------------------------------- */
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  /* La conversacion ocupa el alto disponible; solo scrollea el hilo. */
+  height: calc(100dvh - var(--sp-5) - var(--sp-6));
+  padding-right: var(--sp-4);
+}
+
+/* Modo ESCUCHA: sin mensajes, el orb manda y todo se centra. */
+.chat--escucha {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.chat__orb {
+  width: 84px;
+  height: 84px;
+  flex: none;
+  align-self: center;
+  transition: width var(--t-slow) var(--ease-out), height var(--t-slow) var(--ease-out);
+}
+
+.chat--escucha .chat__orb {
+  width: 160px;
+  height: 160px;
+}
+
+/* Al dictar, el orb respira mas fuerte: retroalimentacion de que te escucha. */
+.orb--vivo {
+  animation: latir 1.6s ease-in-out infinite;
+}
+
+@keyframes latir {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50%      { transform: scale(1.12); opacity: 1; }
+}
+
+.chat__saludo h1 {
+  font-size: var(--fs-2);
+}
+
+.chat__sugerencias {
+  justify-content: center;
+  margin-top: var(--sp-3);
+}
+
+.chat__hilo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-1) 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+
+.chat--escucha .chat__hilo {
+  display: none;
+}
+
+.burbuja {
+  max-width: min(760px, 92%);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  animation: entrar var(--t-base) var(--ease-out) both;
+}
+
+.burbuja--user {
+  align-self: flex-end;
+  background: rgba(79, 163, 255, 0.14);
+  border-color: rgba(79, 163, 255, 0.3);
+  color: var(--text);
+}
+
+.burbuja--assistant {
+  align-self: flex-start;
+  background: var(--glass);
+  color: var(--text-2);
+}
+
+/* Puntos suspensivos mientras el modelo piensa. Un skeleton seria mentir sobre
+   la forma de la respuesta: no sabemos cuanto va a escribir. */
+.burbuja--pensando {
+  display: flex;
+  gap: 6px;
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.burbuja--pensando span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+  animation: pensar 1.2s ease-in-out infinite;
+}
+
+.burbuja--pensando span:nth-child(2) { animation-delay: 0.15s; }
+.burbuja--pensando span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes pensar {
+  0%, 100% { opacity: 0.25; transform: translateY(0); }
+  50%      { opacity: 1; transform: translateY(-4px); }
+}
+
+/* Texto del modelo */
+.rt p + p,
+.rt p + .rt__lista,
+.rt__lista + p {
+  margin-top: var(--sp-1);
+}
+
+.rt strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.rt__lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: var(--sp-1);
+}
+
+.rt__lista li {
+  position: relative;
+  padding-left: 16px;
+}
+
+.rt__lista li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+/* Las ofertas citadas, como tarjetas reales con su enlace. */
+.chat__ofertas {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  margin-top: var(--sp-2);
+  padding: var(--sp-1) 2px var(--sp-2);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.chat__ofertas::-webkit-scrollbar { display: none; }
+.chat__ofertas .card { scroll-snap-align: start; }
+
+.chat__error {
+  flex: none;
+}
+
+/* Barra inferior (modo escritura) */
+.chat__barra {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  width: 100%;
+  max-width: 860px;
+  align-self: center;
+  padding: 8px 8px 8px var(--sp-2);
+  border-radius: var(--r-full);
+  background: rgba(11, 30, 49, 0.7);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  transition: border-color var(--t-base), box-shadow var(--t-base);
+}
+
+.chat__barra:focus-within {
+  border-color: var(--blue);
+  box-shadow: var(--shadow-glow);
+}
+
+.chat__barra input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  background: none;
+  border: none;
+  font-size: 16px; /* evita el zoom automatico de iOS */
+  color: var(--text);
+}
+
+.chat__barra input:focus {
+  outline: none;
+}
+
+.chat__barra input::placeholder {
+  color: var(--text-3);
+}
+
+.iconbtn--activo {
+  color: #04121f;
+  background: linear-gradient(180deg, var(--glow), var(--blue));
+  border-color: transparent;
+}
+
+.iconbtn--enviar:not(:disabled) {
+  color: var(--glow);
+  border-color: rgba(110, 200, 255, 0.35);
+}
+
+@media (max-width: 860px) {
+  .chat {
+    height: calc(100dvh - 190px);
+    padding-right: var(--sp-2);
+  }
+
+  .burbuja {
+    max-width: 100%;
+  }
+}
