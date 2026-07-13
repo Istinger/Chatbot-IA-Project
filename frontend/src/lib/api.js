@@ -71,6 +71,19 @@ export const api = {
   buscar: (texto, limit = 12) =>
     request(`/matching/jobs?text=${encodeURIComponent(texto)}&limit=${limit}`),
 
+  /**
+   * Chatbot. Funciona SIN sesion (un visitante puede conversar mientras ojea la
+   * web); si hay token, el cliente lo adjunta solo y el asistente conoce el perfil.
+   */
+  chat: (mensaje, sessionId) =>
+    request('/chat', { method: 'POST', body: { mensaje, sessionId } }),
+
+  historialChat: (sessionId) => request(`/chat/${sessionId}`),
+
+  pitch: (jobId) => request('/cv/pitch', { method: 'POST', body: { jobId } }),
+
+  resumenCv: () => request('/cv/summary', { method: 'POST' }),
+
   /** Listado plano. scope: 'local' | 'foreign'. */
   ofertas: ({ scope, limit = 12 } = {}) => {
     const qs = new URLSearchParams({ limit: String(limit) });

@@ -5,6 +5,7 @@ import Icon from './Icon';
 const RUTAS = [
   { to: '/', icono: 'inicio', texto: 'Inicio' },
   { to: '/buscar', icono: 'buscar', texto: 'Buscar' },
+  { to: '/asistente', icono: 'asistente', texto: 'Asistente' },
   { to: '/perfil', icono: 'usuario', texto: 'Perfil' },
 ];
 

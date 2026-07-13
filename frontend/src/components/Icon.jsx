@@ -19,6 +19,10 @@ const RUTAS = {
   chispa: <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18" />,
   aviso: <><circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 16h.01" /></>,
   ok: <><circle cx="12" cy="12" r="9" /><path d="m8 12 3 3 5-6" /></>,
+  micro: <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0" /><path d="M12 18v3" /></>,
+  enviar: <><path d="M4 12h15" /><path d="m13 6 6 6-6 6" /></>,
+  chispa2: <><path d="M12 3v18" /><path d="M3 12h18" /></>,
+  asistente: <><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="9" opacity=".4" /></>,
 };
 
 export default function Icon({ name, size = 20, className = '' }) {
