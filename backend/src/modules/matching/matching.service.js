@@ -98,4 +98,7 @@ async function suggestJobs({ profileId, text, limit = 10 }) {
   return epsilonGreedy(fiables, limit, env.epsilon);
 }
 
-module.exports = { suggestJobs };
+// fetchCandidates se exporta para el modulo certs: el skill gap se calcula sobre
+// las MISMAS ofertas afines que ve el usuario, no sobre la base entera. Si no,
+// "te falta Java" saldria por ofertas que nunca le vamos a ensenar.
+module.exports = { suggestJobs, fetchCandidates, filtrarPorConfianza };

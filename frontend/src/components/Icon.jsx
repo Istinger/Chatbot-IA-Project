@@ -24,6 +24,9 @@ const RUTAS = {
   chispa2: <><path d="M12 3v18" /><path d="M3 12h18" /></>,
   asistente: <><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="9" opacity=".4" /></>,
   refrescar: <><path d="M20 12a8 8 0 1 1-2.3-5.6" /><path d="M20 4v5h-5" /></>,
+  crecer: <><path d="M4 19h16" /><path d="m5 15 4-5 4 3 5-7" /><path d="M18 6h3v3" /></>,
+  telegram: <><path d="M21 5 3 11l5 2 2 6 3-4 5 3z" /><path d="m8 13 8-6" /></>,
+  enlace: <><path d="M10 13a4 4 0 0 0 6 .5l2-2a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 11a4 4 0 0 0-6-.5l-2 2A4 4 0 0 0 11.7 18l1-1" /></>,
 };
 
 export default function Icon({ name, size = 20, className = '' }) {

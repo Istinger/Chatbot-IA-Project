@@ -86,6 +86,19 @@ export const api = {
   /** Refrescar ofertas ahora. Encola el trabajo: responde al instante. */
   refrescarOfertas: () => request('/jobs/ingest', { method: 'POST' }),
 
+  /** Skill gap + cursos. Cero IA: diferencia de conjuntos y catalogo estatico. */
+  certificados: () => request('/certs/suggestions'),
+
+  estadoAvisos: () => request('/notifications'),
+
+  /** Devuelve { codigo, enlace, bot }: el enlace ya lleva el codigo dentro. */
+  vincularTelegram: () => request('/notifications/telegram/code', { method: 'POST' }),
+
+  desvincularTelegram: () => request('/notifications/telegram', { method: 'DELETE' }),
+
+  umbralAvisos: (minScore) =>
+    request('/notifications/umbral', { method: 'PUT', body: { minScore } }),
+
   pitch: (jobId) => request('/cv/pitch', { method: 'POST', body: { jobId } }),
 
   resumenCv: () => request('/cv/summary', { method: 'POST' }),

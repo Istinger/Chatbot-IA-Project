@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import Icon from '../components/Icon';
+import AvisosTelegram from '../components/AvisosTelegram';
 
 export default function Profile() {
   const { perfil, refrescar } = useAuth();
@@ -114,6 +115,8 @@ export default function Profile() {
           </p>
         )}
       </section>
+
+      <AvisosTelegram />
     </>
   );
 }

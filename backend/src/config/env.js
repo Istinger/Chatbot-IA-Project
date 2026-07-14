@@ -78,4 +78,22 @@ module.exports = {
 
   // Cada cuantas horas el worker vuelve a traer ofertas.
   ingestaHoras: Number(process.env.INGESTA_HORAS ?? 6),
+
+  telegram: {
+    // Sin token, el modulo de notificaciones se desactiva solo: no rompe nada,
+    // simplemente no avisa. El resto de la app funciona igual.
+    token: process.env.TELEGRAM_BOT_TOKEN || '',
+
+    /**
+     * Umbral por DEFECTO para avisar de una oferta (cada usuario puede subirlo o
+     * bajarlo). Es mas alto que minTopScore (0.52) a proposito: un carrusel con
+     * un match mediocre se ignora, pero una notificacion mediocre INTERRUMPE. El
+     * coste de un falso positivo es mucho mayor aqui, y a la tercera notificacion
+     * irrelevante el usuario silencia el bot para siempre.
+     */
+    minScore: Number(process.env.NOTIF_MIN_SCORE ?? 0.62),
+
+    // Tope de ofertas por aviso: una lista de 20 no se lee, se cierra.
+    maxPorTanda: Number(process.env.NOTIF_MAX_POR_TANDA ?? 3),
+  },
 };

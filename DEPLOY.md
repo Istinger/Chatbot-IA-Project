@@ -187,20 +187,45 @@ JWT_SECRET=<algo_largo_y_aleatorio>
 # Fuentes de ofertas
 ADZUNA_APP_ID=xxxx
 ADZUNA_APP_KEY=xxxx
+
+# Jooble da UNA CLAVE POR PAÍS. La del índice de EE.UU. devuelve 403 contra
+# ec.jooble.org: hay que pedir explícitamente la de Ecuador. Es la fuente que
+# aporta las ofertas LOCALES (Adzuna no cubre Ecuador: responde 404).
 JOOBLE_API_KEY=xxxx
-JOOBLE_HOST=jooble.org
-JOOBLE_COUNTRY=Estados Unidos
+JOOBLE_HOST=ec.jooble.org
+JOOBLE_COUNTRY=Ecuador
+
 ARBEIT_NOW_URL=https://www.arbeitnow.com/api/job-board-api
+REMOTEOK_URL=https://remoteok.com/api
+
+# Opcional. Otra fuente con cobertura de Ecuador; sin affid se salta sin romper.
+CAREERJET_AFFID=
 
 INGESTA_HORAS=6
 MATCHING_EPSILON=0.15
 
 # Solo para generar texto (CV, pitch). El matching NO lo usa.
 OPENROUTER_API_KEY=
+
+# Avisos por Telegram. Sin token, el módulo se desactiva solo.
 TELEGRAM_BOT_TOKEN=
+NOTIF_MIN_SCORE=0.62
+NOTIF_MAX_POR_TANDA=3
 ```
 
 Los servicios se llaman entre sí **por el nombre del servicio**, no por `localhost`: por eso `DATABASE_URL` usa `@postgres:5432`.
+
+### Avisos por Telegram
+
+El bot se crea con **@BotFather** (`/newbot`) y lo único que hay que poner en el
+`.env` es su token. **No hace falta un chat id**: cada usuario vincula el suyo
+desde *Perfil → Vincular Telegram*, que abre `t.me/<bot>?start=<código>` con un
+código de un solo uso que caduca en 15 minutos.
+
+Quien escucha al bot es el **worker**, no la API. Es deliberado: Telegram
+responde `409 Conflict` si dos procesos llaman a `getUpdates` a la vez, y la API
+puede escalar a varias réplicas mientras que el worker corre en una sola. Si
+algún día hicieran falta dos workers, habría que pasar a *webhook*.
 
 ### Levantar
 

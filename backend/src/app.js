@@ -45,6 +45,8 @@ api.use('/jobs', require('./modules/jobs/jobs.controller'));
 api.use('/matching', require('./modules/matching/matching.controller'));
 api.use('/chat', require('./modules/chat/chat.controller'));
 api.use('/cv', require('./modules/cv/cv.controller'));
+api.use('/certs', require('./modules/certs/certs.controller'));
+api.use('/notifications', require('./modules/notifications/notifications.controller'));
 
 app.use('/api', api);
 

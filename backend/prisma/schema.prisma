@@ -26,6 +26,14 @@ model Profile {
   skills    String[]
   embedding Unsupported("vector(384)")?
   updatedAt DateTime                     @updatedAt
+
+  /// Chat de Telegram donde avisar. null = el usuario no ha vinculado el bot,
+  /// y por tanto NO se le notifica. Nunca se notifica a quien no lo pidio.
+  telegramChatId String?
+  /// Umbral de afinidad para avisar (0-1). null = usa el valor global del .env.
+  /// Configurable POR USUARIO: a quien busca activamente le interesa un umbral
+  /// bajo; a quien ya tiene trabajo, solo lo excepcional.
+  notifMinScore  Float?
 }
 
 model Job {
@@ -76,6 +84,23 @@ model Message {
   createdAt DateTime @default(now())
 
   @@index([sessionId, createdAt])
+}
+
+/// Aviso ya enviado. Existe por una sola razon: NO repetir.
+///
+/// El worker reevalua los matches cada vez que ingesta, asi que sin esta tabla
+/// el usuario recibiria la misma oferta por Telegram cada 6 horas hasta que la
+/// oferta caducara. La restriccion unica (userId, jobId) hace imposible el
+/// duplicado a nivel de base de datos, no solo a nivel de codigo.
+model Notification {
+  id     String   @id @default(uuid())
+  userId String
+  jobId  String
+  score  Float
+  sentAt DateTime @default(now())
+
+  @@unique([userId, jobId])
+  @@index([userId, sentAt])
 }
 
 model QuestionBank {

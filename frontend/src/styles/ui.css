@@ -1278,3 +1278,218 @@
 @keyframes girar {
   to { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   Crecer: brecha de habilidades y cursos
+   ========================================================================== */
+
+/* .panel es un flex column con align-items:flex-start, asi que sus hijos se
+   encogen al contenido. Sin `align-self: stretch`, el `1fr` de las barras
+   resuelve a 0px y las barras desaparecen (pasó exactamente eso). */
+.gap {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+  list-style: none;
+}
+
+.gap__item {
+  display: grid;
+  /* La skill a la izquierda, la barra ocupando el resto, el % alineado a la
+     derecha. Las tres columnas fijas hacen que las barras arranquen todas en el
+     mismo punto: si no, comparar de un vistazo es imposible. */
+  grid-template-columns: 130px 1fr 44px;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.gap__skill {
+  font-size: var(--fs-5);
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gap__pct {
+  font-size: 13px;
+  color: var(--text-3);
+  text-align: right;
+  /* Cifras de ancho fijo: sin esto, el % baila al cambiar de 9% a 10%. */
+  font-variant-numeric: tabular-nums;
+}
+
+.gap__nota {
+  margin-top: var(--sp-2);
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.barra {
+  display: block;
+  height: 8px;
+  border-radius: var(--r-full);
+  background: var(--glass-2);
+  overflow: hidden;
+}
+
+.barra__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--blue), var(--glow));
+}
+
+.barra--tengo .barra__fill {
+  background: linear-gradient(90deg, #34d399, var(--success));
+}
+
+.cursos {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.curso {
+  padding: var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--glass);
+}
+
+.curso__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-1);
+}
+
+.curso__head h3 {
+  font-size: var(--fs-4);
+  font-weight: 600;
+}
+
+.curso__pct {
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.curso__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  list-style: none;
+}
+
+.curso__link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  /* 44px: el minimo tactil. Un enlace de 20px de alto no se puede pulsar con el
+     pulgar sin fallar. */
+  min-height: 44px;
+  color: var(--glow);
+  text-decoration: none;
+}
+
+.curso__link:hover .curso__titulo {
+  text-decoration: underline;
+}
+
+.curso__titulo {
+  font-size: var(--fs-5);
+}
+
+.curso__meta {
+  display: block;
+  padding-left: 24px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.curso__gratis {
+  margin-left: var(--sp-1);
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  background: rgba(110, 231, 183, 0.12);
+  color: var(--success);
+  font-style: normal;
+  font-size: 11px;
+}
+
+/* ==========================================================================
+   Avisos por Telegram
+   ========================================================================== */
+
+.tg {
+  align-self: stretch;
+  margin-top: var(--sp-2);
+  padding: var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--glass);
+}
+
+.tg__paso {
+  font-size: var(--fs-5);
+  color: var(--text-2);
+  margin-bottom: var(--sp-1);
+}
+
+.tg__paso a {
+  color: var(--glow);
+}
+
+.tg__codigo {
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  background: var(--glass-2);
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.08em;
+}
+
+.tg__esperando {
+  font-size: 13px;
+  color: var(--glow);
+}
+
+.tg__sub {
+  margin: var(--sp-3) 0 var(--sp-1);
+  font-size: var(--fs-5);
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tg__umbrales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-2);
+}
+
+.tg__umbrales .chip--btn {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 44px;
+  padding: var(--sp-1) var(--sp-2);
+}
+
+.tg__ayuda {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+@media (max-width: 600px) {
+  .gap__item {
+    grid-template-columns: 96px 1fr 40px;
+  }
+}

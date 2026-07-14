@@ -6,6 +6,7 @@ const RUTAS = [
   { to: '/', icono: 'inicio', texto: 'Inicio' },
   { to: '/buscar', icono: 'buscar', texto: 'Buscar' },
   { to: '/asistente', icono: 'asistente', texto: 'Asistente' },
+  { to: '/crecer', icono: 'crecer', texto: 'Crecer' },
   { to: '/perfil', icono: 'usuario', texto: 'Perfil' },
 ];
 
