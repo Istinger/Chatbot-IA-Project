@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { nombreDe } from '../lib/format';
-import { crearDictado, soportado as vozSoportada } from '../lib/voz';
+import { crearDictado, esBrave, mensajeDeError, soportado as vozSoportada } from '../lib/voz';
 import Icon from '../components/Icon';
 import RichText from '../components/RichText';
 import JobCard from '../components/JobCard';
@@ -40,6 +40,9 @@ export default function Chat() {
   const sesion = useRef(localStorage.getItem(CLAVE_SESION));
   const finRef = useRef(null);
   const dictadoRef = useRef(null);
+  // Se resuelve al montar: en Brave el error de voz es distinto y el mensaje
+  // tiene que decirlo con nombre y apellidos.
+  const braveRef = useRef(false);
 
   // Recuperar la conversacion anterior (si la hay).
   useEffect(() => {
@@ -48,6 +51,12 @@ export default function Chat() {
       .historialChat(sesion.current)
       .then((r) => setMensajes(r.mensajes.map((m) => ({ role: m.role, content: m.content }))))
       .catch(() => localStorage.removeItem(CLAVE_SESION));
+  }, []);
+
+  // Saber si es Brave, solo si el navegador dice soportar la voz (si no, el
+  // boton ni se muestra y da igual).
+  useEffect(() => {
+    if (vozSoportada) esBrave().then((b) => (braveRef.current = b));
   }, []);
 
   // Autoscroll al ultimo mensaje.
@@ -93,9 +102,12 @@ export default function Chat() {
     const d = crearDictado({
       onTexto: (t) => setTexto(t),
       onFin: () => setEscuchando(false),
-      onError: () => {
+      onError: (codigo) => {
         setEscuchando(false);
-        setError('No se pudo acceder al microfono.');
+        // El traductor puede devolver null (el usuario lo detuvo): en ese caso
+        // no se ensucia la pantalla con una alerta que no aporta nada.
+        const msg = mensajeDeError(codigo, { brave: braveRef.current });
+        if (msg) setError(msg);
       },
     });
 
