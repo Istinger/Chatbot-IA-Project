@@ -12,3 +12,5 @@ __pycache__/
 
 npm-debug.log*
 .DS_Store
+
+VPS-CHECKLIST.md
