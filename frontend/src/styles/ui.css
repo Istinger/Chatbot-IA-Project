@@ -984,12 +984,29 @@
 
   .rail__lista {
     flex-direction: row;
-    justify-content: space-around;
+    justify-content: space-between;
     margin: 0;
+    width: 100%;
   }
 
   .rail__link {
-    min-width: 72px;
+    /* Repartir el ancho por igual entre los 5 destinos. Con min-width fijo la
+       barra medía ~404px y no se encogía: en un movil de 320-360px "Perfil" se
+       salía. Con flex:1 y min-width:0 caben SIEMPRE, en cualquier pantalla. */
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    padding: 8px 2px;
+    gap: 3px;
+    font-size: 11px;
+  }
+
+  /* La etiqueta no debe romper el reparto: una sola linea, sin desbordar. */
+  .rail__link span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .lienzo {
