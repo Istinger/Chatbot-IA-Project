@@ -2,7 +2,7 @@
 
 Recopilación de todo lo que trabajamos: las preguntas conceptuales (IA,
 embeddings, RAG, infraestructura) y los pasos reales que seguimos para desplegar
-Jobia en el VPS `jobia.duckdns.org` (`TU_IP`).
+Jobia en el VPS `jobia.duckdns.org`.
 
 > **Producción real:** https://jobia.duckdns.org — Node + Express (API), Python +
 > FastAPI (matching), PostgreSQL + pgvector, Redis, React, todo en Docker detrás
@@ -246,7 +246,7 @@ desde tu máquina local (donde ya funciona) con `scp`:
 
 ```bash
 # Desde tu PORTÁTIL (no el VPS)
-scp ~/Escritorio/Proyecto-CHATBOT/.env jossue@TU_IP:~/jobia/.env
+scp ~/Escritorio/Proyecto-CHATBOT/.env usuario@TU_IP:~/jobia/.env
 ```
 
 > Copiar el `.env` local evita la trampa nº 1: la contraseña de Postgres y la de

@@ -1,7 +1,7 @@
 # Jobia — Diagrama de despliegue
 
-Arquitectura real en producción: `https://jobia.duckdns.org` (`TU_IP`),
-VPS Vultr de 2 vCPU · 4 GB, todo en Docker.
+Arquitectura real en producción: `https://jobia.duckdns.org`, sobre un VPS
+Vultr de 2 vCPU · 4 GB, todo en Docker.
 
 ---
 
@@ -14,7 +14,7 @@ VPS Vultr de 2 vCPU · 4 GB, todo en Docker.
 flowchart TB
     user([Usuario / navegador])
 
-    subgraph vps["VPS Vultr · TU_IP · Docker"]
+    subgraph vps["VPS Vultr · Docker"]
         direction TB
         npm["Nginx Proxy Manager<br/>:80 :443 :81<br/>HTTPS Let's Encrypt"]
 
