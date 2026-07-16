@@ -387,6 +387,15 @@
   transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
 }
 
+/* En movil, tocar dispara el zoom por doble-tap y arrastra un retardo de ~300ms.
+   manipulation lo desactiva para los elementos pulsables sin afectar el scroll. */
+.btn,
+.iconbtn,
+.chip--btn,
+.rail__link {
+  touch-action: manipulation;
+}
+
 .chip--btn:hover {
   border-color: var(--border-2);
   color: var(--text);
@@ -985,9 +994,25 @@
 
   .lienzo {
     margin-left: 0;
-    /* Reservar el hueco de la barra inferior: si no, tapa la ultima tarjeta. */
-    padding: var(--sp-4) 0 calc(96px + env(safe-area-inset-bottom, 0px)) var(--sp-2);
+    /* Reservar el hueco de la barra inferior + aire extra: si no, la ultima
+       tarjeta queda pegada a la barra y se siente apretada. */
+    padding: var(--sp-4) 0 calc(112px + env(safe-area-inset-bottom, 0px)) var(--sp-2);
     gap: var(--sp-5);
+  }
+
+  /* Objetivos tactiles mas comodos en movil (los minimos ya se cumplian; esto
+     es holgura para el pulgar). */
+  .iconbtn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .chips {
+    gap: var(--sp-2); /* mas separacion entre chips que se pulsan (quitar skills) */
+  }
+
+  .chip--btn {
+    min-height: 46px;
   }
 
   .saludo h1,
