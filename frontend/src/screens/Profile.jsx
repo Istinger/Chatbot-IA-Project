@@ -5,7 +5,7 @@ import Icon from '../components/Icon';
 import AvisosTelegram from '../components/AvisosTelegram';
 
 export default function Profile() {
-  const { perfil, refrescar } = useAuth();
+  const { perfil, refrescar, salir } = useAuth();
   const inputArchivo = useRef(null);
 
   const [estado, setEstado] = useState(null); // { tipo: 'ok'|'error', texto }
@@ -117,6 +117,24 @@ export default function Profile() {
       </section>
 
       <AvisosTelegram />
+
+      <section className="panel">
+        <h2 className="carrusel__title">Sesion</h2>
+        <p className="onb__sub">
+          {perfil?.email ? (
+            <>
+              Sesion iniciada como <strong>{perfil.email}</strong>.
+            </>
+          ) : (
+            'Sesion iniciada.'
+          )}
+        </p>
+
+        <button type="button" className="btn btn--salir" onClick={salir}>
+          <Icon name="salir" size={18} />
+          Cerrar sesion
+        </button>
+      </section>
     </>
   );
 }

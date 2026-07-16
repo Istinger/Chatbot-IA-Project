@@ -98,6 +98,18 @@
   backdrop-filter: blur(12px);
 }
 
+/* Cerrar sesion: accion de salida, en tono de peligro pero sin gritar. */
+.btn--salir {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  color: var(--danger);
+}
+
+.btn--salir:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
 .btn--glass:hover:not(:disabled) {
   background: var(--glass-2);
   border-color: var(--border-2);
