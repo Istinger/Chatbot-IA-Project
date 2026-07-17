@@ -14,3 +14,5 @@ npm-debug.log*
 .DS_Store
 
 VPS-CHECKLIST.md
+
+./claude
