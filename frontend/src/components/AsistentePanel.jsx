@@ -34,7 +34,7 @@ export default function AsistentePanel() {
   // Lo que el usuario ve ahora: la oferta abierta (modal compartido en el Shell)
   // y un resumen de la pantalla actual (p. ej. brechas/cursos de "Crecer"). Se
   // manda como contexto al chat para responder sobre lo que hay en pantalla.
-  const { ofertaActiva, setOfertaActiva, contextoPantalla } = useVista();
+  const { ofertaActiva, setOfertaActiva, contextoPantalla, peticionIA, consumirIA } = useVista();
 
   const [mensajes, setMensajes] = useState([]);
   const [texto, setTexto] = useState('');
@@ -86,6 +86,16 @@ export default function AsistentePanel() {
       setPensando(false);
     }
   };
+
+  // Otra pantalla (p. ej. el worksheet del portafolio) empuja un mensaje al chat.
+  useEffect(() => {
+    if (peticionIA) {
+      enviar(peticionIA.texto);
+      consumirIA();
+    }
+    // Solo reaccionar a nuevas peticiones (id cambia en cada pedirIA).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [peticionIA]);
 
   const alternarVoz = () => {
     if (escuchando) {
