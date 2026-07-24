@@ -51,18 +51,24 @@ export default function Profile() {
       <header className="saludo">
         <h1>Tu perfil</h1>
         <p className="saludo__sub">
-          Esto es lo que el motor de busqueda sabe de ti. Cambiarlo cambia tus
+          Esto es lo que el motor de busqueda sabe de ti. Cambialo y mejora tus
           recomendaciones al instante.
         </p>
       </header>
 
       <section className="panel">
-        <h2 className="carrusel__title">Habilidades</h2>
-        <p className="onb__sub">
-          {perfil?.skills?.length
-            ? 'Pulsa una habilidad para quitarla.'
-            : 'Aun no tienes habilidades. Sube tu CV.'}
-        </p>
+        <header className="seccion__cab">
+          <span className="seccion__icono seccion__icono--cursos"><Icon name="chispa" size={20} /></span>
+          <div className="seccion__txt">
+            <h2 className="seccion__titulo">Habilidades</h2>
+            <p className="seccion__sub">
+              {perfil?.skills?.length
+                ? 'Pulsa una habilidad para quitarla.'
+                : 'Aun no tienes habilidades. Sube tu CV.'}
+            </p>
+          </div>
+          <span className="panel__grip" aria-hidden="true" />
+        </header>
 
         <ul className="chips chips--grandes">
           {perfil?.skills?.map((s) => (
@@ -83,12 +89,18 @@ export default function Profile() {
       </section>
 
       <section className="panel">
-        <h2 className="carrusel__title">Curriculum</h2>
-        <p className="onb__sub">
-          {perfil?.tieneCv
-            ? `Tenemos tu CV (${perfil.cvLongitud} caracteres de texto). Subir uno nuevo lo reemplaza.`
-            : 'No tenemos tu CV.'}
-        </p>
+        <header className="seccion__cab">
+          <span className="seccion__icono"><Icon name="maletin" size={20} /></span>
+          <div className="seccion__txt">
+            <h2 className="seccion__titulo">Curriculum</h2>
+            <p className="seccion__sub">
+              {perfil?.tieneCv
+                ? `Tenemos tu CV (${perfil.cvLongitud} caracteres de texto). Sube uno nuevo para reemplazarlo.`
+                : 'No tenemos tu CV.'}
+            </p>
+          </div>
+          <span className="panel__grip" aria-hidden="true" />
+        </header>
 
         <button
           type="button"
@@ -119,16 +131,22 @@ export default function Profile() {
       <AvisosTelegram />
 
       <section className="panel">
-        <h2 className="carrusel__title">Sesion</h2>
-        <p className="onb__sub">
-          {perfil?.email ? (
-            <>
-              Sesion iniciada como <strong>{perfil.email}</strong>.
-            </>
-          ) : (
-            'Sesion iniciada.'
-          )}
-        </p>
+        <header className="seccion__cab">
+          <span className="seccion__icono"><Icon name="usuario" size={20} /></span>
+          <div className="seccion__txt">
+            <h2 className="seccion__titulo">Sesion</h2>
+            <p className="seccion__sub">
+              {perfil?.email ? (
+                <>
+                  Sesion iniciada como <strong>{perfil.email}</strong>.
+                </>
+              ) : (
+                'Sesion iniciada.'
+              )}
+            </p>
+          </div>
+          <span className="panel__grip" aria-hidden="true" />
+        </header>
 
         <button type="button" className="btn btn--salir" onClick={salir}>
           <Icon name="salir" size={18} />

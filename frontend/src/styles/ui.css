@@ -1921,6 +1921,18 @@
 .seccion__titulo { font-size: var(--fs-3); font-weight: 600; line-height: 1.1; }
 .seccion__sub { margin-top: 2px; font-size: 13px; color: var(--text-3); }
 
+/* Asa decorativa (puntitos) en la esquina de las tarjetas del perfil. */
+.panel__grip {
+  flex: none;
+  align-self: flex-start;
+  width: 16px;
+  height: 22px;
+  color: var(--text-3);
+  opacity: 0.45;
+  background-image: radial-gradient(currentColor 1.3px, transparent 1.6px);
+  background-size: 8px 7px;
+}
+
 .seccion__pill {
   flex: none;
   display: inline-flex;
@@ -2070,6 +2082,11 @@
 /* ==========================================================================
    Portafolio: ideas, detalle (caso de estudio) y asistente de proyecto
    ========================================================================== */
+.portlist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
 .port {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
@@ -2121,8 +2138,8 @@
   text-transform: uppercase;
 }
 
-/* --- Columna de tarjetas --- */
-.port-lista { display: flex; flex-direction: column; gap: var(--sp-2); }
+/* --- Columna de tarjetas (centrada respecto a la destacada, que es mas alta) --- */
+.port-lista { display: flex; flex-direction: column; justify-content: center; gap: var(--sp-2); }
 .port-card {
   display: grid;
   grid-template-columns: 132px 1fr auto;
@@ -2148,6 +2165,28 @@
 .port-card__cuerpo h3 { font-size: var(--fs-4); font-weight: 600; }
 .port-card__desc { font-size: 13px; color: var(--text-3); }
 .port-card__flecha { color: var(--text-3); flex: none; }
+
+/* Apartado "Tus ideas guardadas": rellena el espacio bajo el listado con las
+   ideas que el usuario marco, o un estado vacio si aun no guardo ninguna. */
+.port-guardadas { display: flex; flex-direction: column; gap: var(--sp-2); }
+.port-guardadas__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--sp-2);
+}
+.port-guardadas__vacio {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-md);
+  background: var(--glass);
+  color: var(--text-3);
+  font-size: var(--fs-5);
+}
+.port-guardadas__vacio svg { flex: none; color: var(--text-3); opacity: 0.7; }
+.port-guardadas__vacio strong { color: var(--text-2); }
 
 /* --- Etiquetas / iconos / chips comunes --- */
 .port-tags { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 12px; }
@@ -2190,6 +2229,19 @@
 }
 
 /* --- Detalle (caso de estudio) --- */
+/* Llena el alto: la cabecera "volver" queda arriba y el contenido se centra en
+   el resto, en vez de quedar pegado arriba con un gran vacio debajo. */
+.portidea,
+.portproy {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.portidea__cols { margin-top: auto; }
+.portidea__acciones { margin-bottom: auto; }
+.portproy__cols { margin-block: auto; }
+
 .portidea__cols { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--sp-3); align-items: start; }
 .portidea__media {
   position: relative;

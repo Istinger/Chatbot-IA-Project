@@ -95,22 +95,36 @@ export default function AvisosTelegram() {
   if (!estado.disponible) {
     return (
       <section className="panel">
-        <h2 className="carrusel__title">Avisos por Telegram</h2>
-        <p className="onb__sub">No estan configurados en este servidor.</p>
+        <header className="seccion__cab">
+          <span className="seccion__icono"><Icon name="telegram" size={20} /></span>
+          <div className="seccion__txt">
+            <h2 className="seccion__titulo">Avisos por Telegram</h2>
+            <p className="seccion__sub">No estan configurados en este servidor.</p>
+          </div>
+          <span className="panel__grip" aria-hidden="true" />
+        </header>
       </section>
     );
   }
 
   return (
     <section className="panel">
-      <h2 className="carrusel__title">Avisos por Telegram</h2>
+      <header className="seccion__cab">
+        <span className="seccion__icono"><Icon name="telegram" size={20} /></span>
+        <div className="seccion__txt">
+          <h2 className="seccion__titulo">Avisos por Telegram</h2>
+          {!estado.vinculado && (
+            <p className="seccion__sub">
+              Te avisamos por Telegram cuando aparezca una oferta que encaje contigo.
+              Sin vincular, no te escribimos nunca.
+            </p>
+          )}
+        </div>
+        <span className="panel__grip" aria-hidden="true" />
+      </header>
 
       {!estado.vinculado && (
         <>
-          <p className="onb__sub">
-            Te avisamos por Telegram cuando aparezca una oferta que encaje contigo. Sin
-            vincular, no te escribimos nunca.
-          </p>
 
           <button type="button" className="btn btn--glass" onClick={vincular}>
             <Icon name="telegram" size={18} />
