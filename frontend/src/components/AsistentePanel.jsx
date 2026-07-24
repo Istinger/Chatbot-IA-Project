@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useVista } from '../lib/vista';
@@ -24,14 +23,6 @@ const CLAVE_SESION = 'jobia_chat';
  * movil), asi que la conversacion no se pierde al moverse por la app.
  */
 
-// Las acciones son la navegacion. Icono + titulo + subtitulo, como el mock.
-const ACCIONES = [
-  { icono: 'maletin', titulo: 'Ver ofertas afines', sub: 'Las mejores para tu perfil', a: '/' },
-  { icono: 'buscar', titulo: 'Buscar ofertas', sub: 'Describe lo que quieres', a: '/buscar' },
-  { icono: 'subir', titulo: 'Mejorar mi CV', sub: 'Sube tu CV y tus skills', a: '/perfil' },
-  { icono: 'crecer', titulo: 'Crecer', sub: 'Certificados que te faltan', a: '/crecer' },
-];
-
 const SUGERENCIAS = [
   'Busco trabajo remoto de backend',
   'Simula una entrevista tecnica junior',
@@ -40,7 +31,6 @@ const SUGERENCIAS = [
 
 export default function AsistentePanel() {
   const { perfil } = useAuth();
-  const navegar = useNavigate();
   // Lo que el usuario ve ahora: la oferta abierta (modal compartido en el Shell)
   // y un resumen de la pantalla actual (p. ej. brechas/cursos de "Crecer"). Se
   // manda como contexto al chat para responder sobre lo que hay en pantalla.
@@ -154,24 +144,6 @@ export default function AsistentePanel() {
               Hola {nombreDe(perfil?.email) || 'de nuevo'}, estoy aqui para ayudarte a
               encontrar la oportunidad ideal.
             </p>
-
-            <div className="asis__acciones">
-              {ACCIONES.map((ac) => (
-                <button
-                  key={ac.a}
-                  type="button"
-                  className="accion"
-                  onClick={() => navegar(ac.a)}
-                >
-                  <span className="accion__icono"><Icon name={ac.icono} size={20} /></span>
-                  <span className="accion__texto">
-                    <span className="accion__titulo">{ac.titulo}</span>
-                    <span className="accion__sub">{ac.sub}</span>
-                  </span>
-                  <Icon name="derecha" size={18} className="accion__flecha" />
-                </button>
-              ))}
-            </div>
 
             <p className="asis__sugtit">Sugerencias rapidas</p>
             <ul className="asis__sugs">

@@ -43,7 +43,10 @@ function ShellInterno() {
     <div className="shell">
       {/* Rail de navegacion (escritorio, izquierda) */}
       <nav className="rail" aria-label="Navegacion principal">
-        <span className="rail__marca" aria-hidden="true" />
+        {/* Marca: orbe animado 100% CSS (anillo con halo + onda de sonido). */}
+        <span className="rail__marca" aria-hidden="true">
+          <i /><i /><i /><i /><i /><i /><i />
+        </span>
         <ul className="rail__lista">
           {RUTAS.map((r) => (
             <li key={r.to}>
