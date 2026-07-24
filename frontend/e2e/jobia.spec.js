@@ -12,7 +12,7 @@ import { test, expect } from '@playwright/test';
 const DEMO = { email: 'demo@jobia.ec', password: 'demo1234' };
 
 // Ruido de red que NO es un bug de la app (imagenes externas de prueba, etc.).
-const RUIDO = [/net::/i, /Failed to load resource/i, /favicon/i, /picsum/i, /placehold/i, /pravatar/i];
+const RUIDO = [/net::/i, /Failed to load resource/i, /favicon/i, /picsum/i, /placehold/i, /pravatar/i, /loremflickr/i];
 
 /** Adjunta captura de errores reales de consola/JS; devuelve el array vivo. */
 function cazarErrores(page) {
@@ -127,6 +127,37 @@ test.describe('Buscar', () => {
     await expect(page.locator('.resultados .carrusel__title')).toContainText(/ofertas encontradas/i);
     await expect(page.locator('.ofertas__rejilla .card').first()).toBeVisible();
     expect(errores, errores.join('\n')).toEqual([]);
+  });
+});
+
+test.describe('Portafolio', () => {
+  test('la IA sugiere 4 ideas (1 destacada) adaptadas al perfil', async ({ page }) => {
+    const errores = cazarErrores(page);
+    await login(page);
+    await page.goto('/portafolio');
+
+    // 1 destacada + 3 en la lista = 4 proyectos.
+    await expect(page.locator('.port-dest')).toHaveCount(1);
+    await expect(page.locator('.port-lista .port-card')).toHaveCount(3);
+    // Titulo de la seccion presente.
+    await expect(page.locator('.portlist h1')).toHaveText(/Ideas para portafolio/i);
+    expect(errores, errores.join('\n')).toEqual([]);
+  });
+
+  test('deep-link al detalle de una idea funciona (refresh)', async ({ page }) => {
+    await login(page);
+    await page.goto('/portafolio');
+    // a.port-dest = el link real (el esqueleto es un div con la misma clase).
+    const destacada = page.locator('a.port-dest');
+    await expect(destacada).toBeVisible();
+    const href = await destacada.getAttribute('href');
+    expect(href).toMatch(/\/portafolio\/.+/);
+
+    // Navegar directo (como un refresh/enlace compartido): el detalle debe
+    // resolver la idea por la API, no depender de que venga del listado.
+    await page.goto(href);
+    await expect(page.locator('.portidea__titulo')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Empezar proyecto/i })).toBeVisible();
   });
 });
 

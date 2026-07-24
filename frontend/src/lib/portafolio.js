@@ -341,7 +341,38 @@ export const FASES = [
   },
 ];
 
-export const ideaPorId = (id) => IDEAS.find((i) => i.id === id) || null;
+/* --- Cache de las ideas que sirve el backend (personalizadas) --------------
+ * Las ideas ya no son estaticas: las genera el backend segun el perfil. Se
+ * cachean en sessionStorage para que el detalle y el asistente de proyecto lean
+ * las MISMAS que vio el listado, sin volver a pedirlas. IDEAS (arriba) queda solo
+ * como ultimo respaldo si el backend no estuviera disponible. */
+export const CLAVE_CACHE = 'jobia_portafolio_ideas';
+
+export function guardarIdeasCache(ideas) {
+  try {
+    sessionStorage.setItem(CLAVE_CACHE, JSON.stringify(ideas));
+  } catch {
+    /* sessionStorage lleno o bloqueado: no es critico */
+  }
+}
+
+export function leerIdeasCache() {
+  try {
+    return JSON.parse(sessionStorage.getItem(CLAVE_CACHE) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+/** Añade una idea suelta (deep-link) al cache sin duplicar. */
+export function agregarIdeaCache(idea) {
+  const cache = leerIdeasCache();
+  if (!cache.some((i) => i.id === idea.id)) guardarIdeasCache([...cache, idea]);
+}
+
+/** Busca por id: primero en lo que trajo el backend, luego en el respaldo. */
+export const ideaPorId = (id) =>
+  leerIdeasCache().find((i) => i.id === id) || IDEAS.find((i) => i.id === id) || null;
 
 /**
  * Imagen relevante para una idea, servida por LoremFlickr (fotos por palabra
@@ -370,10 +401,19 @@ export function alternarGuardada(id) {
   return set.has(id);
 }
 
-/** Las ideas guardadas, en el orden del catalogo. */
+/** Las ideas guardadas, resueltas contra lo cacheado del backend + el respaldo. */
 export function ideasGuardadas() {
   const ids = idsGuardadas();
-  return IDEAS.filter((i) => ids.has(i.id));
+  const pool = [...leerIdeasCache(), ...IDEAS];
+  const vistos = new Set();
+  const res = [];
+  for (const i of pool) {
+    if (ids.has(i.id) && !vistos.has(i.id)) {
+      vistos.add(i.id);
+      res.push(i);
+    }
+  }
+  return res;
 }
 
 /* --- Notas del asistente de proyecto (localStorage, por idea+fase+item) --- */
