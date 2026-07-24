@@ -28,6 +28,17 @@ const RUTAS = {
   telegram: <><path d="M21 5 3 11l5 2 2 6 3-4 5 3z" /><path d="m8 13 8-6" /></>,
   enlace: <><path d="M10 13a4 4 0 0 0 6 .5l2-2a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 11a4 4 0 0 0-6-.5l-2 2A4 4 0 0 0 11.7 18l1-1" /></>,
   teclado: <><rect x="3" y="7" width="18" height="10" rx="2" /><path d="M7 11h.01M11 11h.01M15 11h.01M8 14h8" /></>,
+  reloj: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+  nivel: <><path d="M6 20v-6" /><path d="M12 20V8" /><path d="M18 20v-9" /></>,
+  marcador: <path d="M6 3h12v18l-6-4-6 4z" />,
+  estrella: <path d="m12 3 2.6 5.6L21 9.3l-4.5 4.2L17.5 21 12 17.8 6.5 21l1-7.5L3 9.3l6.4-.7z" />,
+  filtros: <><path d="M4 5h16" /><path d="M7 12h10" /><path d="M10 19h4" /></>,
+  sobre: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>,
+  candado: <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
+  ojo: <><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" /><circle cx="12" cy="12" r="3" /></>,
+  ojoOff: <><path d="M4 4l16 16" /><path d="M9.5 9.5a3 3 0 0 0 4.2 4.2" /><path d="M6.6 6.6C3.8 8.2 2 12 2 12s3.5 6 10 6c1.8 0 3.4-.5 4.8-1.2" /><path d="M9.9 5.2A9.8 9.8 0 0 1 12 5c6.5 0 10 6 10 6a17 17 0 0 1-2.4 3" /></>,
+  rejilla: <><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></>,
+  lista: <><path d="M8 6h12M8 12h12M8 18h12" /><path d="M4 6h.01M4 12h.01M4 18h.01" /></>,
 };
 
 export default function Icon({ name, size = 20, className = '' }) {

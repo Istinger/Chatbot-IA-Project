@@ -238,14 +238,88 @@
   padding: var(--sp-3);
 }
 
+.entrada__orb {
+  display: grid;
+  place-items: center;
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  color: var(--glow);
+  border: 2px solid #39b7ff;
+  background: radial-gradient(circle, rgba(19, 71, 137, 0.5), rgba(5, 15, 32, 0.9));
+  box-shadow: 0 0 34px rgba(32, 160, 255, 0.75), inset 0 0 22px rgba(34, 173, 255, 0.35);
+  animation: entrar var(--t-slow) var(--ease-out) both;
+}
+
 .entrada__caja {
-  width: min(420px, 100%);
+  width: min(460px, 100%);
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  text-align: center;
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-card);
+  text-align: left;
   animation: entrar var(--t-slow) var(--ease-out) both;
 }
+
+/* Campo con icono a la izquierda y (opcional) toggle a la derecha. */
+.campo__input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.campo__input .campo__icono {
+  position: absolute;
+  left: 14px;
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.campo__input input {
+  width: 100%;
+  padding-left: 44px;
+}
+
+.campo__toggle {
+  position: absolute;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-sm);
+  color: var(--text-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.campo__toggle:hover { color: var(--text); }
+
+.entrada__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-size: var(--fs-5);
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.check input { width: 16px; height: 16px; accent-color: var(--blue); }
+
+.entrada__olvido { color: var(--blue); cursor: pointer; }
 
 /* Solo opacity y transform. Animar `filter: blur()` obliga al navegador a
    rasterizar de nuevo en cada frame (caro en portatiles modestos) y, si la
@@ -549,6 +623,27 @@
 
 .asis__orb { flex: none; }
 
+/* Orb del asistente al estilo mock (.pulse): anillo nitido + glow, no un blob. */
+.asis__pulse {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  color: var(--glow);
+  border: 3px solid #39b7ff;
+  background: radial-gradient(circle, rgba(19, 71, 137, 0.85), rgba(5, 15, 32, 0.95));
+  box-shadow: 0 0 18px rgba(32, 160, 255, 0.7), inset 0 0 14px rgba(34, 173, 255, 0.4);
+}
+
+.asis__pulse--vivo { animation: pulso 1.6s ease-in-out infinite; }
+
+@keyframes pulso {
+  0%, 100% { box-shadow: 0 0 18px rgba(32, 160, 255, 0.6), inset 0 0 14px rgba(34, 173, 255, 0.4); }
+  50%      { box-shadow: 0 0 30px rgba(32, 160, 255, 0.95), inset 0 0 18px rgba(34, 173, 255, 0.6); }
+}
+
 .asis__nombre { font-size: var(--fs-4); font-weight: 600; }
 
 .asis__estado {
@@ -822,20 +917,20 @@
    Tarjeta de oferta
 --------------------------------------------------------------------------- */
 .card {
-  flex: none;
-  width: 300px;
-  min-height: 260px;
+  width: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  padding: var(--sp-3);
-  border-radius: var(--r-lg);
-  background: var(--glass);
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  background: rgba(3, 9, 17, 0.74);
   border: 1px solid var(--border);
   backdrop-filter: blur(16px);
   text-align: left;
   box-shadow: var(--shadow-card);
+  cursor: pointer;
   /* Solo transform / box-shadow / border: nada que provoque reflow. */
   transition: transform var(--t-base) var(--ease-out),
               box-shadow var(--t-base) var(--ease-out),
@@ -844,10 +939,121 @@
 
 .card:hover,
 .card:focus-visible {
-  /* DESIGN.md: scale 1.03 + glow azul. */
-  transform: scale(1.03);
-  border-color: rgba(110, 200, 255, 0.4);
+  transform: translateY(-4px);
+  border-color: rgba(110, 200, 255, 0.45);
   box-shadow: var(--shadow-glow);
+  outline: none;
+}
+
+/* Portada con imagen de prueba (Picsum sembrado por id). */
+.card__visual {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #071424, #02070d);
+}
+
+.card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.92;
+}
+
+.card__visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(2, 6, 13, 0.9), transparent 46%);
+  pointer-events: none;
+}
+
+.card__chips {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Sobre la imagen los chips necesitan fondo solido para leerse. */
+.card__chips .chip {
+  background: rgba(3, 9, 17, 0.72);
+  border: 1px solid rgba(94, 131, 190, 0.4);
+  backdrop-filter: blur(6px);
+}
+
+.card__destacada-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #edf5ff;
+  border: 1px solid rgba(64, 129, 255, 0.84);
+  background: linear-gradient(135deg, rgba(26, 70, 178, 0.94), rgba(23, 40, 109, 0.9));
+}
+
+.card__cuerpo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  flex: 1;
+}
+
+/* La destacada solo es mas ANCHA (mas columnas): su altura la iguala la fila.
+   El titulo si crece para darle jerarquia. */
+.card--destacada .card__title {
+  font-size: var(--fs-3);
+}
+
+.card__acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  margin-top: auto;
+  padding-top: var(--sp-1);
+}
+
+.card__ver {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: var(--fs-5);
+  color: #eaf4ff;
+  border: 1px solid rgba(80, 154, 255, 0.7);
+  background: linear-gradient(135deg, rgba(30, 68, 163, 0.85), rgba(9, 36, 91, 0.9));
+  box-shadow: inset 0 0 22px rgba(35, 133, 255, 0.16);
+}
+
+.card:hover .card__ver {
+  box-shadow: 0 0 22px rgba(52, 131, 255, 0.5), inset 0 0 22px rgba(35, 133, 255, 0.2);
+}
+
+.card__marcador {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  background: var(--glass);
 }
 
 .card__top {
@@ -902,13 +1108,18 @@
 }
 
 .card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   color: var(--text-3);
   font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   max-width: 100%;
+  font-variant-numeric: tabular-nums;
 }
+
+.card__meta .dot { display: inline-flex; align-items: center; gap: 10px; }
+.card__meta .dot::before { content: "•"; color: #91a1bf; }
 
 .card__salary {
   display: flex;
@@ -991,6 +1202,8 @@
 
 /* Esqueleto: reserva el hueco exacto de la tarjeta para que no salte el layout. */
 .card--esqueleto {
+  min-height: 320px;
+  cursor: default;
   background: linear-gradient(100deg, var(--glass) 30%, var(--glass-2) 50%, var(--glass) 70%);
   background-size: 200% 100%;
   animation: brillo 1.4s linear infinite;
@@ -1954,4 +2167,161 @@
   .voz, .voz__orb--vivo .voz__anillo, .voz__orb--vivo .voz__onda path, .voz__btn--activo {
     animation: none;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Rediseño mockups: home "Ofertas nuevas", buscar, perfil-chip
+--------------------------------------------------------------------------- */
+.btn--bloque {
+  width: 100%;
+  border-radius: var(--r-sm);
+  min-height: 54px;
+}
+
+/* Cabecera de la home. */
+.ofertas__cab {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-right: var(--sp-4);
+  margin-bottom: var(--sp-3);
+  animation: entrar var(--t-slow) var(--ease-out) both;
+}
+
+.ofertas__cab h1 { font-size: var(--fs-1); line-height: 1.05; }
+
+/* Una sola fila de 4: destacada (mas ancha) + 3 chicas, TODA la misma altura
+   (mock ofertas nuevas.html). La destacada no crece de alto, solo de ancho. */
+.ofertas__fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+  align-items: stretch;
+  padding-right: var(--sp-4);
+}
+
+.ofertas__fila .card { height: 100%; }
+
+/* Altura de portada uniforme en la fila para que los pies de tarjeta alineen. */
+.ofertas__fila .card__visual {
+  aspect-ratio: auto;
+  height: clamp(150px, 15vw, 230px);
+}
+
+/* Nota "haz scroll" al pie de la primera pagina. */
+.ofertas__scroll {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  justify-content: center;
+  color: var(--text-2);
+  font-size: var(--fs-5);
+  margin-top: var(--sp-3);
+}
+
+.ofertas__scroll-flecha { transform: rotate(90deg); color: var(--glow); }
+
+.ofertas__rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--sp-2);
+  padding-right: var(--sp-4);
+}
+
+.ofertas__mas { margin-top: var(--sp-4); }
+.ofertas__mas .carrusel__title { font-size: var(--fs-2); }
+
+/* Buscar ofertas */
+.buscar__cab {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-right: var(--sp-4);
+  margin-bottom: var(--sp-3);
+  animation: entrar var(--t-slow) var(--ease-out) both;
+}
+
+.buscar__cab h1 { font-size: var(--fs-1); }
+
+.iconbtn--volver { flex: none; }
+
+.buscar__barra { max-width: none; margin-right: var(--sp-4); }
+
+.buscar__limpiar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.buscar__limpiar:hover { color: var(--text); }
+
+.buscar__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding-right: var(--sp-4);
+  margin-top: var(--sp-2);
+}
+
+.filtro-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-5);
+  color: var(--text-2);
+  background: var(--glass);
+  border: 1px solid var(--border);
+}
+.filtro-chip--mas { color: var(--text); }
+.filtro-chip__flecha { color: var(--text-3); transform: rotate(90deg); }
+
+.resultados__barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding-right: var(--sp-4);
+}
+
+/* Escritorio: cada seccion de la home es una "pagina" con snap SUAVE. El scroller
+   es el root; solo .ofertas-pagina tiene snap-align, asi que otras rutas no se ven
+   afectadas. */
+@media (min-width: 861px) {
+  html { scroll-snap-type: y proximity; }
+
+  .ofertas-pagina {
+    min-height: 100dvh;
+    scroll-snap-align: start;
+    scroll-margin-top: var(--sp-3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--sp-3);
+  }
+}
+
+/* Movil: apilar la home y la busqueda; sin scroll horizontal ni snap. */
+@media (max-width: 860px) {
+  .ofertas__cab { flex-direction: column; }
+  .ofertas__fila { grid-template-columns: 1fr; }
+  .ofertas-pagina { min-height: auto; scroll-snap-align: none; }
+  .ofertas__fila .card__visual { height: clamp(170px, 45vw, 240px); }
+  .ofertas__cab,
+  .ofertas__fila,
+  .ofertas__rejilla,
+  .buscar__cab,
+  .buscar__barra,
+  .buscar__filtros,
+  .resultados__barra { padding-right: 0; }
+  .ofertas__cab h1,
+  .buscar__cab h1 { font-size: var(--fs-2); }
 }

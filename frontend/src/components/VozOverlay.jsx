@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from './Icon';
 
 /**
@@ -33,7 +34,10 @@ export default function VozOverlay({
     return () => document.removeEventListener('keydown', alTecla);
   }, [onCerrar]);
 
-  return (
+  // Portal a <body>: el panel del asistente tiene backdrop-filter, que crea un
+  // contenedor de posicionamiento y atraparia el position:fixed del overlay
+  // dejandolo dentro de la columna. En el body ocupa toda la pantalla (mock).
+  return createPortal(
     <div className="voz" role="dialog" aria-modal="true" aria-label="Modo voz">
       <div className="voz__fondo" aria-hidden="true" />
 
@@ -87,6 +91,7 @@ export default function VozOverlay({
           <Icon name="cerrar" size={26} />
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

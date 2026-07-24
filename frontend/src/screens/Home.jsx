@@ -1,28 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../lib/api';
-import { useAuth } from '../lib/auth';
-import { nombreDe } from '../lib/format';
-import Carousel from '../components/Carousel';
 import JobCard from '../components/JobCard';
 import JobModal from '../components/JobModal';
 import Icon from '../components/Icon';
 import Refrescar from '../components/Refrescar';
 
-function Esqueleto() {
-  // Reservar el espacio evita el salto de layout (CLS) cuando llegan los datos.
-  return (
-    <div className="carrusel__pista">
-      {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="card card--esqueleto" aria-hidden="true" />
-      ))}
-    </div>
-  );
-}
-
 export default function Home() {
-  const { perfil } = useAuth();
-
   const [recomendadas, setRecomendadas] = useState(null);
   const [exterior, setExterior] = useState(null);
   const [locales, setLocales] = useState(null);
@@ -52,71 +36,91 @@ export default function Home() {
     };
   }, [version]);
 
-  const verBusqueda = (
-    <Link to="/buscar" className="btn btn--texto">
-      Buscar
-    </Link>
-  );
+  const cargando = recomendadas === null;
+  const destacada = recomendadas?.[0];
+  const chicas = recomendadas?.slice(1, 4) ?? [];
+
+  // "Mas ofertas": el resto de recomendadas + exterior + locales, sin repetir.
+  // Asi la home conserva el valor de exterior/local que el mock no muestra.
+  const vistos = new Set(recomendadas?.slice(0, 4).map((j) => j.id));
+  const mas = [];
+  for (const j of [...(recomendadas?.slice(4) ?? []), ...(exterior ?? []), ...(locales ?? [])]) {
+    if (j && !vistos.has(j.id)) {
+      vistos.add(j.id);
+      mas.push(j);
+    }
+  }
 
   return (
     <>
-      <header className="saludo">
-        <h1>Hola {nombreDe(perfil?.email) || 'de nuevo'}</h1>
-        <p className="saludo__sub">Esto es lo que encontramos para ti hoy.</p>
-        {/* Al terminar una ingesta se recargan los carruseles: si no, el usuario
-            ve el mensaje "listo, 900 ofertas" pero la pantalla sigue igual. */}
-        <Refrescar onFin={() => recargar((n) => n + 1)} />
-      </header>
-
-      {sinPerfil && (
-        <div className="aviso-panel">
-          <Icon name="aviso" size={20} />
+      {/* Pagina 1: "Ofertas nuevas" — una fila de 4 (destacada + 3), snap suave. */}
+      <section className="ofertas-pagina">
+        <header className="ofertas__cab">
           <div>
-            <strong>Aun no sabemos que buscas.</strong>
-            <p>Sube tu CV o dinos tus habilidades para recibir recomendaciones.</p>
+            <h1>Ofertas nuevas</h1>
+            <p className="saludo__sub">
+              {cargando
+                ? 'Buscando lo mejor para ti…'
+                : recomendadas.length
+                ? `${recomendadas.length} oportunidades encontradas para ti`
+                : 'Aun no hay recomendaciones para ti'}
+            </p>
+            <Refrescar onFin={() => recargar((n) => n + 1)} />
           </div>
-          <Link to="/onboarding" className="btn btn--primario">
-            Completar perfil
-          </Link>
-        </div>
-      )}
+        </header>
 
-      <Carousel
-        titulo="Recomendadas para ti"
-        subtitulo="Ordenadas por afinidad con tu perfil"
-        accion={verBusqueda}
-      >
-        {recomendadas === null ? (
-          <Esqueleto />
+        {sinPerfil && (
+          <div className="aviso-panel">
+            <Icon name="aviso" size={20} />
+            <div>
+              <strong>Aun no sabemos que buscas.</strong>
+              <p>Sube tu CV o dinos tus habilidades para recibir recomendaciones.</p>
+            </div>
+            <Link to="/onboarding" className="btn btn--primario">
+              Completar perfil
+            </Link>
+          </div>
+        )}
+
+        {cargando ? (
+          <div className="ofertas__fila">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="card card--esqueleto" aria-hidden="true" />
+            ))}
+          </div>
         ) : recomendadas.length ? (
-          recomendadas.map((j) => <JobCard key={j.id} job={j} onOpen={setAbierta} />)
+          <div className="ofertas__fila">
+            <JobCard job={destacada} onOpen={setAbierta} destacada />
+            {chicas.map((j) => (
+              <JobCard key={j.id} job={j} onOpen={setAbierta} />
+            ))}
+          </div>
         ) : (
           <p className="vacio">Todavia no hay recomendaciones. Completa tu perfil.</p>
         )}
-      </Carousel>
 
-      <Carousel titulo="En el exterior" subtitulo="Remoto: puedes postular desde Ecuador">
-        {exterior === null ? (
-          <Esqueleto />
-        ) : exterior.length ? (
-          exterior.map((j) => <JobCard key={j.id} job={j} onOpen={setAbierta} />)
-        ) : (
-          <p className="vacio">No hay ofertas del exterior ahora mismo.</p>
-        )}
-      </Carousel>
-
-      <Carousel titulo="Cerca de ti" subtitulo="Ofertas en Ecuador">
-        {locales === null ? (
-          <Esqueleto />
-        ) : locales.length ? (
-          locales.map((j) => <JobCard key={j.id} job={j} onOpen={setAbierta} />)
-        ) : (
-          <p className="vacio">
-            Todavia no tenemos ofertas locales: las fuentes disponibles no cubren
-            Ecuador. Mientras tanto, mira las remotas.
+        {mas.length > 0 && (
+          <p className="ofertas__scroll" aria-hidden="true">
+            <Icon name="derecha" size={18} className="ofertas__scroll-flecha" />
+            Haz scroll para ver mas ofertas
           </p>
         )}
-      </Carousel>
+      </section>
+
+      {/* Pagina 2: "Mas ofertas" — rejilla de 4 columnas. */}
+      {mas.length > 0 && (
+        <section className="ofertas-pagina ofertas__mas">
+          <div>
+            <h2 className="carrusel__title">Mas ofertas</h2>
+            <p className="saludo__sub">Sigue explorando oportunidades para ti</p>
+          </div>
+          <div className="ofertas__rejilla">
+            {mas.slice(0, 12).map((j) => (
+              <JobCard key={j.id} job={j} onOpen={setAbierta} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <JobModal job={abierta} onClose={() => setAbierta(null)} />
     </>

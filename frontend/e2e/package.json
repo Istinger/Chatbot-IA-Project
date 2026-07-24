@@ -1,0 +1,14 @@
+{
+  "name": "jobia-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pruebas E2E de UX (Playwright). Aislado de la app: no entra en la imagen del frontend.",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.48.0"
+  }
+}

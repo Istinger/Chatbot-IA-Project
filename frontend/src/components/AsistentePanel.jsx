@@ -133,7 +133,9 @@ export default function AsistentePanel() {
   return (
     <aside className="asis" aria-label="Asistente">
       <header className="asis__cab">
-        <span className={`asis__orb orb orb--peq ${escuchando ? 'orb--vivo' : ''}`} aria-hidden="true" />
+        <span className={`asis__pulse ${escuchando ? 'asis__pulse--vivo' : ''}`} aria-hidden="true">
+          <Icon name="asistente" size={30} />
+        </span>
         <div>
           <h2 className="asis__nombre">Asistente IA</h2>
           <p className="asis__estado"><span className="asis__punto" /> En linea</p>
