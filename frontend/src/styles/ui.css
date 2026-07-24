@@ -60,9 +60,9 @@
 .ambient__vignette {
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.76), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.8)),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.28), transparent 30%, rgba(0, 0, 0, 0.58)),
-    radial-gradient(ellipse at center, transparent 0 44%, rgba(0, 0, 0, 0.28) 76%, rgba(0, 0, 0, 0.72));
+    linear-gradient(90deg, rgba(0, 0, 0, 0.34), transparent 16%, transparent 84%, rgba(0, 0, 0, 0.36)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.2), transparent 30%, rgba(0, 0, 0, 0.42)),
+    radial-gradient(ellipse at center, transparent 0 50%, rgba(0, 0, 0, 0.22) 80%, rgba(0, 0, 0, 0.52));
 }
 
 @keyframes amb-drift {
@@ -583,7 +583,7 @@
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-1);
-  background: rgba(5, 11, 20, 0.6);
+  background: rgba(5, 11, 20, 0.38);
   border-right: 1px solid var(--border);
   backdrop-filter: blur(20px);
 }
@@ -701,7 +701,7 @@
   top: 0;
   height: 100dvh;
   border-left: 1px solid var(--border);
-  background: rgba(5, 11, 20, 0.55);
+  background: rgba(5, 11, 20, 0.4);
   backdrop-filter: blur(20px);
 }
 
