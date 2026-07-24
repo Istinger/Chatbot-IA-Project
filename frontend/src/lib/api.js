@@ -93,6 +93,11 @@ export const api = {
   portafolioIdeas: () => request('/portafolio/ideas'),
   portafolioIdea: (id) => request(`/portafolio/ideas/${encodeURIComponent(id)}`),
 
+  /** Entrevista simulada (hibrido: banco + IA racionada). */
+  interviewStart: (cfg) => request('/interview/start', { method: 'POST', body: cfg }),
+  interviewFollowup: (payload) => request('/interview/followup', { method: 'POST', body: payload }),
+  interviewFeedback: (payload) => request('/interview/feedback', { method: 'POST', body: payload }),
+
   estadoAvisos: () => request('/notifications'),
 
   /** Devuelve { codigo, enlace, bot }: el enlace ya lleva el codigo dentro. */

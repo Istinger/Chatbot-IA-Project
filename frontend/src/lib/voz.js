@@ -72,6 +72,40 @@ export function mensajeDeError(codigo, { brave = false } = {}) {
   }
 }
 
+/**
+ * Lee un texto en voz alta con el sintetizador del navegador (SpeechSynthesis).
+ *
+ * Corre en el navegador: $0, sin tocar el VPS ni OpenRouter. Se usa para que la
+ * entrevista "hable" la pregunta. Cancela lo que estuviera diciendo antes; no-op
+ * si el navegador no lo soporta.
+ */
+export const ttsSoportado =
+  typeof window !== 'undefined' && 'speechSynthesis' in window;
+
+export function leerEnVozAlta(texto) {
+  if (!ttsSoportado || !texto) return;
+  try {
+    window.speechSynthesis.cancel(); // corta la pregunta anterior
+    const u = new SpeechSynthesisUtterance(String(texto));
+    u.lang = 'es-ES';
+    u.rate = 1;
+    window.speechSynthesis.speak(u);
+  } catch {
+    /* algunos navegadores lo bloquean sin gesto del usuario: no es critico */
+  }
+}
+
+/** Corta cualquier lectura en curso (al cerrar la sesion o cambiar de pregunta). */
+export function callarVoz() {
+  if (ttsSoportado) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      /* no-op */
+    }
+  }
+}
+
 export function crearDictado({ onTexto, onFin, onError }) {
   if (!Reconocimiento) return null;
 
