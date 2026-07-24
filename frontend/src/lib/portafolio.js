@@ -390,6 +390,9 @@ function leerNotas() {
 /** Clave estable de una nota. */
 export const claveNota = (ideaId, faseId, i) => `${ideaId}-${faseId}-${i}`;
 
+/** Clave de la respuesta a la pregunta `j` de un item (worksheet). */
+export const claveRespuesta = (ideaId, faseId, i, j) => `${ideaId}-${faseId}-${i}-r${j}`;
+
 export const leerNota = (clave) => leerNotas()[clave] || '';
 
 /** Guarda (o borra si queda vacia) la nota de una clave. */
@@ -398,4 +401,15 @@ export function guardarNota(clave, texto) {
   if (texto.trim()) notas[clave] = texto;
   else delete notas[clave];
   localStorage.setItem(CLAVE_NOTAS, JSON.stringify(notas));
+}
+
+/** Cuantas preguntas del item tienen respuesta (para la barra de progreso). */
+export function respondidasItem(ideaId, faseId, item, i) {
+  const notas = leerNotas();
+  return item.pasos.filter((_, j) => (notas[claveRespuesta(ideaId, faseId, i, j)] || '').trim()).length;
+}
+
+/** El item esta completo cuando TODAS sus preguntas tienen respuesta. */
+export function itemCompleto(ideaId, faseId, item, i) {
+  return item.pasos.length > 0 && respondidasItem(ideaId, faseId, item, i) === item.pasos.length;
 }
