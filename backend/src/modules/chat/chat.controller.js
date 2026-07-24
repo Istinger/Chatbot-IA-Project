@@ -2,6 +2,7 @@ const express = require('express');
 const { ok, fail } = require('../../shared/envelope');
 const { optionalAuth } = require('../../shared/auth.middleware');
 const { prisma } = require('../../config/db');
+const jobs = require('../jobs/jobs.repository');
 const service = require('./chat.service');
 
 const router = express.Router();
@@ -22,11 +23,18 @@ router.post('/', optionalAuth, async (req, res) => {
         })
       : null;
 
+    // La oferta que el usuario esta viendo. El cliente manda solo el id: la
+    // oferta se lee de NUESTRA base, nunca del cuerpo de la peticion, asi el
+    // texto (de terceros) no puede colarse sin pasar por el bloque de DATOS.
+    const jobViendo = req.body?.jobId ? await jobs.obtenerPorId(req.body.jobId) : null;
+
     const r = await service.responder({
       mensaje: req.body?.mensaje,
       sessionId: req.body?.sessionId,
       user: req.user,
       perfil,
+      jobViendo,
+      contextoPantalla: req.body?.contexto,
     });
 
     return ok(res, r);

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
+import { useVista } from '../lib/vista';
 import JobCard from '../components/JobCard';
-import JobModal from '../components/JobModal';
 import Icon from '../components/Icon';
 
 /**
@@ -33,7 +33,9 @@ export default function Search() {
   const [resultados, setResultados] = useState(null);
   const [buscando, setBuscando] = useState(false);
   const [error, setError] = useState(null);
-  const [abierta, setAbierta] = useState(null);
+  // Modal compartido en el Shell: al abrir una oferta, el Asistente tambien
+  // sabe cual estas viendo.
+  const { setOfertaActiva } = useVista();
 
   const buscar = async (consulta) => {
     const q = (consulta ?? texto).trim();
@@ -136,13 +138,11 @@ export default function Search() {
 
           <div className="ofertas__rejilla">
             {resultados.map((j) => (
-              <JobCard key={j.id} job={j} onOpen={setAbierta} />
+              <JobCard key={j.id} job={j} onOpen={setOfertaActiva} />
             ))}
           </div>
         </section>
       )}
-
-      <JobModal job={abierta} onClose={() => setAbierta(null)} />
     </>
   );
 }

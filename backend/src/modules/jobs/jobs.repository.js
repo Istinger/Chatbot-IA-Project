@@ -102,6 +102,32 @@ async function list({ scope, q, limit = 20, page = 1 }) {
   return { total, page, limit, jobs };
 }
 
+/** Una oferta por id, con el mismo select seguro que `list` (sin el embedding). */
+async function obtenerPorId(id) {
+  if (!id) return null;
+  return prisma.job.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      source: true,
+      title: true,
+      company: true,
+      location: true,
+      country: true,
+      salaryMin: true,
+      salaryMax: true,
+      currency: true,
+      salaryUsdMin: true,
+      salaryUsdMax: true,
+      salaryPredicted: true,
+      description: true,
+      url: true,
+      skills: true,
+      isForeign: true,
+    },
+  });
+}
+
 async function stats() {
   const [total, pendientes, porFuente] = await Promise.all([
     prisma.job.count(),
@@ -118,4 +144,4 @@ async function stats() {
   };
 }
 
-module.exports = { upsertMany, list, stats };
+module.exports = { upsertMany, list, obtenerPorId, stats };
