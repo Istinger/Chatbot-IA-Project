@@ -53,8 +53,12 @@ export default function Home() {
 
   return (
     <>
-      {/* Pagina 1: "Ofertas nuevas" — una fila de 4 (destacada + 3), snap suave. */}
-      <section className="ofertas-pagina">
+      {/* Pagina 1: "Ofertas nuevas" — una fila de 4 (destacada + 3). El contenido
+          va dentro de .ofertas-blink: un wrapper "sticky" que se queda fijo en la
+          columna mientras la seccion scrollea, y se funde (blink) con la scroll
+          timeline de la seccion. Ver .ofertas-pagina--blink en ui.css. */}
+      <section className="ofertas-pagina ofertas-pagina--blink">
+       <div className="ofertas-blink">
         <header className="ofertas__cab">
           <div>
             <h1>Ofertas nuevas</h1>
@@ -105,6 +109,7 @@ export default function Home() {
             Haz scroll para ver mas ofertas
           </p>
         )}
+       </div>
       </section>
 
       {/* Pagina 2: "Mas ofertas" — rejilla de 4 columnas. */}

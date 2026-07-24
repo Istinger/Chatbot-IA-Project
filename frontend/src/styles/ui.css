@@ -2314,6 +2314,49 @@
     justify-content: center;
     gap: var(--sp-3);
   }
+
+  /* --- Efecto "blink" en la primera pagina (scroll-driven animation) ----------
+     La seccion es solo el "riel": expone una scroll timeline con su posicion en
+     el viewport (view-timeline). Su contenido, .ofertas-blink, se queda pegado
+     (sticky) dentro de la columna y se funde con esa timeline: nitido y visible
+     cuando la seccion esta centrada, difuminado e invisible al salir. Como es
+     sticky (no fixed) NO tapa el rail ni el asistente. */
+  .ofertas-pagina--blink {
+    /* la seccion deja de centrar: de eso se encarga el wrapper sticky */
+    display: block;
+    view-timeline: --ofertas-1 block;
+  }
+
+  .ofertas-blink {
+    position: sticky;
+    top: 0;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--sp-3);
+    /* fondo solido: durante el contraste/blur las tarjetas no dejan ver el
+       degradado del body por detras (mismo motivo que el fondo negro del demo). */
+    background: var(--bg);
+    animation: ofertas-blink ease-in-out both;
+    animation-timeline: --ofertas-1;
+  }
+}
+
+/* Nitido y presente a mitad de recorrido (seccion centrada); difuminado, sin
+   contraste y oculto en los extremos. Igual que el @keyframes blink del demo. */
+@keyframes ofertas-blink {
+  0%,
+  100% {
+    filter: blur(0.5rem) contrast(3);
+    opacity: 0;
+    visibility: hidden;
+  }
+  50% {
+    filter: blur(0) contrast(1);
+    opacity: 1;
+    visibility: visible;
+  }
 }
 
 /* Movil: apilar la home y la busqueda; sin scroll horizontal ni snap. */
@@ -2321,6 +2364,13 @@
   .ofertas__cab { flex-direction: column; }
   .ofertas__fila { grid-template-columns: 1fr; }
   .ofertas-pagina { min-height: auto; scroll-snap-align: none; }
+  /* En movil el blink se apaga: sin sticky, sin animacion, sin fondo solido. */
+  .ofertas-blink {
+    position: static;
+    min-height: auto;
+    background: none;
+    animation: none;
+  }
   .ofertas__fila .card__visual { height: clamp(170px, 45vw, 240px); }
   .ofertas__cab,
   .ofertas__fila,
