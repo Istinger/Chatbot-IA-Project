@@ -530,17 +530,59 @@
   backdrop-filter: blur(20px);
 }
 
+/* Marca del rail: orbe del Asistente hecho 100% con CSS (sin imagen). Un anillo
+   azul con halo que respira y, dentro, una onda de sonido de barras que viaja de
+   izquierda a derecha (cada barra lleva su propio desfase). */
 .rail__marca {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  /* Imagen de marca (circulo con onda). Cae en frontend/public/. Si falta el
-     archivo, el degradado de reserva evita un hueco vacio. */
-  background:
-    url('/marca-asistente.png') center / cover no-repeat,
-    radial-gradient(circle at 35% 30%, var(--glow), var(--blue));
-  box-shadow: 0 0 20px rgba(79, 163, 255, 0.6);
+  position: relative;
+  width: 40px;
+  height: 40px;
   flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+  border-radius: 50%;
+  /* Anillo brillante + centro oscuro (como la referencia). */
+  border: 1.5px solid rgba(130, 205, 255, 0.9);
+  background: radial-gradient(circle at 50% 42%, rgba(20, 70, 130, 0.35), rgba(2, 7, 13, 0.92) 72%);
+  animation: marca-respira 3s ease-in-out infinite;
+}
+
+/* Cada barra de la onda. La altura la anima scaleY; el desfase escalonado hace
+   que la onda parezca desplazarse. */
+.rail__marca i {
+  width: 2px;
+  height: 34%;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #cfe8ff, var(--glow));
+  box-shadow: 0 0 6px rgba(130, 205, 255, 0.9);
+  transform-origin: center;
+  animation: marca-onda 1.3s ease-in-out infinite;
+}
+.rail__marca i:nth-child(1) { animation-delay: 0s; }
+.rail__marca i:nth-child(2) { animation-delay: 0.11s; }
+.rail__marca i:nth-child(3) { animation-delay: 0.22s; }
+.rail__marca i:nth-child(4) { animation-delay: 0.33s; }
+.rail__marca i:nth-child(5) { animation-delay: 0.44s; }
+.rail__marca i:nth-child(6) { animation-delay: 0.55s; }
+.rail__marca i:nth-child(7) { animation-delay: 0.66s; }
+
+@keyframes marca-onda {
+  0%, 100% { transform: scaleY(0.35); opacity: 0.65; }
+  50%      { transform: scaleY(1.5);  opacity: 1; }
+}
+
+@keyframes marca-respira {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(79, 163, 255, 0.6), 0 0 20px rgba(79, 163, 255, 0.32),
+      inset 0 0 8px rgba(79, 163, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(79, 163, 255, 0.9), 0 0 32px rgba(79, 163, 255, 0.5),
+      inset 0 0 13px rgba(79, 163, 255, 0.45);
+  }
 }
 
 .rail__lista {
@@ -1847,67 +1889,120 @@
   margin-top: var(--sp-2);
 }
 
+/* Cabecera de seccion (icono + titulo + subtitulo, y pill opcional a la derecha). */
+.seccion__cab {
+  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+
+.seccion__icono {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-sm);
+  color: var(--glow);
+  background: rgba(79, 163, 255, 0.12);
+  border: 1px solid rgba(79, 163, 255, 0.2);
+}
+.seccion__icono--ok {
+  color: var(--success);
+  background: rgba(110, 231, 183, 0.12);
+  border-color: rgba(110, 231, 183, 0.22);
+}
+.seccion__icono--cursos {
+  color: #c4b5fd;
+  background: rgba(167, 139, 250, 0.14);
+  border-color: rgba(167, 139, 250, 0.24);
+}
+
+.seccion__txt { flex: 1; min-width: 0; }
+.seccion__titulo { font-size: var(--fs-3); font-weight: 600; line-height: 1.1; }
+.seccion__sub { margin-top: 2px; font-size: 13px; color: var(--text-3); }
+
+.seccion__pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--r-full);
+  background: var(--glass-2);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Tarjeta de curso (mock: nombre + proveedor/nivel + descripcion + horas +
+   demanda + flecha). Una por brecha, con el curso principal del catalogo. */
 .curso {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   padding: var(--sp-2);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--glass);
+  transition: border-color var(--t-fast), transform var(--t-fast);
 }
+.curso:hover { border-color: var(--border-2); transform: translateY(-2px); }
 
-.curso__head {
+.curso__top {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--sp-1);
-  margin-bottom: var(--sp-1);
 }
 
-.curso__head h3 {
-  font-size: var(--fs-4);
-  font-weight: 600;
-}
-
-.curso__pct {
-  font-size: 12px;
+.curso__skill {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.curso__lista {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  list-style: none;
+.curso__demanda {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
 }
+.curso__demanda--alta { background: rgba(79, 163, 255, 0.16); color: var(--glow); }
+.curso__demanda--media { background: rgba(169, 182, 204, 0.12); color: var(--text-2); }
+.curso__demanda--baja { background: var(--glass-2); color: var(--text-3); }
 
-.curso__link {
+.curso__nombre { font-size: var(--fs-4); font-weight: 600; line-height: 1.2; }
+.curso__prov { font-size: 13px; color: var(--text-2); }
+.curso__desc { font-size: var(--fs-5); color: var(--text-3); line-height: 1.45; }
+
+.curso__foot {
   display: flex;
   align-items: center;
   gap: var(--sp-1);
-  /* 44px: el minimo tactil. Un enlace de 20px de alto no se puede pulsar con el
-     pulgar sin fallar. */
-  min-height: 44px;
-  color: var(--glow);
-  text-decoration: none;
+  margin-top: auto;
+  padding-top: var(--sp-1);
 }
 
-.curso__link:hover .curso__titulo {
-  text-decoration: underline;
-}
-
-.curso__titulo {
-  font-size: var(--fs-5);
-}
-
-.curso__meta {
-  display: block;
-  padding-left: 24px;
+.curso__horas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   color: var(--text-3);
+  font-variant-numeric: tabular-nums;
 }
 
 .curso__gratis {
-  margin-left: var(--sp-1);
   padding: 2px 8px;
   border-radius: var(--r-full);
   background: rgba(110, 231, 183, 0.12);
@@ -1915,6 +2010,39 @@
   font-style: normal;
   font-size: 11px;
 }
+
+.curso__ir {
+  margin-left: auto;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  color: var(--glow);
+  background: rgba(79, 163, 255, 0.1);
+  border: 1px solid rgba(79, 163, 255, 0.25);
+  transition: background var(--t-fast);
+}
+.curso__ir:hover { background: rgba(79, 163, 255, 0.2); }
+
+.curso__extra {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: var(--sp-1);
+  padding-top: var(--sp-1);
+  border-top: 1px solid var(--border);
+}
+.curso__extra a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.curso__extra a:hover { color: var(--glow); }
 
 /* ==========================================================================
    Avisos por Telegram
