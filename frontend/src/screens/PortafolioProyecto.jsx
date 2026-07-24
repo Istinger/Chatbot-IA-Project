@@ -9,6 +9,7 @@ import {
   itemCompleto,
   leerNota,
 } from '../lib/portafolio';
+import { useVista } from '../lib/vista';
 import Icon from '../components/Icon';
 
 /**
@@ -19,7 +20,8 @@ import Icon from '../components/Icon';
  * Va con `key` = fase+item, asi al cambiar de tarea el componente se remonta y
  * las respuestas se re-leen.
  */
-function DetalleItem({ ideaId, faseId, itemIndex, item, onVolver }) {
+function DetalleItem({ ideaId, ideaTitulo, faseId, itemIndex, item, onVolver }) {
+  const { pedirIA } = useVista();
   const [respuestas, setRespuestas] = useState(() => {
     const init = {};
     item.pasos.forEach((_, j) => {
@@ -31,6 +33,20 @@ function DetalleItem({ ideaId, faseId, itemIndex, item, onVolver }) {
   const cambiar = (j, valor) => {
     setRespuestas((prev) => ({ ...prev, [j]: valor }));
     guardarNota(claveRespuesta(ideaId, faseId, itemIndex, j), valor);
+  };
+
+  // Pide feedback de UNA pregunta al chat. El mensaje es autocontenido: la
+  // pregunta y la respuesta viajan dentro, y se pide orientacion (no la respuesta).
+  const pedirOrientacion = (j) => {
+    const resp = (respuestas[j] || '').trim();
+    pedirIA(
+      [
+        `Estoy en la tarea "${item.titulo}" de mi proyecto de portafolio "${ideaTitulo}".`,
+        `Pregunta: "${item.pasos[j]}".`,
+        resp ? `Mi respuesta actual: "${resp}".` : 'Todavia no la he respondido.',
+        'Dame feedback y orientacion para responderla mejor. No la escribas por mi: solo guiame con preguntas o pistas.',
+      ].join(' '),
+    );
   };
 
   const total = item.pasos.length;
@@ -83,6 +99,9 @@ function DetalleItem({ ideaId, faseId, itemIndex, item, onVolver }) {
                 value={respuestas[j] || ''}
                 onChange={(e) => cambiar(j, e.target.value)}
               />
+              <button type="button" className="portproy__pregia" onClick={() => pedirOrientacion(j)}>
+                <Icon name="asistente" size={14} /> Pedir orientación a la IA
+              </button>
             </li>
           );
         })}
@@ -263,6 +282,7 @@ export default function PortafolioProyecto() {
             <DetalleItem
               key={`${fase.id}-${itemAbierto}`}
               ideaId={idea.id}
+              ideaTitulo={idea.titulo}
               faseId={fase.id}
               itemIndex={itemAbierto}
               item={fase.items[itemAbierto]}

@@ -2552,6 +2552,23 @@
 .portproy__resp::placeholder { color: var(--text-3); }
 .portproy__resp:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
 
+/* Boton "Pedir orientacion a la IA" bajo cada respuesta. */
+.portproy__pregia {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--r-full);
+  border: 1px solid rgba(79, 163, 255, 0.3);
+  background: rgba(79, 163, 255, 0.1);
+  color: var(--glow);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.portproy__pregia:hover { background: rgba(79, 163, 255, 0.18); }
+
 /* Continuar resaltado cuando todas las tareas de la fase estan completas. */
 .btn--primario.is-listo {
   box-shadow: 0 0 0 2px rgba(110, 231, 183, 0.55), 0 10px 40px rgba(79, 163, 255, 0.45);
