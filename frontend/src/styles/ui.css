@@ -1991,6 +1991,39 @@
   background-size: 8px 7px;
 }
 
+/* Perfil: añadir habilidad + acciones de IA. */
+.perfil__skilladd { display: flex; gap: var(--sp-1); margin-top: var(--sp-2); }
+.perfil__skillinput {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-5);
+}
+.perfil__skillinput::placeholder { color: var(--text-3); }
+.perfil__skillinput:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+
+.perfil__ia { display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-2); }
+.perfil__iabtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--r-full);
+  border: 1px solid rgba(79, 163, 255, 0.3);
+  background: rgba(79, 163, 255, 0.1);
+  color: var(--glow);
+  font-size: var(--fs-5);
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.perfil__iabtn:hover { background: rgba(79, 163, 255, 0.18); }
+
 .seccion__pill {
   flex: none;
   display: inline-flex;
