@@ -2668,6 +2668,9 @@
 
 .ofertas__fila .card { height: 100%; }
 
+/* Filas extra de la primera pagina: 4 columnas iguales (sin destacada). */
+.ofertas__fila--extra { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
 /* Altura de portada uniforme en la fila para que los pies de tarjeta alineen. */
 .ofertas__fila .card__visual {
   aspect-ratio: auto;

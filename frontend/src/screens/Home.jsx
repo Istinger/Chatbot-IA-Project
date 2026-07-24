@@ -12,9 +12,30 @@ export default function Home() {
   const [locales, setLocales] = useState(null);
   const [sinPerfil, setSinPerfil] = useState(false);
   const [version, recargar] = useState(0);
+  // Filas EXTRA de ofertas en la primera pagina. En pantallas altas la fila
+  // principal deja mucho hueco; se rellena con las filas que quepan (ver efecto).
+  const [filasExtra, setFilasExtra] = useState(0);
   // La oferta abierta vive en el contexto compartido: asi el Asistente sabe
   // cual estas viendo. El modal se monta una sola vez en el Shell.
   const { setOfertaActiva } = useVista();
+
+  useEffect(() => {
+    const calcular = () => {
+      // Solo en escritorio (la fila de 4 existe >=861px). Se estima cuantas filas
+      // de 4 ofertas caben en el hueco que deja la fila principal.
+      if (window.innerWidth < 861) {
+        setFilasExtra(0);
+        return;
+      }
+      const CHROME = 260; // cabecera + boton + margenes + nota "haz scroll"
+      const FILA = 320; // alto aproximado de una fila de tarjetas
+      const hueco = window.innerHeight - CHROME - FILA;
+      setFilasExtra(Math.max(0, Math.floor(hueco / FILA)));
+    };
+    calcular();
+    window.addEventListener('resize', calcular);
+    return () => window.removeEventListener('resize', calcular);
+  }, []);
 
   useEffect(() => {
     let vivo = true;
@@ -52,6 +73,11 @@ export default function Home() {
       mas.push(j);
     }
   }
+
+  // Las que suben a la primera pagina para rellenar el hueco, y las que quedan
+  // para "Mas ofertas".
+  const extras = mas.slice(0, filasExtra * 4);
+  const masRestante = mas.slice(filasExtra * 4);
 
   return (
     <>
@@ -105,7 +131,16 @@ export default function Home() {
           <p className="vacio">Todavia no hay recomendaciones. Completa tu perfil.</p>
         )}
 
-        {mas.length > 0 && (
+        {/* Filas extra: rellenan el hueco vertical en pantallas altas. */}
+        {!cargando && extras.length > 0 && (
+          <div className="ofertas__fila ofertas__fila--extra">
+            {extras.map((j) => (
+              <JobCard key={j.id} job={j} onOpen={setOfertaActiva} />
+            ))}
+          </div>
+        )}
+
+        {masRestante.length > 0 && (
           <p className="ofertas__scroll" aria-hidden="true">
             <Icon name="derecha" size={18} className="ofertas__scroll-flecha" />
             Haz scroll para ver mas ofertas
@@ -115,14 +150,14 @@ export default function Home() {
       </section>
 
       {/* Pagina 2: "Mas ofertas" — rejilla de 4 columnas. */}
-      {mas.length > 0 && (
+      {masRestante.length > 0 && (
         <section className="ofertas-pagina ofertas__mas">
           <div>
             <h2 className="carrusel__title">Mas ofertas</h2>
             <p className="saludo__sub">Sigue explorando oportunidades para ti</p>
           </div>
           <div className="ofertas__rejilla">
-            {mas.slice(0, 12).map((j) => (
+            {masRestante.slice(0, 12).map((j) => (
               <JobCard key={j.id} job={j} onOpen={setOfertaActiva} />
             ))}
           </div>
