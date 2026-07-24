@@ -89,6 +89,10 @@ export const api = {
   /** Skill gap + cursos. Cero IA: diferencia de conjuntos y catalogo estatico. */
   certificados: () => request('/certs/suggestions'),
 
+  /** Ideas de portafolio personalizadas (perfil + brecha). El backend cachea. */
+  portafolioIdeas: () => request('/portafolio/ideas'),
+  portafolioIdea: (id) => request(`/portafolio/ideas/${encodeURIComponent(id)}`),
+
   estadoAvisos: () => request('/notifications'),
 
   /** Devuelve { codigo, enlace, bot }: el enlace ya lleva el codigo dentro. */

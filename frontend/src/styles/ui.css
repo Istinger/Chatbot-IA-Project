@@ -3068,3 +3068,29 @@
   .ofertas__cab h1,
   .buscar__cab h1 { font-size: var(--fs-2); }
 }
+
+/* --- Portafolio: pista de personalizacion, "por que ti" y esqueletos --- */
+.port-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--sp-1);
+  padding: 6px 12px;
+  border-radius: var(--r-full);
+  font-size: 13px;
+  color: var(--glow);
+  background: rgba(79, 163, 255, 0.12);
+  border: 1px solid var(--border-2);
+}
+
+.port-dest__porque {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--sp-1);
+  color: var(--glow);
+  font-size: var(--fs-5);
+}
+
+.port-dest--esqueleto { min-height: 440px; }
+.port-card--esqueleto { min-height: 132px; display: block; }

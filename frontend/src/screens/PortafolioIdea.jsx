@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { alternarGuardada, ideaPorId, idsGuardadas, imagenIdea } from '../lib/portafolio';
+import { alternarGuardada, idsGuardadas, imagenIdea } from '../lib/portafolio';
+import { usePortafolioIdea } from '../lib/usePortafolioIdea';
 import Icon from '../components/Icon';
 import PortTags from '../components/PortTags';
 
@@ -15,17 +16,21 @@ const SECCIONES = [
 export default function PortafolioIdea() {
   const { id } = useParams();
   const navegar = useNavigate();
-  const idea = ideaPorId(id);
+  const { idea, estado } = usePortafolioIdea(id);
   const [guardada, setGuardada] = useState(() => idsGuardadas().has(id));
 
-  if (!idea) {
+  if (estado !== 'listo' || !idea) {
     return (
       <div className="portidea">
         <header className="port-cab">
           <Link to="/portafolio" className="iconbtn" aria-label="Volver"><Icon name="izquierda" /></Link>
           <span>Ideas para portafolio</span>
         </header>
-        <p className="vacio">Esa idea no existe. Vuelve al listado.</p>
+        {estado === 'cargando' ? (
+          <p className="vacio">Cargando la idea…</p>
+        ) : (
+          <p className="vacio">Esa idea no existe. Vuelve al listado.</p>
+        )}
       </div>
     );
   }

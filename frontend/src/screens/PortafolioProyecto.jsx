@@ -4,12 +4,12 @@ import {
   FASES,
   claveRespuesta,
   guardarNota,
-  ideaPorId,
   imagenIdea,
   itemCompleto,
   leerNota,
 } from '../lib/portafolio';
 import { useVista } from '../lib/vista';
+import { usePortafolioIdea } from '../lib/usePortafolioIdea';
 import Icon from '../components/Icon';
 
 /**
@@ -130,7 +130,7 @@ function DetalleItem({ ideaId, ideaTitulo, faseId, itemIndex, item, onVolver }) 
 export default function PortafolioProyecto() {
   const { id } = useParams();
   const navegar = useNavigate();
-  const idea = ideaPorId(id);
+  const { idea, estado } = usePortafolioIdea(id);
   const [paso, setPaso] = useState(0);
   // Tarea cuyo detalle se muestra (o null = vista general de la fase).
   const [itemAbierto, setItemAbierto] = useState(null);
@@ -141,14 +141,16 @@ export default function PortafolioProyecto() {
     setItemAbierto(null);
   };
 
-  if (!idea) {
+  if (estado !== 'listo' || !idea) {
     return (
       <div className="portproy">
         <header className="port-cab">
           <Link to="/portafolio" className="iconbtn" aria-label="Volver"><Icon name="izquierda" /></Link>
           <span>Ideas para portafolio</span>
         </header>
-        <p className="vacio">Esa idea no existe. Vuelve al listado.</p>
+        <p className="vacio">
+          {estado === 'cargando' ? 'Cargando la idea…' : 'Esa idea no existe. Vuelve al listado.'}
+        </p>
       </div>
     );
   }
