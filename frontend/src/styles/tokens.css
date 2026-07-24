@@ -1,25 +1,25 @@
 /* Tokens de diseño. Fuente de verdad: DESIGN.md.
    Ningun componente escribe un hex a pelo: todo sale de aqui. */
 :root {
-  /* Superficies */
-  --bg: #071421;
-  --bg-2: #0b1e31;
-  --surface: #16283d;
+  /* Superficies — negro profundo con tinte azul (mock: #02070d) */
+  --bg: #02070d;
+  --bg-2: #050b14;
+  --surface: #0a1626;
 
-  /* Marca */
-  --blue: #4fa3ff;
-  --glow: #6ec8ff;
+  /* Marca — azul electrico del mock */
+  --blue: #4b9cff;
+  --glow: #76afff;
 
-  /* Texto */
-  --text: #ffffff;
-  --text-2: #d8dee9;
-  --text-3: #98a4b3;
+  /* Texto — frio, no blanco puro */
+  --text: #eef3fb;
+  --text-2: #a9b6cc;
+  --text-3: #79859a;
 
-  /* Glass */
-  --glass: rgba(255, 255, 255, 0.04);
-  --glass-2: rgba(255, 255, 255, 0.07);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-2: rgba(255, 255, 255, 0.14);
+  /* Glass — tinte azul en vez de blanco: da la profundidad del mock */
+  --glass: rgba(76, 124, 190, 0.05);
+  --glass-2: rgba(76, 124, 190, 0.09);
+  --border: rgba(94, 131, 190, 0.20);
+  --border-2: rgba(76, 148, 255, 0.55);
 
   /* Semanticos */
   --danger: #ff8fa3;

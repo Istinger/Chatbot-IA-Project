@@ -2,6 +2,20 @@ import Icon from './Icon';
 import { formatearSalario } from '../lib/format';
 
 /**
+ * Iniciales de la empresa para el badge (mock: "ID", "AX", "PS"...).
+ *
+ * Se usa como avatar honesto: las ofertas vienen de APIs y NO traen logo, asi
+ * que en vez de inventar una imagen (enganar al usuario) se muestran las
+ * iniciales de la empresa real.
+ */
+function iniciales(nombre) {
+  const palabras = String(nombre || '').trim().split(/\s+/).filter(Boolean);
+  if (!palabras.length) return '·';
+  if (palabras.length === 1) return palabras[0].slice(0, 2).toUpperCase();
+  return (palabras[0][0] + palabras[1][0]).toUpperCase();
+}
+
+/**
  * Tarjeta de oferta. Grande, glass, con glow al hover (DESIGN.md).
  *
  * Es un <button>, no un <div> con onClick: asi funciona con teclado y los
@@ -30,8 +44,15 @@ export default function JobCard({ job, onOpen }) {
         )}
       </div>
 
-      <h3 className="card__title">{job.title}</h3>
-      <p className="card__company">{job.company}</p>
+      <div className="card__head">
+        <span className="card__badge" aria-hidden="true">
+          {iniciales(job.company)}
+        </span>
+        <div className="card__headtext">
+          <h3 className="card__title">{job.title}</h3>
+          <p className="card__company">{job.company}</p>
+        </div>
+      </div>
 
       <p className="card__meta">
         {[job.location, job.country].filter(Boolean).join(' · ') || 'Ubicacion no indicada'}

@@ -9,6 +9,29 @@ import Icon from '../components/Icon';
  *
  * El registro comparte esta misma pantalla: solo cambia el modo.
  */
+/**
+ * Traduce el fallo a un mensaje util segun su tipo. El backend ya devuelve 401
+ * con "Correo o contrasena incorrectos", pero un 502 pasajero (el contenedor
+ * reiniciando durante un deploy) llegaba como "Error 502" crudo: eso confunde,
+ * parece un fallo grave cuando basta con reintentar. Aqui se distingue el caso.
+ */
+function mensajeDeError(err) {
+  switch (err.status) {
+    case 401:
+      return 'Credenciales incorrectas. Vuelve a intentarlo.';
+    case 0:
+      return 'No hay conexion con el servidor. Revisa tu internet.';
+    case 502:
+    case 503:
+    case 504:
+      return 'El servidor esta iniciandose. Prueba de nuevo en unos segundos.';
+    default:
+      // 400 (validacion) y 409 (correo ya registrado) traen un mensaje claro
+      // del backend: se muestra tal cual.
+      return err.message || 'Algo salio mal. Intenta otra vez.';
+  }
+}
+
 export default function Login({ modo = 'login' }) {
   const esRegistro = modo === 'registro';
   const { entrar, registrar } = useAuth();
@@ -32,7 +55,7 @@ export default function Login({ modo = 'login' }) {
       // recomendaciones: va derecho al onboarding.
       navegar(perfil?.skills?.length ? '/' : '/onboarding', { replace: true });
     } catch (err) {
-      setError(err.message);
+      setError(mensajeDeError(err));
       setEnviando(false);
     }
   };
