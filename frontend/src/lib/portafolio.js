@@ -217,3 +217,29 @@ export const ideaPorId = (id) => IDEAS.find((i) => i.id === id) || null;
  */
 export const imagenIdea = (idea, w, h) =>
   `https://loremflickr.com/${w}/${h}/${encodeURIComponent(idea.img)}?lock=${idea.lock}`;
+
+/* --- Ideas guardadas (persisten en localStorage; se marcan desde el detalle) --- */
+export const CLAVE_GUARDADAS = 'jobia_portafolio_guardadas';
+
+export function idsGuardadas() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(CLAVE_GUARDADAS) || '[]'));
+  } catch {
+    return new Set();
+  }
+}
+
+/** Guarda/quita una idea y devuelve si queda guardada. */
+export function alternarGuardada(id) {
+  const set = idsGuardadas();
+  if (set.has(id)) set.delete(id);
+  else set.add(id);
+  localStorage.setItem(CLAVE_GUARDADAS, JSON.stringify([...set]));
+  return set.has(id);
+}
+
+/** Las ideas guardadas, en el orden del catalogo. */
+export function ideasGuardadas() {
+  const ids = idsGuardadas();
+  return IDEAS.filter((i) => ids.has(i.id));
+}

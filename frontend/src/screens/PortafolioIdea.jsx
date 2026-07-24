@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ideaPorId, imagenIdea } from '../lib/portafolio';
+import { alternarGuardada, ideaPorId, idsGuardadas, imagenIdea } from '../lib/portafolio';
 import Icon from '../components/Icon';
 import PortTags from '../components/PortTags';
-
-const CLAVE_GUARDADAS = 'jobia_portafolio_guardadas';
 
 // Las cuatro secciones del caso de estudio (mock). Icono + campo del detalle.
 const SECCIONES = [
@@ -14,19 +12,11 @@ const SECCIONES = [
   { icono: 'crecer', titulo: 'Cómo te ayuda en tu portafolio', campo: 'portafolio' },
 ];
 
-function leerGuardadas() {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(CLAVE_GUARDADAS) || '[]'));
-  } catch {
-    return new Set();
-  }
-}
-
 export default function PortafolioIdea() {
   const { id } = useParams();
   const navegar = useNavigate();
   const idea = ideaPorId(id);
-  const [guardada, setGuardada] = useState(() => leerGuardadas().has(id));
+  const [guardada, setGuardada] = useState(() => idsGuardadas().has(id));
 
   if (!idea) {
     return (
@@ -40,13 +30,7 @@ export default function PortafolioIdea() {
     );
   }
 
-  const alternarGuardar = () => {
-    const set = leerGuardadas();
-    if (set.has(id)) set.delete(id);
-    else set.add(id);
-    localStorage.setItem(CLAVE_GUARDADAS, JSON.stringify([...set]));
-    setGuardada(set.has(id));
-  };
+  const alternarGuardar = () => setGuardada(alternarGuardada(id));
 
   const degradado = `linear-gradient(150deg, ${idea.tono[0]}, ${idea.tono[1]})`;
 
