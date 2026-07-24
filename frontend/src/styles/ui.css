@@ -60,9 +60,9 @@
 .ambient__vignette {
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.76), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.8)),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.28), transparent 30%, rgba(0, 0, 0, 0.58)),
-    radial-gradient(ellipse at center, transparent 0 44%, rgba(0, 0, 0, 0.28) 76%, rgba(0, 0, 0, 0.72));
+    linear-gradient(90deg, rgba(0, 0, 0, 0.34), transparent 16%, transparent 84%, rgba(0, 0, 0, 0.36)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.2), transparent 30%, rgba(0, 0, 0, 0.42)),
+    radial-gradient(ellipse at center, transparent 0 50%, rgba(0, 0, 0, 0.22) 80%, rgba(0, 0, 0, 0.52));
 }
 
 @keyframes amb-drift {
@@ -583,7 +583,7 @@
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-1);
-  background: rgba(5, 11, 20, 0.6);
+  background: rgba(5, 11, 20, 0.38);
   border-right: 1px solid var(--border);
   backdrop-filter: blur(20px);
 }
@@ -701,7 +701,7 @@
   top: 0;
   height: 100dvh;
   border-left: 1px solid var(--border);
-  background: rgba(5, 11, 20, 0.55);
+  background: rgba(5, 11, 20, 0.4);
   backdrop-filter: blur(20px);
 }
 
@@ -2446,6 +2446,85 @@
 .portproy__res strong { font-size: 12px; }
 .portproy__res p { font-size: 11px; color: var(--text-3); line-height: 1.4; margin-top: 2px; }
 .portproy__nav { display: flex; gap: var(--sp-1); margin-top: auto; padding-top: var(--sp-2); }
+
+/* Flecha que indica que el item abre su detalle. */
+.portproy__itemir { flex: none; color: var(--text-3); }
+
+/* --- Detalle de un item (guia + notas) --- */
+.portproy__detalle { flex: 1; display: flex; flex-direction: column; gap: var(--sp-2); }
+.portproy__volver {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+.portproy__volver:hover { color: var(--glow); }
+.portproy__dethead { display: flex; align-items: center; gap: var(--sp-2); }
+
+.portproy__guia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: guia;
+}
+.portproy__guia li {
+  counter-increment: guia;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: var(--sp-1);
+  align-items: start;
+  font-size: var(--fs-5);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.portproy__guia li::before {
+  content: counter(guia);
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(79, 163, 255, 0.12);
+  border: 1px solid rgba(79, 163, 255, 0.25);
+  color: var(--glow);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.portproy__tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  background: rgba(79, 163, 255, 0.08);
+  border: 1px solid rgba(79, 163, 255, 0.2);
+  color: var(--text-2);
+  font-size: 13px;
+}
+.portproy__tip svg { flex: none; color: var(--glow); margin-top: 2px; }
+
+.portproy__notaslbl { font-size: 13px; color: var(--text-2); }
+.portproy__notas {
+  flex: 1;
+  min-height: 120px;
+  resize: vertical;
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-5);
+  line-height: 1.5;
+}
+.portproy__notas::placeholder { color: var(--text-3); }
+.portproy__notas:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
 .portproy__nav .btn--primario { margin-left: auto; min-width: 180px; justify-content: center; }
 
 @media (max-width: 860px) {
