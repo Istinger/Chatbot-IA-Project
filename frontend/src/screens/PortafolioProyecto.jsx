@@ -1,21 +1,42 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { FASES, claveNota, guardarNota, ideaPorId, imagenIdea, leerNota } from '../lib/portafolio';
+import {
+  FASES,
+  claveRespuesta,
+  guardarNota,
+  ideaPorId,
+  imagenIdea,
+  itemCompleto,
+  leerNota,
+} from '../lib/portafolio';
 import Icon from '../components/Icon';
 
 /**
- * Detalle de un item de fase: guia accionable + notas del usuario.
+ * Detalle de una tarea: worksheet: cada pregunta guia tiene su propio campo de
+ * respuesta, con barra de progreso. La tarea se completa sola al responderlas
+ * todas (no hay marca manual). Las respuestas se guardan en localStorage.
  *
- * Va con `key` = clave de la nota, asi al cambiar de item el componente se
- * remonta y la nota se re-lee de localStorage.
+ * Va con `key` = fase+item, asi al cambiar de tarea el componente se remonta y
+ * las respuestas se re-leen.
  */
-function DetalleItem({ clave, item, hecho, onToggle, onVolver }) {
-  const [nota, setNota] = useState(() => leerNota(clave));
+function DetalleItem({ ideaId, faseId, itemIndex, item, onVolver }) {
+  const [respuestas, setRespuestas] = useState(() => {
+    const init = {};
+    item.pasos.forEach((_, j) => {
+      init[j] = leerNota(claveRespuesta(ideaId, faseId, itemIndex, j));
+    });
+    return init;
+  });
 
-  const cambiar = (e) => {
-    setNota(e.target.value);
-    guardarNota(clave, e.target.value);
+  const cambiar = (j, valor) => {
+    setRespuestas((prev) => ({ ...prev, [j]: valor }));
+    guardarNota(claveRespuesta(ideaId, faseId, itemIndex, j), valor);
   };
+
+  const total = item.pasos.length;
+  const respondidas = item.pasos.filter((_, j) => (respuestas[j] || '').trim()).length;
+  const completo = respondidas === total;
+  const pct = total ? Math.round((respondidas / total) * 100) : 0;
 
   return (
     <div className="portproy__detalle">
@@ -29,11 +50,42 @@ function DetalleItem({ clave, item, hecho, onToggle, onVolver }) {
       </div>
       <p className="portproy__desc">{item.intro}</p>
 
-      <p className="portproy__subtit">Cómo abordarlo</p>
-      <ol className="portproy__guia">
-        {item.pasos.map((p, i) => (
-          <li key={i}>{p}</li>
-        ))}
+      <div className="portproy__progreso">
+        <div className="portproy__progtxt">
+          <span>Tu avance</span>
+          {completo ? (
+            <span className="portproy__completado"><Icon name="ok" size={14} /> Completado</span>
+          ) : (
+            <span>{respondidas} de {total} respondidas</span>
+          )}
+        </div>
+        <span className="barra">
+          <span className="barra__fill" style={{ width: `${pct}%` }} />
+        </span>
+      </div>
+
+      <p className="portproy__subtit">Responde para avanzar</p>
+      <ol className="portproy__worksheet">
+        {item.pasos.map((p, j) => {
+          const resuelta = (respuestas[j] || '').trim();
+          return (
+            <li key={j} className={`portproy__preg ${resuelta ? 'is-resuelta' : ''}`}>
+              <div className="portproy__pregcab">
+                <span className="portproy__pregnum">
+                  {resuelta ? <Icon name="ok" size={14} /> : j + 1}
+                </span>
+                <p>{p}</p>
+              </div>
+              <textarea
+                className="portproy__resp"
+                rows={2}
+                placeholder="Tu respuesta… (se guarda sola)"
+                value={respuestas[j] || ''}
+                onChange={(e) => cambiar(j, e.target.value)}
+              />
+            </li>
+          );
+        })}
       </ol>
 
       {item.tip && (
@@ -42,26 +94,9 @@ function DetalleItem({ clave, item, hecho, onToggle, onVolver }) {
         </p>
       )}
 
-      <label className="portproy__notaslbl" htmlFor="nota-item">Tus notas</label>
-      <textarea
-        id="nota-item"
-        className="portproy__notas"
-        placeholder="Escribe aquí tus respuestas, ideas o avances… (se guardan solas)"
-        value={nota}
-        onChange={cambiar}
-      />
-
       <div className="portproy__nav">
         <button type="button" className="btn btn--glass" onClick={onVolver}>
-          <Icon name="izquierda" size={18} /> Volver
-        </button>
-        <button
-          type="button"
-          className={`btn ${hecho ? 'btn--glass' : 'btn--primario'}`}
-          onClick={onToggle}
-          aria-pressed={hecho}
-        >
-          {hecho ? <>Hecho <Icon name="ok" size={18} /></> : <>Marcar como hecho <Icon name="ok" size={18} /></>}
+          <Icon name="izquierda" size={18} /> Volver a la fase
         </button>
       </div>
     </div>
@@ -69,28 +104,17 @@ function DetalleItem({ clave, item, hecho, onToggle, onVolver }) {
 }
 
 /**
- * Asistente de proyecto: guia la idea por 4 fases (Analisis, Preproduccion,
- * Pruebas, Ejecucion). Cada item de una fase abre su propio detalle (guia +
- * notas). El paso vive en estado local; "Continuar"/"Volver" navegan entre fases.
+ * Asistente de proyecto: guia la idea por 4 fases. Cada tarea abre su worksheet
+ * (preguntas con respuesta + progreso); la tarea se completa sola al responderlas
+ * todas. El paso vive en estado local; "Continuar"/"Volver" navegan entre fases.
  */
 export default function PortafolioProyecto() {
   const { id } = useParams();
   const navegar = useNavigate();
   const idea = ideaPorId(id);
   const [paso, setPaso] = useState(0);
-  // Item cuyo detalle se muestra (o null = vista general de la fase).
+  // Tarea cuyo detalle se muestra (o null = vista general de la fase).
   const [itemAbierto, setItemAbierto] = useState(null);
-  // Tareas marcadas por el usuario, por fase+item.
-  const [hechos, setHechos] = useState(() => new Set());
-
-  const alternarItem = (faseId, i) =>
-    setHechos((prev) => {
-      const s = new Set(prev);
-      const clave = `${faseId}-${i}`;
-      if (s.has(clave)) s.delete(clave);
-      else s.add(clave);
-      return s;
-    });
 
   // Cambiar de fase cierra el detalle abierto.
   const irAFase = (i) => {
@@ -113,6 +137,9 @@ export default function PortafolioProyecto() {
   const fase = FASES[paso];
   const esUltimo = paso === FASES.length - 1;
   const degradado = `linear-gradient(150deg, ${idea.tono[0]}, ${idea.tono[1]})`;
+
+  const hechasFase = fase.items.filter((it, i) => itemCompleto(idea.id, fase.id, it, i)).length;
+  const todoHecho = hechasFase === fase.items.length;
 
   const anterior = () => (paso > 0 ? irAFase(paso - 1) : navegar(`/portafolio/${idea.id}`));
   const siguiente = () => (esUltimo ? navegar(`/portafolio/${idea.id}`) : irAFase(paso + 1));
@@ -170,14 +197,21 @@ export default function PortafolioProyecto() {
               <h1 className="portproy__titulo">{fase.nombre}</h1>
               <p className="portproy__desc">{fase.descripcion}</p>
 
+              <div className="portproy__faseprog">
+                <span>Tareas de esta fase</span>
+                <span className={`portproy__faseprog-cont ${todoHecho ? 'is-listo' : ''}`}>
+                  {hechasFase}/{fase.items.length}
+                </span>
+              </div>
+
               <ul className="portproy__items">
                 {fase.items.map((it, i) => {
-                  const hecho = hechos.has(`${fase.id}-${i}`);
+                  const completo = itemCompleto(idea.id, fase.id, it, i);
                   return (
                     <li key={it.titulo}>
                       <button
                         type="button"
-                        className={`portproy__item ${hecho ? 'portproy__item--hecho' : ''}`}
+                        className={`portproy__item ${completo ? 'portproy__item--hecho' : ''}`}
                         onClick={() => setItemAbierto(i)}
                       >
                         <span className="port-ico port-ico--sm"><Icon name={it.icono} size={18} /></span>
@@ -185,7 +219,7 @@ export default function PortafolioProyecto() {
                           <h3>{it.titulo}</h3>
                           <p>{it.texto}</p>
                         </div>
-                        <span className={`portproy__check ${hecho ? 'is-on' : ''}`} aria-hidden="true">
+                        <span className={`portproy__check ${completo ? 'is-on' : ''}`} aria-hidden="true">
                           <Icon name="ok" size={16} />
                         </span>
                         <Icon name="derecha" size={18} className="portproy__itemir" />
@@ -212,7 +246,11 @@ export default function PortafolioProyecto() {
                 <button type="button" className="btn btn--glass" onClick={anterior}>
                   <Icon name="izquierda" size={18} /> Volver
                 </button>
-                <button type="button" className="btn btn--primario" onClick={siguiente}>
+                <button
+                  type="button"
+                  className={`btn btn--primario ${todoHecho ? 'is-listo' : ''}`}
+                  onClick={siguiente}
+                >
                   {esUltimo ? (
                     <>Terminar <Icon name="ok" size={18} /></>
                   ) : (
@@ -224,10 +262,10 @@ export default function PortafolioProyecto() {
           ) : (
             <DetalleItem
               key={`${fase.id}-${itemAbierto}`}
-              clave={claveNota(idea.id, fase.id, itemAbierto)}
+              ideaId={idea.id}
+              faseId={fase.id}
+              itemIndex={itemAbierto}
               item={fase.items[itemAbierto]}
-              hecho={hechos.has(`${fase.id}-${itemAbierto}`)}
-              onToggle={() => alternarItem(fase.id, itemAbierto)}
               onVolver={() => setItemAbierto(null)}
             />
           )}

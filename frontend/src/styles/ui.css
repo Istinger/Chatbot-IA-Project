@@ -2463,27 +2463,54 @@
 .portproy__volver:hover { color: var(--glow); }
 .portproy__dethead { display: flex; align-items: center; gap: var(--sp-2); }
 
-.portproy__guia {
+/* Barra de progreso del worksheet (respondidas / total). */
+.portproy__progreso { display: flex; flex-direction: column; gap: 6px; }
+.portproy__progtxt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.portproy__completado { display: inline-flex; align-items: center; gap: 5px; color: var(--success); font-weight: 600; }
+
+/* Contador de tareas de la fase (X/3). */
+.portproy__faseprog {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.portproy__faseprog-cont {
+  font-variant-numeric: tabular-nums;
+  padding: 2px 10px;
+  border-radius: var(--r-full);
+  background: var(--glass-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+.portproy__faseprog-cont.is-listo {
+  background: rgba(110, 231, 183, 0.15);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+/* Worksheet: cada pregunta con su campo de respuesta. */
+.portproy__worksheet { display: flex; flex-direction: column; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.portproy__preg {
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: guia;
+  padding: var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--glass-2);
 }
-.portproy__guia li {
-  counter-increment: guia;
-  display: grid;
-  grid-template-columns: 24px 1fr;
-  gap: var(--sp-1);
-  align-items: start;
-  font-size: var(--fs-5);
-  color: var(--text-2);
-  line-height: 1.5;
-}
-.portproy__guia li::before {
-  content: counter(guia);
+.portproy__preg.is-resuelta { border-color: rgba(110, 231, 183, 0.4); }
+.portproy__pregcab { display: grid; grid-template-columns: 24px 1fr; gap: var(--sp-1); align-items: center; }
+.portproy__pregcab p { font-size: var(--fs-5); font-weight: 600; color: var(--text); }
+.portproy__pregnum {
   display: grid;
   place-items: center;
   width: 24px;
@@ -2495,6 +2522,7 @@
   font-size: 12px;
   font-weight: 600;
 }
+.portproy__preg.is-resuelta .portproy__pregnum { background: var(--blue); border-color: var(--blue); color: #fff; }
 
 .portproy__tip {
   display: flex;
@@ -2509,13 +2537,11 @@
 }
 .portproy__tip svg { flex: none; color: var(--glow); margin-top: 2px; }
 
-.portproy__notaslbl { font-size: 13px; color: var(--text-2); }
-.portproy__notas {
-  flex: 1;
-  min-height: 120px;
+.portproy__resp {
   resize: vertical;
-  padding: var(--sp-2);
-  border-radius: var(--r-md);
+  min-height: 52px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--border);
   background: var(--glass);
   color: var(--text);
@@ -2523,8 +2549,13 @@
   font-size: var(--fs-5);
   line-height: 1.5;
 }
-.portproy__notas::placeholder { color: var(--text-3); }
-.portproy__notas:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+.portproy__resp::placeholder { color: var(--text-3); }
+.portproy__resp:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+
+/* Continuar resaltado cuando todas las tareas de la fase estan completas. */
+.btn--primario.is-listo {
+  box-shadow: 0 0 0 2px rgba(110, 231, 183, 0.55), 0 10px 40px rgba(79, 163, 255, 0.45);
+}
 .portproy__nav .btn--primario { margin-left: auto; min-width: 180px; justify-content: center; }
 
 @media (max-width: 860px) {
