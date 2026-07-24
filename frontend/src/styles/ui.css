@@ -1,34 +1,92 @@
 /* ---------------------------------------------------------------------------
-   Fondo ambiental
-   El canvas va detras de todo, con un blur fuerte encima: convierte 4 blobs
-   burdos en neblina creible por casi cero coste de CPU.
+   Fondo animado de la app (mock fondo-animado.html): imagen azul con deriva +
+   niebla, glow, particulas y viñeta, todo CSS. Fijo detras de TODO — el rail y
+   el panel del asistente lo dejan ver a traves de su blur translucido.
 --------------------------------------------------------------------------- */
 .ambient {
   position: fixed;
   inset: 0;
   z-index: var(--z-bg);
+  overflow: hidden;
   pointer-events: none;
-  background: radial-gradient(1400px 700px at 50% -20%, var(--bg-2), var(--bg) 70%);
+  background: #02050b;
+}
+.ambient > div { position: absolute; pointer-events: none; }
+
+.ambient__bg {
+  inset: -3%;
+  background: url('/fondo-azul.png') center / cover no-repeat;
+  filter: saturate(1.08) contrast(1.04);
+  transform-origin: center;
+  animation: amb-drift 18s ease-in-out infinite;
 }
 
-.ambient__canvas {
-  width: 100%;
-  height: 100%;
-  filter: blur(60px);
-  opacity: 0.9;
+.ambient__mist {
+  inset: -12%;
+  opacity: 0.34;
+  background:
+    radial-gradient(ellipse at 22% 76%, rgba(33, 98, 255, 0.38), transparent 28%),
+    radial-gradient(ellipse at 78% 76%, rgba(46, 109, 255, 0.36), transparent 30%),
+    radial-gradient(ellipse at 50% 56%, rgba(33, 83, 180, 0.18), transparent 38%);
+  filter: blur(22px);
+  mix-blend-mode: screen;
+  animation: amb-mist 14s ease-in-out infinite alternate;
 }
 
-/* Grano muy sutil: rompe el banding de los degradados en pantallas de 8 bits. */
-.ambient__grain {
-  position: absolute;
+.ambient__glow {
   inset: 0;
-  opacity: 0.025;
-  background-image: repeating-linear-gradient(
-    0deg,
-    rgba(255, 255, 255, 0.4) 0 1px,
-    transparent 1px 3px
-  );
-  mix-blend-mode: overlay;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(28, 105, 255, 0.34), transparent 32%),
+    radial-gradient(ellipse at 18% 82%, rgba(16, 72, 255, 0.22), transparent 28%),
+    radial-gradient(ellipse at 82% 82%, rgba(22, 83, 255, 0.24), transparent 30%);
+  mix-blend-mode: screen;
+  animation: amb-breathe 7s ease-in-out infinite;
+}
+
+.ambient__particles {
+  inset: 0;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(circle, rgba(97, 145, 255, 0.55) 0 1px, transparent 2px),
+    radial-gradient(circle, rgba(45, 107, 255, 0.36) 0 1px, transparent 2px),
+    radial-gradient(circle, rgba(118, 169, 255, 0.26) 0 2px, transparent 3px);
+  background-size: 92px 92px, 141px 141px, 211px 211px;
+  background-position: 0 0, 35px 60px, 90px 130px;
+  animation: amb-particles 20s linear infinite;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 0 58%, transparent 82%);
+  mask-image: radial-gradient(ellipse at center, #000 0 58%, transparent 82%);
+}
+
+.ambient__vignette {
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.76), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.8)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.28), transparent 30%, rgba(0, 0, 0, 0.58)),
+    radial-gradient(ellipse at center, transparent 0 44%, rgba(0, 0, 0, 0.28) 76%, rgba(0, 0, 0, 0.72));
+}
+
+@keyframes amb-drift {
+  0%, 100% { transform: scale(1.02) translate3d(0, 0, 0); }
+  50%      { transform: scale(1.065) translate3d(0, -1.8%, 0); }
+}
+@keyframes amb-breathe {
+  0%, 100% { opacity: 0.62; filter: brightness(1); }
+  50%      { opacity: 1; filter: brightness(1.22); }
+}
+@keyframes amb-mist {
+  0%   { transform: translate3d(-1.2%, 1.2%, 0) scale(1); opacity: 0.28; }
+  100% { transform: translate3d(1.4%, -1%, 0) scale(1.08); opacity: 0.48; }
+}
+@keyframes amb-particles {
+  0%   { background-position: 0 0, 35px 60px, 90px 130px; }
+  100% { background-position: 0 -180px, 35px -120px, 90px -50px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient__bg,
+  .ambient__mist,
+  .ambient__glow,
+  .ambient__particles { animation: none; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -2169,11 +2227,14 @@
 /* Apartado "Tus ideas guardadas": rellena el espacio bajo el listado con las
    ideas que el usuario marco, o un estado vacio si aun no guardo ninguna. */
 .port-guardadas { display: flex; flex-direction: column; gap: var(--sp-2); }
+/* Tarjetas de ancho acotado (no se estiran a toda la fila cuando hay pocas): asi
+   la imagen y el texto quedan proporcionados, como en la columna lateral. */
 .port-guardadas__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--sp-2);
 }
+.port-guardadas__grid .port-card { width: 440px; max-width: 100%; }
 .port-guardadas__vacio {
   display: flex;
   align-items: center;
@@ -2238,11 +2299,13 @@
   display: flex;
   flex-direction: column;
 }
-.portidea__cols { margin-top: auto; }
-.portidea__acciones { margin-bottom: auto; }
-.portproy__cols { margin-block: auto; }
+/* El contenido OCUPA el alto disponible (no se centra con vacio arriba/abajo):
+   las columnas crecen y su contenido se reparte (nav abajo, etc.). */
+.portidea__cols,
+.portproy__cols { flex: 1; }
+.portidea__acciones { margin-top: var(--sp-2); }
 
-.portidea__cols { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--sp-3); align-items: start; }
+.portidea__cols { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--sp-3); align-items: stretch; }
 .portidea__media {
   position: relative;
   min-height: 520px;
@@ -2280,7 +2343,7 @@
 .portidea__acciones { display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-3); }
 
 /* --- Asistente de proyecto (fases) --- */
-.portproy__cols { display: grid; grid-template-columns: 340px 1fr; gap: var(--sp-3); align-items: start; }
+.portproy__cols { display: grid; grid-template-columns: 340px 1fr; grid-template-rows: 1fr; gap: var(--sp-3); align-items: stretch; }
 .portproy__lateral {
   display: flex;
   flex-direction: column;
@@ -2343,25 +2406,46 @@
 .portproy__titulo { font-size: var(--fs-2); }
 .portproy__desc { color: var(--text-2); font-size: var(--fs-5); }
 .portproy__items { list-style: none; display: flex; flex-direction: column; gap: var(--sp-1); margin-top: var(--sp-1); }
+/* Cada item es un boton que alterna hecho/pendiente (su check). */
 .portproy__item {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+  width: 100%;
   padding: var(--sp-2);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--glass-2);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast);
 }
+.portproy__item:hover { border-color: var(--border-2); }
+.portproy__item--hecho { border-color: rgba(79, 163, 255, 0.45); background: rgba(79, 163, 255, 0.08); }
 .portproy__itemtxt { flex: 1; min-width: 0; }
 .portproy__itemtxt h3 { font-size: var(--fs-5); font-weight: 600; }
 .portproy__itemtxt p { font-size: 12px; color: var(--text-3); margin-top: 2px; }
-.portproy__check { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; }
+
+/* Check: vacio (pendiente) por defecto; azul lleno al marcarlo. */
+.portproy__check {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  color: var(--text-3);
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.portproy__check.is-on { background: var(--blue); border-color: var(--blue); color: #fff; }
 .portproy__subtit { margin-top: var(--sp-1); font-size: 13px; color: var(--text-2); }
 .portproy__resultados { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-1); }
 .portproy__res { display: flex; gap: 8px; padding: var(--sp-1); border-radius: var(--r-sm); background: var(--glass); border: 1px solid var(--border); }
 .portproy__res strong { font-size: 12px; }
 .portproy__res p { font-size: 11px; color: var(--text-3); line-height: 1.4; margin-top: 2px; }
-.portproy__nav { display: flex; gap: var(--sp-1); margin-top: var(--sp-2); }
+.portproy__nav { display: flex; gap: var(--sp-1); margin-top: auto; padding-top: var(--sp-2); }
 .portproy__nav .btn--primario { margin-left: auto; min-width: 180px; justify-content: center; }
 
 @media (max-width: 860px) {
