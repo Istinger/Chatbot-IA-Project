@@ -7,6 +7,7 @@ import Icon from '../components/Icon';
 import RichText from '../components/RichText';
 import JobCard from '../components/JobCard';
 import JobModal from '../components/JobModal';
+import VozOverlay from '../components/VozOverlay';
 
 const CLAVE_SESION = 'jobia_chat';
 
@@ -35,6 +36,7 @@ export default function Chat() {
   const [pensando, setPensando] = useState(false);
   const [error, setError] = useState(null);
   const [escuchando, setEscuchando] = useState(false);
+  const [vozAbierta, setVozAbierta] = useState(false);
   const [abierta, setAbierta] = useState(null);
 
   const sesion = useRef(localStorage.getItem(CLAVE_SESION));
@@ -115,6 +117,28 @@ export default function Chat() {
     dictadoRef.current = d;
     setEscuchando(true);
     d.start();
+  };
+
+  // Abrir el modo voz a pantalla completa y empezar a escuchar de una.
+  const abrirVoz = () => {
+    setError(null);
+    setVozAbierta(true);
+    if (!escuchando) alternarVoz();
+  };
+
+  // Volver a escribir: se para la escucha pero se CONSERVA lo transcrito en el
+  // input, para que el usuario lo termine con el teclado.
+  const cerrarVozAlTeclado = () => {
+    dictadoRef.current?.stop();
+    setVozAbierta(false);
+    setTimeout(() => document.getElementById('msg')?.focus(), 0);
+  };
+
+  // Cerrar del todo: para la escucha y descarta lo a medio decir.
+  const cerrarVoz = () => {
+    dictadoRef.current?.stop();
+    setVozAbierta(false);
+    setTexto('');
   };
 
   const vacio = mensajes.length === 0;
@@ -204,10 +228,9 @@ export default function Chat() {
         {vozSoportada && (
           <button
             type="button"
-            className={`iconbtn ${escuchando ? 'iconbtn--activo' : ''}`}
-            onClick={alternarVoz}
-            aria-label={escuchando ? 'Dejar de escuchar' : 'Dictar por voz'}
-            aria-pressed={escuchando}
+            className="iconbtn"
+            onClick={abrirVoz}
+            aria-label="Hablar por voz"
           >
             <Icon name="micro" />
           </button>
@@ -224,6 +247,18 @@ export default function Chat() {
       </form>
 
       <JobModal job={abierta} onClose={() => setAbierta(null)} />
+
+      {vozAbierta && (
+        <VozOverlay
+          nombre={nombreDe(perfil?.email)}
+          escuchando={escuchando}
+          transcripcion={texto}
+          error={error}
+          onMic={alternarVoz}
+          onTeclado={cerrarVozAlTeclado}
+          onCerrar={cerrarVoz}
+        />
+      )}
     </div>
   );
 }

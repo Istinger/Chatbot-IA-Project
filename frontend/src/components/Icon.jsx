@@ -27,6 +27,7 @@ const RUTAS = {
   crecer: <><path d="M4 19h16" /><path d="m5 15 4-5 4 3 5-7" /><path d="M18 6h3v3" /></>,
   telegram: <><path d="M21 5 3 11l5 2 2 6 3-4 5 3z" /><path d="m8 13 8-6" /></>,
   enlace: <><path d="M10 13a4 4 0 0 0 6 .5l2-2a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 11a4 4 0 0 0-6-.5l-2 2A4 4 0 0 0 11.7 18l1-1" /></>,
+  teclado: <><rect x="3" y="7" width="18" height="10" rx="2" /><path d="M7 11h.01M11 11h.01M15 11h.01M8 14h8" /></>,
 };
 
 export default function Icon({ name, size = 20, className = '' }) {

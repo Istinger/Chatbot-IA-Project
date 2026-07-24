@@ -1576,3 +1576,189 @@
     grid-template-columns: 96px 1fr 40px;
   }
 }
+
+/* ==========================================================================
+   Modo voz a pantalla completa (mock: design/escuchando.html)
+   ========================================================================== */
+
+.voz {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-3);
+  /* Negro con halos azules + viñeta, como el mock. */
+  background:
+    radial-gradient(circle at 50% 48%, rgba(39, 132, 255, 0.22), transparent 30%),
+    radial-gradient(ellipse at 50% 96%, rgba(27, 89, 185, 0.16), transparent 30%),
+    #010306;
+  animation: voz-entra var(--t-base) var(--ease-out);
+}
+
+@keyframes voz-entra {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.voz__fondo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.92), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.92)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 30%, rgba(0, 0, 0, 0.5));
+  box-shadow: inset 0 0 130px #000;
+}
+
+.voz__saludo {
+  position: relative;
+  text-align: center;
+}
+
+.voz__saludo h2 {
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 18px rgba(206, 226, 255, 0.2);
+  margin-bottom: var(--sp-1);
+}
+
+.voz__saludo p {
+  color: var(--text-2);
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  font-weight: 300;
+}
+
+/* ---- Orb ---- */
+.voz__orb {
+  position: relative;
+  width: clamp(220px, 42vw, 340px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+
+.voz__glow {
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(50, 145, 255, 0.36), transparent 44%),
+    radial-gradient(circle, rgba(89, 79, 194, 0.2), transparent 60%);
+  filter: blur(12px);
+}
+
+.voz__anillo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid #8dc7ff;
+  background:
+    radial-gradient(circle at 50% 58%, rgba(7, 13, 27, 0.94), rgba(2, 5, 11, 0.98) 66%),
+    radial-gradient(circle at 50% 50%, rgba(51, 123, 255, 0.2), transparent 62%);
+  box-shadow:
+    0 0 18px rgba(99, 189, 255, 0.9),
+    0 0 48px rgba(45, 137, 255, 0.7),
+    inset 0 0 32px rgba(64, 131, 255, 0.22);
+}
+
+/* La onda dentro del orb. En reposo casi plana; al escuchar, respira. */
+.voz__onda {
+  position: relative;
+  width: 62%;
+  height: 40%;
+  overflow: visible;
+}
+
+.voz__onda path {
+  fill: none;
+  stroke: var(--glow);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 8px rgba(45, 170, 255, 0.85));
+  opacity: 0.9;
+}
+
+.voz__onda2 {
+  stroke: #2fe0ff;
+  opacity: 0.55;
+}
+
+.voz__orb--vivo .voz__anillo {
+  animation: voz-pulso 2.4s var(--ease-out) infinite;
+}
+
+.voz__orb--vivo .voz__onda path {
+  animation: voz-onda 1.6s ease-in-out infinite alternate;
+}
+
+.voz__orb--vivo .voz__onda2 {
+  animation-delay: 0.3s;
+}
+
+@keyframes voz-pulso {
+  0%, 100% { box-shadow: 0 0 18px rgba(99, 189, 255, 0.9), 0 0 48px rgba(45, 137, 255, 0.7), inset 0 0 32px rgba(64, 131, 255, 0.22); }
+  50% { box-shadow: 0 0 26px rgba(99, 189, 255, 1), 0 0 72px rgba(45, 137, 255, 0.9), inset 0 0 40px rgba(64, 131, 255, 0.3); }
+}
+
+@keyframes voz-onda {
+  from { transform: scaleY(0.5); }
+  to { transform: scaleY(1.15); }
+}
+
+.voz__texto {
+  position: relative;
+  min-height: 1.6em;
+  max-width: 40ch;
+  text-align: center;
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+/* ---- Controles ---- */
+.voz__controles {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(24px, 6vw, 56px);
+}
+
+.voz__btn {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(108, 132, 211, 0.42);
+  background: rgba(12, 16, 36, 0.62);
+  color: var(--text);
+  box-shadow: inset 0 0 24px rgba(87, 113, 255, 0.08);
+  transition: transform var(--t-fast) var(--ease-out), border-color var(--t-fast);
+}
+
+.voz__btn:hover { border-color: var(--border-2); }
+.voz__btn:active { transform: scale(0.94); }
+.voz__btn:focus-visible { outline: 2px solid var(--glow); outline-offset: 3px; }
+
+.voz__btn--mic {
+  width: 108px;
+  height: 108px;
+  border: 3px solid #78bdff;
+  background: radial-gradient(circle, rgba(28, 69, 151, 0.66), rgba(10, 16, 38, 0.86));
+  box-shadow:
+    0 0 25px rgba(81, 169, 255, 0.9),
+    0 0 56px rgba(59, 136, 255, 0.45),
+    inset 0 0 24px rgba(79, 146, 255, 0.24);
+  color: #eaf3ff;
+}
+
+.voz__btn--activo { animation: voz-pulso 2s var(--ease-out) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .voz, .voz__orb--vivo .voz__anillo, .voz__orb--vivo .voz__onda path, .voz__btn--activo {
+    animation: none;
+  }
+}
