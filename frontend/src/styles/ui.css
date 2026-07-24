@@ -2296,11 +2296,18 @@
    es el root; solo .ofertas-pagina tiene snap-align, asi que otras rutas no se ven
    afectadas. */
 @media (min-width: 861px) {
-  html { scroll-snap-type: y proximity; }
+  html {
+    /* mandatory (no proximity): cada gesto ENGANCHA a la pagina, no se queda a
+       medias. Es lo que da sentido a la nota "Haz scroll para ver mas ofertas". */
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+  }
 
   .ofertas-pagina {
     min-height: 100dvh;
     scroll-snap-align: start;
+    /* Cada tanda avanza de una en una: un gesto rapido no salta la pagina. */
+    scroll-snap-stop: always;
     scroll-margin-top: var(--sp-3);
     display: flex;
     flex-direction: column;
