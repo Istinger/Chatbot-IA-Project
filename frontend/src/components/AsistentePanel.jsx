@@ -8,6 +8,7 @@ import Icon from './Icon';
 import RichText from './RichText';
 import JobCard from './JobCard';
 import VozOverlay from './VozOverlay';
+import EntrevistaPanel from './EntrevistaPanel';
 
 const CLAVE_SESION = 'jobia_chat';
 
@@ -36,6 +37,7 @@ export default function AsistentePanel() {
   // manda como contexto al chat para responder sobre lo que hay en pantalla.
   const { ofertaActiva, setOfertaActiva, contextoPantalla, peticionIA, consumirIA } = useVista();
 
+  const [modo, setModo] = useState('chat'); // chat | entrevista
   const [mensajes, setMensajes] = useState([]);
   const [texto, setTexto] = useState('');
   const [pensando, setPensando] = useState(false);
@@ -147,6 +149,34 @@ export default function AsistentePanel() {
         </div>
       </header>
 
+      {/* Subsecciones del panel: chat libre o entrevista simulada. */}
+      <div className="asis-modo" role="tablist" aria-label="Modo del asistente">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={modo === 'chat'}
+          className={`asis-modo__btn ${modo === 'chat' ? 'is-on' : ''}`}
+          onClick={() => setModo('chat')}
+        >
+          <Icon name="asistente" size={16} /> Chat
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={modo === 'entrevista'}
+          className={`asis-modo__btn ${modo === 'entrevista' ? 'is-on' : ''}`}
+          onClick={() => setModo('entrevista')}
+        >
+          <Icon name="micro" size={16} /> Entrevista
+        </button>
+      </div>
+
+      {modo === 'entrevista' ? (
+        <div className="asis__cuerpo asis__cuerpo--entrev">
+          <EntrevistaPanel />
+        </div>
+      ) : (
+       <>
       <div className="asis__cuerpo">
         {vacio ? (
           <>
@@ -227,6 +257,8 @@ export default function AsistentePanel() {
           <Icon name="enviar" />
         </button>
       </form>
+       </>
+      )}
 
       {vozAbierta && (
         <VozOverlay

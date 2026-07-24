@@ -161,6 +161,34 @@ test.describe('Portafolio', () => {
   });
 });
 
+test.describe('Entrevista', () => {
+  test('subseccion: setup -> pregunta -> feedback', async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', 'el panel esta siempre visible en escritorio');
+    await login(page);
+
+    // Cambiar a la subseccion Entrevista del panel.
+    await page.getByRole('tab', { name: /Entrevista/i }).click();
+    await expect(page.locator('.entrev-setup')).toBeVisible();
+    // La tarjeta de video aparece como "proximamente".
+    await expect(page.locator('.entrev-video--soon')).toContainText(/Proximamente/i);
+
+    // Empezar: preguntas del banco (sin depender del LLM).
+    await page.locator('.entrev-setup input').first().fill('Desarrollador frontend junior');
+    await page.getByRole('button', { name: /Empezar entrevista/i }).click();
+
+    // Aparece la primera pregunta y la zona de respuesta.
+    await expect(page.locator('.entrev-sesion .burbuja--assistant')).toBeVisible();
+    await page.locator('.entrev__resp').fill(
+      'Soy egresado de sistemas, me gusta el frontend con React y he hecho proyectos personales de practica para aprender.',
+    );
+
+    // Terminar salta al feedback (usa fallback si el LLM no responde: nunca cuelga).
+    await page.getByRole('button', { name: /^Terminar$/i }).click();
+    await expect(page.locator('.entrev-feedback')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Practicar otra vez/i })).toBeVisible();
+  });
+});
+
 test.describe('Modo voz', () => {
   test('abrir el microfono muestra el overlay a pantalla completa', async ({ page }, info) => {
     await login(page);
