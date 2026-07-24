@@ -8,6 +8,9 @@ import Home from './screens/Home';
 import Search from './screens/Search';
 import Certs from './screens/Certs';
 import Profile from './screens/Profile';
+import Portafolio from './screens/Portafolio';
+import PortafolioIdea from './screens/PortafolioIdea';
+import PortafolioProyecto from './screens/PortafolioProyecto';
 
 /** Ruta protegida: sin sesion, al login. */
 function Privada({ children }) {
@@ -42,6 +45,9 @@ function Rutas() {
         <Route path="/" element={<Home />} />
         <Route path="/buscar" element={<Search />} />
         <Route path="/crecer" element={<Certs />} />
+        <Route path="/portafolio" element={<Portafolio />} />
+        <Route path="/portafolio/:id" element={<PortafolioIdea />} />
+        <Route path="/portafolio/:id/proyecto" element={<PortafolioProyecto />} />
         <Route path="/perfil" element={<Profile />} />
       </Route>
 

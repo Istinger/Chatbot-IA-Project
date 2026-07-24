@@ -21,6 +21,7 @@ const RUTAS = [
   { to: '/', icono: 'inicio', texto: 'Inicio' },
   { to: '/buscar', icono: 'buscar', texto: 'Buscar' },
   { to: '/crecer', icono: 'crecer', texto: 'Crecer' },
+  { to: '/portafolio', icono: 'maletin', texto: 'Portafolio' },
   { to: '/perfil', icono: 'usuario', texto: 'Perfil' },
 ];
 
@@ -43,9 +44,13 @@ function ShellInterno() {
     <div className="shell">
       {/* Rail de navegacion (escritorio, izquierda) */}
       <nav className="rail" aria-label="Navegacion principal">
-        {/* Marca: orbe animado 100% CSS (anillo con halo + onda de sonido). */}
+        {/* Marca: mismo orbe animado que el modo voz (anillo con halo + la onda
+            SVG de dos trazos), a escala del rail. */}
         <span className="rail__marca" aria-hidden="true">
-          <i /><i /><i /><i /><i /><i /><i />
+          <svg className="rail__marca-onda" viewBox="0 0 200 80" preserveAspectRatio="none">
+            <path d="M0,40 Q25,10 50,40 T100,40 T150,40 T200,40" />
+            <path className="rail__marca-onda2" d="M0,40 Q25,64 50,40 T100,40 T150,40 T200,40" />
+          </svg>
         </span>
         <ul className="rail__lista">
           {RUTAS.map((r) => (

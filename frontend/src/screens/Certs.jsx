@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { useVista } from '../lib/vista';
 import Icon from '../components/Icon';
+import SkillIcon from '../components/SkillIcon';
 
 /**
  * Brecha de habilidades (skill gap).
@@ -180,22 +181,28 @@ export default function Certs() {
 
               return (
                 <article key={c.skill} className="curso">
-                  <header className="curso__top">
-                    <span className="curso__skill">{c.skill}</span>
-                    <span className={`curso__demanda curso__demanda--${dem.tono}`}>{dem.texto}</span>
-                  </header>
+                  <div className="curso__head">
+                    <SkillIcon skill={c.skill} size={40} />
+                    <div className="curso__headtxt">
+                      <h3 className="curso__nombre">{curso.titulo}</h3>
+                      <p className="curso__prov">
+                        <span className="curso__provname">{curso.proveedor}</span>
+                        {curso.nivel && (
+                          <span className="curso__nivel">
+                            <Icon name="nivel" size={13} /> {curso.nivel}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
 
-                  <h3 className="curso__nombre">{curso.titulo}</h3>
-                  <p className="curso__prov">
-                    {curso.proveedor}
-                    {curso.nivel ? ` · ${curso.nivel}` : ''}
-                  </p>
                   {curso.descripcion && <p className="curso__desc">{curso.descripcion}</p>}
 
                   <footer className="curso__foot">
                     <span className="curso__horas">
                       <Icon name="reloj" size={14} /> {curso.horas ? `${curso.horas} h` : 'a tu ritmo'}
                     </span>
+                    <span className={`curso__demanda curso__demanda--${dem.tono}`}>{dem.texto}</span>
                     {curso.gratis === true && <span className="curso__gratis">gratis</span>}
                     {curso.gratis === 'auditable' && (
                       <span className="curso__gratis" title="Se puede cursar gratis; el certificado se paga">
