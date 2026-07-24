@@ -13,6 +13,18 @@ export default function PortafolioProyecto() {
   const navegar = useNavigate();
   const idea = ideaPorId(id);
   const [paso, setPaso] = useState(0);
+  // Tareas marcadas por el usuario, por fase+item. Cada item es un boton que
+  // alterna su estado hecho/pendiente (su "accion").
+  const [hechos, setHechos] = useState(() => new Set());
+
+  const alternarItem = (faseId, i) =>
+    setHechos((prev) => {
+      const s = new Set(prev);
+      const clave = `${faseId}-${i}`;
+      if (s.has(clave)) s.delete(clave);
+      else s.add(clave);
+      return s;
+    });
 
   if (!idea) {
     return (
@@ -85,16 +97,28 @@ export default function PortafolioProyecto() {
           <p className="portproy__desc">{fase.descripcion}</p>
 
           <ul className="portproy__items">
-            {fase.items.map((it) => (
-              <li key={it.titulo} className="portproy__item">
-                <span className="port-ico port-ico--sm"><Icon name={it.icono} size={18} /></span>
-                <div className="portproy__itemtxt">
-                  <h3>{it.titulo}</h3>
-                  <p>{it.texto}</p>
-                </div>
-                <span className="portproy__check"><Icon name="ok" size={16} /></span>
-              </li>
-            ))}
+            {fase.items.map((it, i) => {
+              const hecho = hechos.has(`${fase.id}-${i}`);
+              return (
+                <li key={it.titulo}>
+                  <button
+                    type="button"
+                    className={`portproy__item ${hecho ? 'portproy__item--hecho' : ''}`}
+                    onClick={() => alternarItem(fase.id, i)}
+                    aria-pressed={hecho}
+                  >
+                    <span className="port-ico port-ico--sm"><Icon name={it.icono} size={18} /></span>
+                    <div className="portproy__itemtxt">
+                      <h3>{it.titulo}</h3>
+                      <p>{it.texto}</p>
+                    </div>
+                    <span className={`portproy__check ${hecho ? 'is-on' : ''}`}>
+                      <Icon name="ok" size={16} />
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
 
           <p className="portproy__subtit">Resultados de esta fase</p>

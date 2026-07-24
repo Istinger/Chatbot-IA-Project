@@ -21,16 +21,17 @@ export default function Home() {
 
   useEffect(() => {
     const calcular = () => {
-      // Solo en escritorio (la fila de 4 existe >=861px). Se estima cuantas filas
-      // de 4 ofertas caben en el hueco que deja la fila principal.
+      // Como MUCHO una fila extra (2 filas en total): mas romperia el scroll-snap
+      // de la primera pagina. Y solo se añade si las 2 filas caben ENTERAS en el
+      // viewport, para que no asome una tercera ni desborde la pagina.
       if (window.innerWidth < 861) {
         setFilasExtra(0);
         return;
       }
-      const CHROME = 260; // cabecera + boton + margenes + nota "haz scroll"
-      const FILA = 320; // alto aproximado de una fila de tarjetas
-      const hueco = window.innerHeight - CHROME - FILA;
-      setFilasExtra(Math.max(0, Math.floor(hueco / FILA)));
+      const CHROME = 210; // cabecera + nota "haz scroll" + margenes
+      const FILA = 430; // alto real de una fila de tarjetas (imagen + cuerpo)
+      const filasQueCaben = Math.floor((window.innerHeight - CHROME) / FILA);
+      setFilasExtra(filasQueCaben >= 2 ? 1 : 0);
     };
     calcular();
     window.addEventListener('resize', calcular);
