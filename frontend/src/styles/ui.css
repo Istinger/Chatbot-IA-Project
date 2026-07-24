@@ -512,7 +512,7 @@
   z-index: var(--z-content);
   min-height: 100dvh;
   display: grid;
-  grid-template-columns: 108px minmax(0, 1fr) minmax(340px, 400px);
+  grid-template-columns: 108px minmax(0, 1fr) minmax(340px, var(--asis-ancho));
 }
 
 .rail {
@@ -531,10 +531,14 @@
 }
 
 .rail__marca {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--glow), var(--blue));
+  /* Imagen de marca (circulo con onda). Cae en frontend/public/. Si falta el
+     archivo, el degradado de reserva evita un hueco vacio. */
+  background:
+    url('/marca-asistente.png') center / cover no-repeat,
+    radial-gradient(circle at 35% 30%, var(--glow), var(--blue));
   box-shadow: 0 0 20px rgba(79, 163, 255, 0.6);
   flex: none;
 }
@@ -2340,6 +2344,13 @@
     background: transparent;
     animation: ofertas-blink ease-in-out both;
     animation-timeline: --ofertas-1;
+  }
+
+  /* El scrim del modal no cubre la columna del Asistente: se queda visible y
+     usable mientras hay una oferta abierta, y el dialogo se centra sobre el
+     resto (rail + contenido). */
+  .modal {
+    right: var(--asis-ancho);
   }
 }
 

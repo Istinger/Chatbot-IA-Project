@@ -4,7 +4,13 @@ const env = require('../../config/env');
 const llm = require('../../config/openrouter');
 const { consumir } = require('../../shared/ratelimit');
 const matching = require('../matching/matching.service');
-const { SYSTEM, bloqueOfertas, bloquePerfil } = require('./chat.prompt');
+const {
+  SYSTEM,
+  bloqueOfertas,
+  bloquePerfil,
+  bloqueOfertaActual,
+  bloquePantalla,
+} = require('./chat.prompt');
 const { esConsultaDeEmpleo } = require('./chat.intencion');
 
 /** Turnos de conversacion que viajan en el prompt. Ver `historial()`. */
@@ -70,7 +76,7 @@ async function recuperar({ mensaje }) {
   }
 }
 
-async function responder({ mensaje, sessionId, user, perfil }) {
+async function responder({ mensaje, sessionId, user, perfil, jobViendo, contextoPantalla }) {
   const texto = String(mensaje || '').trim().slice(0, MAX_MENSAJE);
   if (!texto) throw new ChatError('El mensaje esta vacio', 400);
 
@@ -94,7 +100,12 @@ async function responder({ mensaje, sessionId, user, perfil }) {
   // El contexto recuperado va en un mensaje aparte, delimitado y anunciado como
   // DATOS. Nunca concatenado al texto del usuario: eso es lo que abre la puerta
   // a la inyeccion indirecta de prompts.
-  const contexto = [bloquePerfil(perfil), bloqueOfertas(jobs)]
+  const contexto = [
+    bloquePerfil(perfil),
+    bloquePantalla(contextoPantalla),
+    bloqueOfertaActual(jobViendo),
+    bloqueOfertas(jobs),
+  ]
     .filter(Boolean)
     .join('\n\n');
 

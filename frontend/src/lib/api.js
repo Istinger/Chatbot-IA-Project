@@ -75,8 +75,8 @@ export const api = {
    * Chatbot. Funciona SIN sesion (un visitante puede conversar mientras ojea la
    * web); si hay token, el cliente lo adjunta solo y el asistente conoce el perfil.
    */
-  chat: (mensaje, sessionId) =>
-    request('/chat', { method: 'POST', body: { mensaje, sessionId } }),
+  chat: (mensaje, sessionId, jobId, contexto) =>
+    request('/chat', { method: 'POST', body: { mensaje, sessionId, jobId, contexto } }),
 
   historialChat: (sessionId) => request(`/chat/${sessionId}`),
 

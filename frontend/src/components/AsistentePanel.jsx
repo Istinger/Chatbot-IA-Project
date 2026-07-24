@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { useVista } from '../lib/vista';
 import { nombreDe } from '../lib/format';
 import { crearDictado, esBrave, mensajeDeError, soportado as vozSoportada } from '../lib/voz';
 import Icon from './Icon';
 import RichText from './RichText';
 import JobCard from './JobCard';
-import JobModal from './JobModal';
 import VozOverlay from './VozOverlay';
 
 const CLAVE_SESION = 'jobia_chat';
@@ -41,6 +41,10 @@ const SUGERENCIAS = [
 export default function AsistentePanel() {
   const { perfil } = useAuth();
   const navegar = useNavigate();
+  // Lo que el usuario ve ahora: la oferta abierta (modal compartido en el Shell)
+  // y un resumen de la pantalla actual (p. ej. brechas/cursos de "Crecer"). Se
+  // manda como contexto al chat para responder sobre lo que hay en pantalla.
+  const { ofertaActiva, setOfertaActiva, contextoPantalla } = useVista();
 
   const [mensajes, setMensajes] = useState([]);
   const [texto, setTexto] = useState('');
@@ -48,7 +52,6 @@ export default function AsistentePanel() {
   const [error, setError] = useState(null);
   const [escuchando, setEscuchando] = useState(false);
   const [vozAbierta, setVozAbierta] = useState(false);
-  const [abierta, setAbierta] = useState(null);
 
   const sesion = useRef(localStorage.getItem(CLAVE_SESION));
   const finRef = useRef(null);
@@ -79,7 +82,9 @@ export default function AsistentePanel() {
     setMensajes((prev) => [...prev, { role: 'user', content: m }]);
     setPensando(true);
     try {
-      const r = await api.chat(m, sesion.current);
+      // Se adjunta lo que se ve en pantalla: el id de la oferta abierta (si la
+      // hay) y el resumen de la pantalla actual (brechas/cursos de "Crecer", etc.).
+      const r = await api.chat(m, sesion.current, ofertaActiva?.id, contextoPantalla);
       sesion.current = r.sessionId;
       localStorage.setItem(CLAVE_SESION, r.sessionId);
       setMensajes((prev) => [...prev, { role: 'assistant', content: r.respuesta, jobs: r.jobs }]);
@@ -187,7 +192,7 @@ export default function AsistentePanel() {
                 {m.jobs?.length > 0 && (
                   <div className="asis__ofertas">
                     {m.jobs.slice(0, 3).map((j) => (
-                      <JobCard key={j.id} job={j} onOpen={setAbierta} />
+                      <JobCard key={j.id} job={j} onOpen={setOfertaActiva} />
                     ))}
                   </div>
                 )}
@@ -240,8 +245,6 @@ export default function AsistentePanel() {
           <Icon name="enviar" />
         </button>
       </form>
-
-      <JobModal job={abierta} onClose={() => setAbierta(null)} />
 
       {vozAbierta && (
         <VozOverlay

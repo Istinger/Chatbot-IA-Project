@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { useVista } from '../lib/vista';
 import Icon from '../components/Icon';
 
 /**
@@ -21,6 +22,7 @@ function Barra({ porcentaje, tono = 'falta' }) {
 export default function Certs() {
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState(null);
+  const { setContextoPantalla } = useVista();
 
   useEffect(() => {
     api
@@ -28,6 +30,31 @@ export default function Certs() {
       .then(setDatos)
       .catch((e) => setError(e.message));
   }, []);
+
+  // Se le cuenta al Asistente que brechas y cursos esta viendo el usuario, para
+  // que "que aprendo primero?" o "cursos para X" tengan contexto real. Se limpia
+  // al salir de la pantalla para no arrastrar contexto viejo a otras rutas.
+  useEffect(() => {
+    if (!datos) return undefined;
+    const { analizadas, faltantes, fortalezas, cursos } = datos;
+    const resumen = [
+      `El usuario esta en la pantalla "Crecer": analisis de brechas de habilidades frente a ${analizadas} ofertas afines a su perfil.`,
+      faltantes.length
+        ? `Brechas (habilidad: % de esas ofertas que la piden): ${faltantes
+            .map((f) => `${f.skill} ${f.porcentaje}%`)
+            .join(', ')}.`
+        : 'No tiene brechas: ya cubre lo que piden sus ofertas.',
+      fortalezas.length
+        ? `Ya domina y le valoran: ${fortalezas.map((f) => `${f.skill} ${f.porcentaje}%`).join(', ')}.`
+        : '',
+      cursos.length ? `Hay cursos sugeridos para: ${cursos.map((c) => c.skill).join(', ')}.` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    setContextoPantalla(resumen);
+    return () => setContextoPantalla(null);
+  }, [datos, setContextoPantalla]);
 
   if (error) {
     return (

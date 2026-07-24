@@ -53,6 +53,10 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
 
+  /* Ancho de la columna del Asistente en escritorio. Se usa en el grid del Shell
+     y para que el scrim del modal NO tape el asistente (queda visible y usable). */
+  --asis-ancho: 400px;
+
   /* Capas */
   --z-bg: 0;
   --z-content: 10;

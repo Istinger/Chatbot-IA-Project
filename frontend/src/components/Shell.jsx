@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { VistaProvider, useVista } from '../lib/vista';
 import Icon from './Icon';
 import AsistentePanel from './AsistentePanel';
+import JobModal from './JobModal';
 
 /**
  * Navegacion HIBRIDA (el asistente es el protagonista, no las pestañas):
@@ -23,8 +25,19 @@ const RUTAS = [
 ];
 
 export default function Shell() {
+  // El proveedor envuelve TODO el shell: la home (Outlet) y el asistente
+  // comparten la misma "oferta activa", y el modal se monta una sola vez.
+  return (
+    <VistaProvider>
+      <ShellInterno />
+    </VistaProvider>
+  );
+}
+
+function ShellInterno() {
   const { salir } = useAuth();
   const [asisAbierto, setAsisAbierto] = useState(false);
+  const { ofertaActiva, setOfertaActiva } = useVista();
 
   return (
     <div className="shell">
@@ -86,6 +99,10 @@ export default function Shell() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Modal unico y compartido: lo abren tanto las tarjetas de la home como
+          las del chat, y el Asistente sabe que oferta esta activa. */}
+      <JobModal job={ofertaActiva} onClose={() => setOfertaActiva(null)} />
     </div>
   );
 }

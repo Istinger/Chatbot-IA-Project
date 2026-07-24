@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../lib/api';
+import { useVista } from '../lib/vista';
 import JobCard from '../components/JobCard';
-import JobModal from '../components/JobModal';
 import Icon from '../components/Icon';
 import Refrescar from '../components/Refrescar';
 
@@ -11,8 +11,10 @@ export default function Home() {
   const [exterior, setExterior] = useState(null);
   const [locales, setLocales] = useState(null);
   const [sinPerfil, setSinPerfil] = useState(false);
-  const [abierta, setAbierta] = useState(null);
   const [version, recargar] = useState(0);
+  // La oferta abierta vive en el contexto compartido: asi el Asistente sabe
+  // cual estas viendo. El modal se monta una sola vez en el Shell.
+  const { setOfertaActiva } = useVista();
 
   useEffect(() => {
     let vivo = true;
@@ -94,9 +96,9 @@ export default function Home() {
           </div>
         ) : recomendadas.length ? (
           <div className="ofertas__fila">
-            <JobCard job={destacada} onOpen={setAbierta} destacada />
+            <JobCard job={destacada} onOpen={setOfertaActiva} destacada />
             {chicas.map((j) => (
-              <JobCard key={j.id} job={j} onOpen={setAbierta} />
+              <JobCard key={j.id} job={j} onOpen={setOfertaActiva} />
             ))}
           </div>
         ) : (
@@ -121,13 +123,11 @@ export default function Home() {
           </div>
           <div className="ofertas__rejilla">
             {mas.slice(0, 12).map((j) => (
-              <JobCard key={j.id} job={j} onOpen={setAbierta} />
+              <JobCard key={j.id} job={j} onOpen={setOfertaActiva} />
             ))}
           </div>
         </section>
       )}
-
-      <JobModal job={abierta} onClose={() => setAbierta(null)} />
     </>
   );
 }
