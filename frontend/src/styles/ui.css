@@ -2335,9 +2335,9 @@
     flex-direction: column;
     justify-content: center;
     gap: var(--sp-3);
-    /* fondo solido: durante el contraste/blur las tarjetas no dejan ver el
-       degradado del body por detras (mismo motivo que el fondo negro del demo). */
-    background: var(--bg);
+    /* Sin fondo propio: se ve el mismo fondo ambiental que "Mas ofertas". El blur
+       y el fundido bastan para la transicion; no hace falta tapar el body. */
+    background: transparent;
     animation: ofertas-blink ease-in-out both;
     animation-timeline: --ofertas-1;
   }
