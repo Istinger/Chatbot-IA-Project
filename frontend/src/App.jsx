@@ -6,7 +6,6 @@ import Login from './screens/Login';
 import Onboarding from './screens/Onboarding';
 import Home from './screens/Home';
 import Search from './screens/Search';
-import Chat from './screens/Chat';
 import Certs from './screens/Certs';
 import Profile from './screens/Profile';
 
@@ -37,10 +36,11 @@ function Rutas() {
 
       <Route path="/onboarding" element={<Privada><Onboarding /></Privada>} />
 
+      {/* El Asistente ya no es una ruta: vive SIEMPRE en el Shell (derecha en
+          escritorio). /asistente se redirige a la home por compatibilidad. */}
       <Route element={<Privada><Shell /></Privada>}>
         <Route path="/" element={<Home />} />
         <Route path="/buscar" element={<Search />} />
-        <Route path="/asistente" element={<Chat />} />
         <Route path="/crecer" element={<Certs />} />
         <Route path="/perfil" element={<Profile />} />
       </Route>

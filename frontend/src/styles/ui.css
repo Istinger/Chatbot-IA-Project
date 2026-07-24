@@ -432,26 +432,26 @@
 /* ---------------------------------------------------------------------------
    Shell: rail lateral (escritorio) / barra inferior (movil)
 --------------------------------------------------------------------------- */
+/* Tres columnas: rail de navegacion | contenido | Asistente. */
 .shell {
   position: relative;
   z-index: var(--z-content);
   min-height: 100dvh;
-  display: flex;
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr) minmax(340px, 400px);
 }
 
 .rail {
-  position: fixed;
-  z-index: var(--z-nav);
+  position: sticky;
   top: 0;
-  left: 0;
-  bottom: 0;
-  width: 108px;
+  z-index: var(--z-nav);
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-1);
-  background: rgba(7, 20, 33, 0.6);
+  background: rgba(5, 11, 20, 0.6);
   border-right: 1px solid var(--border);
   backdrop-filter: blur(20px);
 }
@@ -511,14 +511,183 @@
 }
 
 .lienzo {
-  flex: 1;
-  min-width: 0; /* sin esto, el carrusel desborda el flex y aparece scroll horizontal */
-  margin-left: 108px;
-  padding: var(--sp-5) 0 var(--sp-6) var(--sp-4);
+  min-width: 0; /* sin esto, el carrusel desborda y aparece scroll horizontal */
+  padding: var(--sp-5) var(--sp-4) var(--sp-6);
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
 }
+
+/* ---------------------------------------------------------------------------
+   Panel del Asistente (columna derecha en escritorio / hoja en movil)
+--------------------------------------------------------------------------- */
+.asis-host {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  border-left: 1px solid var(--border);
+  background: rgba(5, 11, 20, 0.55);
+  backdrop-filter: blur(20px);
+}
+
+.asis-host__cerrar { display: none; } /* solo visible como hoja en movil */
+
+.asis {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-3);
+  gap: var(--sp-2);
+}
+
+.asis__cab {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+}
+
+.asis__orb { flex: none; }
+
+.asis__nombre { font-size: var(--fs-4); font-weight: 600; }
+
+.asis__estado {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.asis__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+/* El cuerpo scrollea; la cabecera y la barra quedan fijas. */
+.asis__cuerpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.asis__hola {
+  color: var(--text-2);
+  font-size: var(--fs-5);
+  line-height: 1.55;
+}
+
+/* Tarjetas de accion: la navegacion del asistente (mock). */
+.asis__acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.accion {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--glass);
+  text-align: left;
+  transition: border-color var(--t-fast), background var(--t-fast), transform var(--t-fast);
+}
+
+.accion:hover {
+  border-color: var(--border-2);
+  background: var(--glass-2);
+  transform: translateX(2px);
+}
+
+.accion__icono {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #cfe0ff;
+  background: linear-gradient(135deg, rgba(25, 68, 146, 0.86), rgba(14, 32, 78, 0.92));
+  border: 1px solid rgba(93, 128, 184, 0.38);
+  box-shadow: inset 0 0 18px rgba(68, 156, 255, 0.28);
+}
+
+.accion__texto { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.accion__titulo { font-size: var(--fs-5); font-weight: 600; }
+.accion__sub { font-size: 12px; color: var(--text-3); }
+.accion__flecha { color: var(--text-3); flex: none; }
+
+.asis__sugtit {
+  margin-top: var(--sp-1);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+
+.asis__sugs {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.asis__hilo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.asis__ofertas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+}
+
+/* En el panel las tarjetas de oferta van a ancho completo, no en carrusel. */
+.asis__ofertas .card { width: 100%; }
+
+.asis__error { flex: none; margin: 0; }
+
+.asis__barra {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding-top: var(--sp-1);
+}
+
+.asis__barra input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 16px;
+}
+
+.asis__barra input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(79, 163, 255, 0.2);
+}
+
+/* Barra inferior movil: oculta en escritorio. */
+.tabbar { display: none; }
 
 /* ---------------------------------------------------------------------------
    Cabeceras y paneles
@@ -1001,54 +1170,78 @@
    Movil: el rail lateral pasa a barra inferior
 --------------------------------------------------------------------------- */
 @media (max-width: 860px) {
-  .rail {
-    top: auto;
+  /* Una sola columna: el rail lateral se oculta y navega la barra inferior. */
+  .shell { display: block; }
+  .rail { display: none; }
+
+  /* El Asistente pasa a HOJA a pantalla completa (se abre desde la barra). */
+  .asis-host {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    height: 100dvh;
+    border-left: none;
+    background: rgba(2, 7, 13, 0.98);
+    transform: translateX(100%);
+    transition: transform var(--t-base) var(--ease-out);
+  }
+
+  .asis-host--abierto { transform: translateX(0); }
+
+  .asis-host__cerrar {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: calc(var(--sp-2) + env(safe-area-inset-top, 0px));
+    right: var(--sp-2);
+    z-index: 2;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    color: var(--text-2);
+  }
+
+  /* Barra inferior con el Asistente en el centro (el protagonista). */
+  .tabbar {
+    display: flex;
+    position: fixed;
+    left: 0;
     right: 0;
-    width: 100%;
-    height: 76px;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-    gap: 0;
-    padding: 0 var(--sp-1);
-    /* Respetar la barra de gestos del movil. */
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    bottom: 0;
+    z-index: var(--z-nav);
+    padding: 0 var(--sp-1) env(safe-area-inset-bottom, 0);
     height: calc(76px + env(safe-area-inset-bottom, 0px));
-    border-right: none;
+    background: rgba(5, 11, 20, 0.9);
     border-top: 1px solid var(--border);
+    backdrop-filter: blur(20px);
   }
 
-  .rail__marca,
-  .rail__salir {
-    display: none; /* salir vive en /perfil en movil */
-  }
-
-  .rail__lista {
-    flex-direction: row;
-    justify-content: space-between;
-    margin: 0;
-    width: 100%;
-  }
-
-  .rail__link {
-    /* Repartir el ancho por igual entre los 5 destinos. Con min-width fijo la
-       barra medía ~404px y no se encogía: en un movil de 320-360px "Perfil" se
-       salía. Con flex:1 y min-width:0 caben SIEMPRE, en cualquier pantalla. */
+  .tabbar__link,
+  .tabbar__asis {
     flex: 1 1 0;
     min-width: 0;
-    width: auto;
-    padding: 8px 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 3px;
+    color: var(--text-3);
     font-size: 11px;
   }
 
-  /* La etiqueta no debe romper el reparto: una sola linea, sin desbordar. */
-  .rail__link span {
+  .tabbar__link span,
+  .tabbar__asis span {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  .tabbar__link.active { color: var(--glow); }
+  .tabbar__asis { color: var(--glow); }
+  .tabbar__asis span { font-weight: 600; }
 
   .lienzo {
     margin-left: 0;
