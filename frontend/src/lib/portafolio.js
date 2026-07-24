@@ -129,16 +129,43 @@ export const FASES = [
         icono: 'ojo',
         titulo: 'Objetivos del proyecto',
         texto: 'Definimos qué se quiere lograr con el proyecto y cuáles son los resultados esperados.',
+        intro:
+          'Antes de diseñar o programar nada, decide a dónde quieres llegar. Un objetivo claro evita que el proyecto crezca sin control y te da una vara para medir si funcionó.',
+        pasos: [
+          '¿Qué problema resuelve el proyecto y para quién?',
+          '¿Qué debe poder hacer el usuario al terminar?',
+          '¿Cómo sabrás que salió bien? (una métrica concreta)',
+          '¿Qué NO entra en esta versión? (para acotar el alcance)',
+        ],
+        tip: 'Escribe el objetivo en una sola frase medible: "que un usuario pueda X en menos de Y".',
       },
       {
         icono: 'usuario',
         titulo: 'Investigación de usuario',
         texto: 'Entendemos a la audiencia objetivo, sus comportamientos, necesidades y motivaciones.',
+        intro:
+          'Diseñar sin conocer al usuario es adivinar. Con un poco de investigación entiendes a quién sirves y qué le importa de verdad.',
+        pasos: [
+          '¿Quién es el usuario típico? Descríbelo en 2-3 frases.',
+          '¿Qué intenta conseguir y qué le frustra hoy?',
+          'Habla con 2-3 personas reales o busca reseñas/foros del tema.',
+          'Resume 3 hallazgos que cambiarían tu diseño.',
+        ],
+        tip: 'Una sola entrevista real vale más que diez suposiciones. Pregunta por lo que HACEN, no por lo que dicen que harían.',
       },
       {
         icono: 'buscar',
         titulo: 'Problema y oportunidad',
         texto: 'Identificamos los puntos de dolor, causas raíz y oportunidades de mejora o innovación.',
+        intro:
+          'Detrás de cada buen proyecto hay un problema concreto. Definirlo bien es la mitad de la solución.',
+        pasos: [
+          'Enuncia el problema en una frase, desde la óptica del usuario.',
+          '¿Cuál es la causa raíz, no solo el síntoma?',
+          '¿Cómo se resuelve hoy y por qué no basta?',
+          '¿Dónde está la oportunidad de mejorar o innovar?',
+        ],
+        tip: 'Si no puedes explicar el problema a alguien ajeno en 30 segundos, todavía no lo tienes claro.',
       },
     ],
     resultados: [
@@ -157,16 +184,43 @@ export const FASES = [
         icono: 'lista',
         titulo: 'Requerimientos funcionales',
         texto: 'Definimos las funciones y comportamientos del sistema desde la perspectiva del usuario.',
+        intro:
+          'Son las cosas que el sistema debe HACER. Listarlas evita que se te olviden funciones clave a mitad del proyecto.',
+        pasos: [
+          'Enumera las acciones que el usuario podrá realizar.',
+          'Escríbelas como "El usuario puede…" o historias de usuario.',
+          'Marca cuáles son imprescindibles (MVP) y cuáles opcionales.',
+          'Ordénalas por prioridad.',
+        ],
+        tip: 'Empieza solo por lo imprescindible: un MVP terminado enseña más que una app enorme a medias.',
       },
       {
         icono: 'candado',
         titulo: 'Requerimientos no funcionales',
         texto: 'Establecemos los atributos de calidad, restricciones y criterios técnicos del sistema.',
+        intro:
+          'Son las cosas que el sistema debe SER: rápido, accesible, seguro, responsivo… La calidad que se nota aunque no se vea en una lista de funciones.',
+        pasos: [
+          '¿Qué tan rápido debe responder? ¿En qué dispositivos?',
+          '¿Necesita ser accesible, responsivo, funcionar offline?',
+          '¿Hay límites técnicos (navegadores, tamaño, seguridad)?',
+          'Elige 2-3 atributos y hazlos objetivos ("carga < 2s").',
+        ],
+        tip: 'No intentes cumplirlos todos: elige los 2-3 que de verdad importan para tu proyecto.',
       },
       {
         icono: 'rejilla',
         titulo: 'Diagrama de contexto',
         texto: 'Representamos el sistema y su interacción con actores externos a alto nivel.',
+        intro:
+          'Un dibujo simple de tu sistema y con quién habla (usuarios, APIs, servicios). Ayuda a ver el todo antes de meterte en los detalles.',
+        pasos: [
+          'Dibuja tu sistema como una caja en el centro.',
+          'Añade alrededor los actores: usuarios, APIs, bases de datos…',
+          'Traza flechas con lo que entra y sale de cada uno.',
+          'Revisa: ¿falta algún actor o dependencia?',
+        ],
+        tip: 'A mano en papel o en Excalidraw/Figma basta. No busques perfección, busca claridad.',
       },
     ],
     resultados: [
@@ -181,9 +235,48 @@ export const FASES = [
     descripcion:
       'Construimos una versión funcional y la ponemos a prueba con usuarios y datos reales para ajustar antes del final.',
     items: [
-      { icono: 'chispa2', titulo: 'Prototipo funcional', texto: 'Montamos una versión navegable o un primer entregable real.' },
-      { icono: 'usuario', titulo: 'Prueba con usuarios', texto: 'Lo enfrentamos a personas reales y recogemos su feedback.' },
-      { icono: 'refrescar', titulo: 'Iteración', texto: 'Corregimos los problemas detectados y mejoramos la propuesta.' },
+      {
+        icono: 'chispa2',
+        titulo: 'Prototipo funcional',
+        texto: 'Montamos una versión navegable o un primer entregable real.',
+        intro:
+          'Una primera versión que se pueda tocar, aunque sea tosca. Pasar de la idea a algo real es donde más se aprende.',
+        pasos: [
+          'Construye lo mínimo para probar la idea de punta a punta.',
+          'Que sea navegable/usable, aunque falten detalles.',
+          'No pulas estética todavía: prioriza que funcione.',
+          'Prepáralo para enseñárselo a alguien.',
+        ],
+        tip: 'Hecho es mejor que perfecto. Un prototipo feo pero funcional ya te enseña qué falla.',
+      },
+      {
+        icono: 'usuario',
+        titulo: 'Prueba con usuarios',
+        texto: 'Lo enfrentamos a personas reales y recogemos su feedback.',
+        intro:
+          'Ponlo en manos de personas reales y observa. Verás problemas que tú, que lo hiciste, ya no ves.',
+        pasos: [
+          'Pide a 2-3 personas que intenten una tarea concreta.',
+          'Observa en silencio: ¿dónde dudan o se traban?',
+          'Pregunta qué esperaban que pasara y no pasó.',
+          'Anota los problemas por frecuencia y gravedad.',
+        ],
+        tip: 'No expliques cómo se usa: si tienen que preguntártelo, ahí está el problema de diseño.',
+      },
+      {
+        icono: 'refrescar',
+        titulo: 'Iteración',
+        texto: 'Corregimos los problemas detectados y mejoramos la propuesta.',
+        intro:
+          'Con el feedback en la mano, arregla lo importante. Iterar es lo que separa un proyecto bueno de uno mediocre.',
+        pasos: [
+          'Ordena los problemas: ¿cuáles rompen la experiencia?',
+          'Arregla primero los graves y frecuentes.',
+          'Aplica los cambios y vuelve a probar si puedes.',
+          'Anota qué mejoró para contarlo en tu caso de estudio.',
+        ],
+        tip: 'No intentes arreglar todo. Dos o tres mejoras bien elegidas cambian más que veinte pequeñas.',
+      },
     ],
     resultados: [
       { icono: 'ok', titulo: 'Feedback recogido', texto: 'Sabemos qué funciona y qué falla.' },
@@ -197,9 +290,48 @@ export const FASES = [
     descripcion:
       'Pulimos, documentamos y presentamos el proyecto terminado, listo para enseñarlo en tu portafolio.',
     items: [
-      { icono: 'estrella', titulo: 'Entrega final', texto: 'Rematamos los detalles y dejamos el proyecto presentable.' },
-      { icono: 'sobre', titulo: 'Documentación', texto: 'Explicamos proceso, decisiones y resultados con claridad.' },
-      { icono: 'enlace', titulo: 'Publicación', texto: 'Lo subimos y lo preparamos para compartir en tu portafolio.' },
+      {
+        icono: 'estrella',
+        titulo: 'Entrega final',
+        texto: 'Rematamos los detalles y dejamos el proyecto presentable.',
+        intro:
+          'El último 10% (pulido, detalles, consistencia) es el que hace que un proyecto parezca profesional.',
+        pasos: [
+          'Repasa espaciados, colores y textos: consistencia ante todo.',
+          'Prueba en móvil y en un navegador distinto al tuyo.',
+          'Quita lo que sobra: código muerto, placeholders, "lorem ipsum".',
+          'Añade un toque final que lo haga memorable.',
+        ],
+        tip: 'Mira tu proyecto como si fuera de otra persona: ¿qué detalle te chirriaría?',
+      },
+      {
+        icono: 'sobre',
+        titulo: 'Documentación',
+        texto: 'Explicamos proceso, decisiones y resultados con claridad.',
+        intro:
+          'Contar CÓMO y POR QUÉ lo hiciste vale tanto como el resultado. Es lo que demuestra tu forma de pensar.',
+        pasos: [
+          'Escribe un README: qué es, cómo se usa, cómo se ejecuta.',
+          'Cuenta el problema, tu proceso y las decisiones clave.',
+          'Incluye capturas o un gif del resultado.',
+          'Menciona qué aprendiste y qué mejorarías.',
+        ],
+        tip: 'Un caso de estudio (problema → proceso → resultado) impresiona más que solo el enlace a la demo.',
+      },
+      {
+        icono: 'enlace',
+        titulo: 'Publicación',
+        texto: 'Lo subimos y lo preparamos para compartir en tu portafolio.',
+        intro:
+          'Un proyecto que nadie puede ver no suma. Publícalo y déjalo listo para compartir.',
+        pasos: [
+          'Sube el código a GitHub con un README decente.',
+          'Despliega la demo (Vercel, Netlify, GitHub Pages…).',
+          'Comprueba que los enlaces funcionan desde otro dispositivo.',
+          'Añádelo a tu portafolio y a tu perfil (LinkedIn, CV).',
+        ],
+        tip: 'Enlace a la demo + enlace al código, siempre juntos. Facilítale a quien te contrata verlo en 10 segundos.',
+      },
     ],
     resultados: [
       { icono: 'estrella', titulo: 'Proyecto terminado', texto: 'Tienes un entregable pulido y presentable.' },
@@ -242,4 +374,28 @@ export function alternarGuardada(id) {
 export function ideasGuardadas() {
   const ids = idsGuardadas();
   return IDEAS.filter((i) => ids.has(i.id));
+}
+
+/* --- Notas del asistente de proyecto (localStorage, por idea+fase+item) --- */
+export const CLAVE_NOTAS = 'jobia_portafolio_notas';
+
+function leerNotas() {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_NOTAS) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+/** Clave estable de una nota. */
+export const claveNota = (ideaId, faseId, i) => `${ideaId}-${faseId}-${i}`;
+
+export const leerNota = (clave) => leerNotas()[clave] || '';
+
+/** Guarda (o borra si queda vacia) la nota de una clave. */
+export function guardarNota(clave, texto) {
+  const notas = leerNotas();
+  if (texto.trim()) notas[clave] = texto;
+  else delete notas[clave];
+  localStorage.setItem(CLAVE_NOTAS, JSON.stringify(notas));
 }
