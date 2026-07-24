@@ -538,40 +538,37 @@
   width: 40px;
   height: 40px;
   flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
+  display: grid;
+  place-items: center;
   overflow: hidden;
   border-radius: 50%;
-  /* Anillo brillante + centro oscuro (como la referencia). */
+  /* Anillo brillante + centro oscuro (igual que el orbe del modo voz). */
   border: 1.5px solid rgba(130, 205, 255, 0.9);
   background: radial-gradient(circle at 50% 42%, rgba(20, 70, 130, 0.35), rgba(2, 7, 13, 0.92) 72%);
   animation: marca-respira 3s ease-in-out infinite;
 }
 
-/* Cada barra de la onda. La altura la anima scaleY; el desfase escalonado hace
-   que la onda parezca desplazarse. */
-.rail__marca i {
-  width: 2px;
-  height: 34%;
-  border-radius: 2px;
-  background: linear-gradient(180deg, #cfe8ff, var(--glow));
-  box-shadow: 0 0 6px rgba(130, 205, 255, 0.9);
-  transform-origin: center;
-  animation: marca-onda 1.3s ease-in-out infinite;
+/* La misma onda de dos trazos del VozOverlay (.voz__onda), a escala del rail. */
+.rail__marca-onda {
+  width: 66%;
+  height: 42%;
+  overflow: visible;
 }
-.rail__marca i:nth-child(1) { animation-delay: 0s; }
-.rail__marca i:nth-child(2) { animation-delay: 0.11s; }
-.rail__marca i:nth-child(3) { animation-delay: 0.22s; }
-.rail__marca i:nth-child(4) { animation-delay: 0.33s; }
-.rail__marca i:nth-child(5) { animation-delay: 0.44s; }
-.rail__marca i:nth-child(6) { animation-delay: 0.55s; }
-.rail__marca i:nth-child(7) { animation-delay: 0.66s; }
-
-@keyframes marca-onda {
-  0%, 100% { transform: scaleY(0.35); opacity: 0.65; }
-  50%      { transform: scaleY(1.5);  opacity: 1; }
+.rail__marca-onda path {
+  fill: none;
+  stroke: var(--glow);
+  /* trazo alto: el viewBox (200x80) se pinta en ~26px, si no la linea desaparece */
+  stroke-width: 8;
+  filter: drop-shadow(0 0 4px rgba(45, 170, 255, 0.85));
+  opacity: 0.9;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: voz-onda 1.6s ease-in-out infinite alternate;
+}
+.rail__marca-onda2 {
+  stroke: #2fe0ff;
+  opacity: 0.6;
+  animation-delay: 0.3s;
 }
 
 @keyframes marca-respira {
@@ -1952,21 +1949,39 @@
 }
 .curso:hover { border-color: var(--border-2); transform: translateY(-2px); }
 
-.curso__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-1);
+/* Icono de skill: logo de Devicon (tile claro para que los logos oscuros como
+   Next.js/Express se vean) o badge de color de fallback (ver SkillIcon.jsx). */
+.skillogo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+.skillogo--img {
+  background: #fff;
+  padding: 6px;
+}
+.skillogo--img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
-.curso__skill {
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.curso__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+.curso__headtxt { min-width: 0; }
+.curso__nivel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--text-3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .curso__demanda {
@@ -1982,7 +1997,15 @@
 .curso__demanda--baja { background: var(--glass-2); color: var(--text-3); }
 
 .curso__nombre { font-size: var(--fs-4); font-weight: 600; line-height: 1.2; }
-.curso__prov { font-size: 13px; color: var(--text-2); }
+.curso__prov {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-2);
+}
 .curso__desc { font-size: var(--fs-5); color: var(--text-3); line-height: 1.45; }
 
 .curso__foot {
@@ -2043,6 +2066,264 @@
   color: var(--text-2);
 }
 .curso__extra a:hover { color: var(--glow); }
+
+/* ==========================================================================
+   Portafolio: ideas, detalle (caso de estudio) y asistente de proyecto
+   ========================================================================== */
+.port {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--sp-2);
+  align-items: stretch;
+}
+
+/* --- Idea destacada (imagen de fondo + texto con scrim) --- */
+.port-dest {
+  position: relative;
+  display: flex;
+  min-height: 460px;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border-2);
+  box-shadow: var(--shadow-glow);
+}
+.port-dest__img { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.port-dest__img img { width: 100%; height: 100%; object-fit: cover; opacity: 0.92; }
+.port-dest::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(2, 7, 13, 0.94) 0%, rgba(2, 7, 13, 0.72) 42%, rgba(2, 7, 13, 0.15) 100%);
+}
+.port-dest__cuerpo {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  max-width: 58%;
+}
+.port-dest__cuerpo h2 { font-size: var(--fs-2); line-height: 1.08; }
+.port-dest__desc { color: var(--text-2); font-size: var(--fs-5); max-width: 42ch; }
+.port-dest__cta { margin-top: var(--sp-1); }
+
+.port__badge {
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  background: var(--glass-2);
+  border: 1px solid var(--border);
+  color: var(--glow);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* --- Columna de tarjetas --- */
+.port-lista { display: flex; flex-direction: column; gap: var(--sp-2); }
+.port-card {
+  display: grid;
+  grid-template-columns: 132px 1fr auto;
+  gap: var(--sp-2);
+  align-items: center;
+  padding: var(--sp-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--glass);
+  transition: border-color var(--t-fast), transform var(--t-fast);
+}
+.port-card:hover { border-color: var(--border-2); transform: translateY(-2px); }
+.port-card__img {
+  width: 132px;
+  height: 96px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+}
+.port-card__img img { width: 100%; height: 100%; object-fit: cover; }
+.port-card__cuerpo { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.port-card__cuerpo h3 { font-size: var(--fs-4); font-weight: 600; }
+.port-card__desc { font-size: 13px; color: var(--text-3); }
+.port-card__flecha { color: var(--text-3); flex: none; }
+
+/* --- Etiquetas / iconos / chips comunes --- */
+.port-tags { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.port-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-2); }
+.port-tags--sm .port-tag { font-size: 11px; color: var(--text-3); }
+
+.port-ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-sm);
+  color: var(--glow);
+  background: rgba(79, 163, 255, 0.12);
+  border: 1px solid rgba(79, 163, 255, 0.22);
+}
+.port-ico--sm { width: 36px; height: 36px; }
+
+.port-chip {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--r-full);
+  background: rgba(196, 149, 92, 0.14);
+  border: 1px solid rgba(196, 149, 92, 0.3);
+  color: #e0b98a;
+  font-size: 12px;
+}
+
+.port-cab {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-2);
+  color: var(--text-2);
+  font-size: var(--fs-5);
+}
+
+/* --- Detalle (caso de estudio) --- */
+.portidea__cols { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--sp-3); align-items: start; }
+.portidea__media {
+  position: relative;
+  min-height: 520px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background-size: cover;
+  background-position: center;
+}
+.portidea__media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.92; }
+.portidea__marca {
+  position: absolute;
+  left: var(--sp-2);
+  bottom: var(--sp-2);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-md);
+  background: rgba(2, 7, 13, 0.66);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+}
+.portidea__marca strong { display: block; font-size: var(--fs-5); }
+.portidea__marca span { font-size: 12px; color: var(--text-3); }
+
+.portidea__info { display: flex; flex-direction: column; gap: var(--sp-2); }
+.portidea__titulo { font-size: var(--fs-2); line-height: 1.05; }
+.portidea__desc { color: var(--text-2); font-size: var(--fs-5); line-height: 1.5; }
+.portidea__secciones { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-1); }
+.portidea__sec { display: flex; gap: var(--sp-2); }
+.portidea__sec h3 { font-size: var(--fs-4); font-weight: 600; }
+.portidea__sec p { font-size: 13px; color: var(--text-3); line-height: 1.5; margin-top: 2px; }
+.portidea__acciones { display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-3); }
+
+/* --- Asistente de proyecto (fases) --- */
+.portproy__cols { display: grid; grid-template-columns: 340px 1fr; gap: var(--sp-3); align-items: start; }
+.portproy__lateral {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--glass);
+}
+.portproy__media { height: 180px; border-radius: var(--r-md); overflow: hidden; background-size: cover; background-position: center; }
+.portproy__media img { width: 100%; height: 100%; object-fit: cover; }
+.portproy__idea { display: flex; align-items: center; gap: var(--sp-1); }
+.portproy__idea strong { display: block; font-size: var(--fs-5); }
+.portproy__idea span { font-size: 12px; color: var(--text-3); }
+.portproy__meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 12px; color: var(--text-3); }
+.portproy__meta span { display: inline-flex; align-items: center; gap: 5px; }
+.portproy__metasep { opacity: 0.4; }
+
+.portproy__pasos { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-top: var(--sp-1); }
+.portproy__paso button {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  width: 100%;
+  padding: var(--sp-1);
+  border-radius: var(--r-sm);
+  color: var(--text-3);
+  text-align: left;
+  font-size: var(--fs-5);
+}
+.portproy__paso.is-activo button {
+  color: var(--text);
+  background: rgba(79, 163, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(79, 163, 255, 0.35);
+}
+.portproy__paso.is-hecho button { color: var(--text-2); }
+.portproy__num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  font-size: 13px;
+}
+.portproy__paso.is-activo .portproy__num { background: var(--blue); border-color: var(--blue); color: #fff; }
+.portproy__paso.is-hecho .portproy__num { background: rgba(110, 231, 183, 0.15); border-color: var(--success); color: var(--success); }
+
+.portproy__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--glass);
+}
+.portproy__contador { font-size: 12px; color: var(--text-3); }
+.portproy__titulo { font-size: var(--fs-2); }
+.portproy__desc { color: var(--text-2); font-size: var(--fs-5); }
+.portproy__items { list-style: none; display: flex; flex-direction: column; gap: var(--sp-1); margin-top: var(--sp-1); }
+.portproy__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--glass-2);
+}
+.portproy__itemtxt { flex: 1; min-width: 0; }
+.portproy__itemtxt h3 { font-size: var(--fs-5); font-weight: 600; }
+.portproy__itemtxt p { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.portproy__check { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; }
+.portproy__subtit { margin-top: var(--sp-1); font-size: 13px; color: var(--text-2); }
+.portproy__resultados { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-1); }
+.portproy__res { display: flex; gap: 8px; padding: var(--sp-1); border-radius: var(--r-sm); background: var(--glass); border: 1px solid var(--border); }
+.portproy__res strong { font-size: 12px; }
+.portproy__res p { font-size: 11px; color: var(--text-3); line-height: 1.4; margin-top: 2px; }
+.portproy__nav { display: flex; gap: var(--sp-1); margin-top: var(--sp-2); }
+.portproy__nav .btn--primario { margin-left: auto; min-width: 180px; justify-content: center; }
+
+@media (max-width: 860px) {
+  .port,
+  .portidea__cols,
+  .portproy__cols { grid-template-columns: 1fr; }
+  .port-dest { min-height: 340px; }
+  .port-dest__cuerpo { max-width: 100%; }
+  .port-card { grid-template-columns: 96px 1fr auto; }
+  .port-card__img { width: 96px; height: 72px; }
+  .portidea__media { min-height: 300px; }
+  .portproy__resultados { grid-template-columns: 1fr; }
+  .portproy__nav .btn--primario { min-width: 0; }
+}
 
 /* ==========================================================================
    Avisos por Telegram
