@@ -148,8 +148,10 @@ test.describe('Portafolio', () => {
     await login(page);
     await page.goto('/portafolio');
     // a.port-dest = el link real (el esqueleto es un div con la misma clase).
+    // Timeout amplio: la PRIMERA generacion personaliza con el LLM y puede tardar
+    // (las siguientes salen de la cache de Redis).
     const destacada = page.locator('a.port-dest');
-    await expect(destacada).toBeVisible();
+    await expect(destacada).toBeVisible({ timeout: 30_000 });
     const href = await destacada.getAttribute('href');
     expect(href).toMatch(/\/portafolio\/.+/);
 
@@ -162,30 +164,126 @@ test.describe('Portafolio', () => {
 });
 
 test.describe('Entrevista', () => {
-  test('subseccion: setup -> pregunta -> feedback', async ({ page }, info) => {
-    test.skip(info.project.name !== 'desktop', 'el panel esta siempre visible en escritorio');
+  test('se llega desde la navegacion y es un chat a pantalla completa', async ({ page }, info) => {
+    const errores = cazarErrores(page);
     await login(page);
 
-    // Cambiar a la subseccion Entrevista del panel.
-    await page.getByRole('tab', { name: /Entrevista/i }).click();
+    // Entrevista es un destino de primer nivel (rail en escritorio, barra en movil).
+    await page.getByRole('link', { name: /Entrevista/i }).click();
+    await expect(page).toHaveURL(/\/entrevista$/);
     await expect(page.locator('.entrev-setup')).toBeVisible();
-    // La tarjeta de video aparece como "proximamente".
-    await expect(page.locator('.entrev-video--soon')).toContainText(/Proximamente/i);
+    // Se puede elegir modalidad; texto viene por defecto.
+    await expect(page.locator('.entrev__modos')).toBeVisible();
+    await expect(page.locator('.entrev__modo.is-on')).toContainText(/Chat de texto/i);
 
-    // Empezar: preguntas del banco (sin depender del LLM).
+    // En escritorio el chat se come la columna del Asistente.
+    if (info.project.name === 'desktop') {
+      await expect(page.locator('.shell--full')).toHaveCount(1);
+      await expect(page.locator('.asis-host')).toBeHidden();
+    }
+
+    // Empezar: las preguntas salen del banco (no dependen del LLM).
     await page.locator('.entrev-setup input').first().fill('Desarrollador frontend junior');
     await page.getByRole('button', { name: /Empezar entrevista/i }).click();
 
-    // Aparece la primera pregunta y la zona de respuesta.
-    await expect(page.locator('.entrev-sesion .burbuja--assistant')).toBeVisible();
-    await page.locator('.entrev__resp').fill(
+    // Hilo de chat con la primera pregunta + barra de escritura abajo.
+    await expect(page.locator('.entrev-chat__hilo .burbuja--assistant').first()).toBeVisible();
+    await expect(page.locator('.entrev-chat__barra')).toBeVisible();
+
+    // Responder: la respuesta entra al hilo como burbuja del usuario.
+    await page.locator('#resp').fill(
       'Soy egresado de sistemas, me gusta el frontend con React y he hecho proyectos personales de practica para aprender.',
     );
+    await page.getByRole('button', { name: /Enviar respuesta/i }).click();
+    await expect(page.locator('.entrev-chat__hilo .burbuja--user').first()).toBeVisible();
 
-    // Terminar salta al feedback (usa fallback si el LLM no responde: nunca cuelga).
+    expect(errores, errores.join('\n')).toEqual([]);
+  });
+
+  test('terminar muestra las recomendaciones', async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', 'basta comprobarlo en un viewport');
+    await login(page);
+    await page.goto('/entrevista');
+    await page.locator('.entrev-setup input').first().fill('Desarrollador backend junior');
+    await page.getByRole('button', { name: /Empezar entrevista/i }).click();
+    await expect(page.locator('.entrev-chat__hilo .burbuja--assistant').first()).toBeVisible();
+
+    // Terminar cierra el hilo con el feedback (con respaldo si el LLM no responde).
     await page.getByRole('button', { name: /^Terminar$/i }).click();
     await expect(page.locator('.entrev-feedback')).toBeVisible();
     await expect(page.getByRole('button', { name: /Practicar otra vez/i })).toBeVisible();
+  });
+
+  test('el panel del Asistente ya NO tiene el conmutador de entrevista', async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', 'el panel se ve en escritorio');
+    await login(page);
+    await expect(page.locator('.asis-modo')).toHaveCount(0);
+  });
+});
+
+test.describe('Entrevista en video (simulada)', () => {
+  /** Deja el setup listo en modalidad video y entra a la llamada. */
+  async function entrarALlamada(page) {
+    await page.goto('/entrevista');
+    await page.locator('.entrev-setup input[type="text"], .entrev-setup input:not([type])').first()
+      .fill('Desarrollador frontend junior');
+    // Modalidad video (el radio esta oculto: se pulsa su etiqueta).
+    await page.getByText('Videollamada', { exact: false }).click();
+    await expect(page.locator('.entrev__aviso-video')).toContainText(/no se graba/i);
+    await page.getByRole('button', { name: /Empezar entrevista/i }).click();
+    await expect(page.locator('.vc')).toBeVisible();
+  }
+
+  test('la videollamada muestra entrevistador, tu recuadro y controles', async ({ page }) => {
+    const errores = cazarErrores(page);
+    await login(page);
+    await entrarALlamada(page);
+
+    // El entrevistador 3D tiene que CARGAR de verdad. Este assert existe porque la
+    // primera version tiraba de un avatar remoto cuyo dominio no resolvia: la llamada
+    // se veia bien pero siempre salia el respaldo con las iniciales. El modelo ahora
+    // es local (public/modelos), asi que aqui se comprueba end-to-end.
+    await expect(page.locator('.vc__escena[data-estado="listo"]')).toBeAttached({
+      timeout: 25_000,
+    });
+    await expect(page.locator('.vc__sinvideo')).toHaveCount(0);
+
+    // Cromo de videollamada.
+    await expect(page.locator('.vc__quien')).toContainText(/Ana Morales/i);
+    await expect(page.locator('.vc__pip')).toBeVisible();
+    await expect(page.locator('.vc__reloj')).toBeVisible();
+    // El aviso de que no se graba tiene que estar VISIBLE durante la llamada.
+    await expect(page.locator('.vc__badge')).toContainText(/no se graba/i);
+    // Subtitulos con la pregunta del banco.
+    await expect(page.locator('.vc__sub-preg')).not.toBeEmpty();
+    // Controles, incluido colgar.
+    await expect(page.getByRole('button', { name: /Terminar la entrevista/i })).toBeVisible();
+
+    expect(errores, errores.join('\n')).toEqual([]);
+  });
+
+  test('colgar lleva a las recomendaciones', async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', 'basta comprobarlo en un viewport');
+    await login(page);
+    await entrarALlamada(page);
+
+    await page.getByRole('button', { name: /Terminar la entrevista/i }).click();
+    await expect(page.locator('.entrev-feedback')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Practicar otra vez/i })).toBeVisible();
+  });
+
+  test('la camara del usuario se puede apagar y encender', async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', 'basta comprobarlo en un viewport');
+    await login(page);
+    await entrarALlamada(page);
+
+    const btn = page.getByRole('button', { name: /mi camara/i });
+    await expect(btn).toBeVisible();
+    // Con la camara falsa deberia encenderse sola; apagarla no debe romper nada:
+    // el recuadro pasa a mostrar las iniciales y la llamada sigue.
+    await btn.click();
+    await expect(page.locator('.vc__pipini')).toBeVisible();
+    await expect(page.locator('.vc')).toBeVisible();
   });
 });
 

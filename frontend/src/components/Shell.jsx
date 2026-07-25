@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { VistaProvider, useVista } from '../lib/vista';
 import Icon from './Icon';
@@ -22,8 +22,16 @@ const RUTAS = [
   { to: '/buscar', icono: 'buscar', texto: 'Buscar' },
   { to: '/crecer', icono: 'crecer', texto: 'Crecer' },
   { to: '/portafolio', icono: 'maletin', texto: 'Portafolio' },
+  { to: '/entrevista', icono: 'entrevista', texto: 'Entrevista' },
   { to: '/perfil', icono: 'usuario', texto: 'Perfil' },
 ];
+
+/**
+ * Rutas que se ven a PANTALLA COMPLETA: ocupan tambien la columna del Asistente.
+ * La entrevista es un chat de por si; tener otro chat al lado confunde y parte la
+ * atencion, asi que ahi el panel se oculta (en escritorio) y el chat se expande.
+ */
+const RUTAS_FULL = ['/entrevista'];
 
 export default function Shell() {
   // El proveedor envuelve TODO el shell: la home (Outlet) y el asistente
@@ -39,9 +47,15 @@ function ShellInterno() {
   const { salir } = useAuth();
   const [asisAbierto, setAsisAbierto] = useState(false);
   const { ofertaActiva, setOfertaActiva } = useVista();
+  const { pathname } = useLocation();
+
+  // En las rutas "full" el contenido se come la columna del Asistente. El panel
+  // se sigue MONTANDO (en movil es la hoja que abre la barra inferior); solo se
+  // oculta por CSS en escritorio.
+  const full = RUTAS_FULL.some((r) => pathname.startsWith(r));
 
   return (
-    <div className="shell">
+    <div className={`shell ${full ? 'shell--full' : ''}`}>
       {/* Rail de navegacion (escritorio, izquierda) */}
       <nav className="rail" aria-label="Navegacion principal">
         {/* Marca: mismo orbe animado que el modo voz (anillo con halo + la onda
@@ -86,9 +100,10 @@ function ShellInterno() {
         <AsistentePanel />
       </div>
 
-      {/* Barra inferior (solo movil) con el Asistente en el centro. */}
+      {/* Barra inferior (solo movil) con el Asistente en el centro: 3 rutas a cada
+          lado para que quede simetrico. */}
       <nav className="tabbar" aria-label="Navegacion">
-        {RUTAS.slice(0, 2).map((r) => (
+        {RUTAS.slice(0, 3).map((r) => (
           <NavLink key={r.to} to={r.to} end={r.to === '/'} className="tabbar__link">
             <Icon name={r.icono} size={22} />
             <span>{r.texto}</span>
@@ -100,7 +115,7 @@ function ShellInterno() {
           <span>Asistente</span>
         </button>
 
-        {RUTAS.slice(2).map((r) => (
+        {RUTAS.slice(3).map((r) => (
           <NavLink key={r.to} to={r.to} className="tabbar__link">
             <Icon name={r.icono} size={22} />
             <span>{r.texto}</span>

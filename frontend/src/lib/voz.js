@@ -82,16 +82,45 @@ export function mensajeDeError(codigo, { brave = false } = {}) {
 export const ttsSoportado =
   typeof window !== 'undefined' && 'speechSynthesis' in window;
 
-export function leerEnVozAlta(texto) {
-  if (!ttsSoportado || !texto) return;
+/**
+ * @param {string} texto
+ * @param {object} [cb]
+ * @param {() => void} [cb.onInicio]  Empezo a hablar (para animar al avatar).
+ * @param {() => void} [cb.onFin]     Termino (o fallo): sirve para encadenar el
+ *                                    dictado, asi la conversacion fluye sola.
+ * @param {() => void} [cb.onPalabra] Una vez por palabra. Es lo que mueve la boca
+ *                                    del avatar 3D: la Web Speech API no expone el
+ *                                    audio ni timestamps de fonemas, pero si este
+ *                                    evento de frontera, que da el ritmo del habla.
+ */
+export function leerEnVozAlta(texto, { onInicio, onFin, onPalabra } = {}) {
+  if (!ttsSoportado || !texto) {
+    onFin?.(); // sin TTS no hay que esperar a nada: se sigue el flujo igual
+    return;
+  }
   try {
     window.speechSynthesis.cancel(); // corta la pregunta anterior
     const u = new SpeechSynthesisUtterance(String(texto));
     u.lang = 'es-ES';
     u.rate = 1;
+
+    let terminado = false;
+    const fin = () => {
+      if (terminado) return; // onend y onerror pueden llegar los dos
+      terminado = true;
+      onFin?.();
+    };
+
+    u.onstart = () => onInicio?.();
+    u.onend = fin;
+    u.onerror = fin;
+    if (onPalabra) u.onboundary = (e) => { if (e.name !== 'sentence') onPalabra(); };
+
     window.speechSynthesis.speak(u);
   } catch {
-    /* algunos navegadores lo bloquean sin gesto del usuario: no es critico */
+    // Algunos navegadores lo bloquean sin gesto del usuario. No es critico, pero
+    // hay que avisar del fin o el flujo se quedaria esperando para siempre.
+    onFin?.();
   }
 }
 

@@ -11,6 +11,7 @@ import Profile from './screens/Profile';
 import Portafolio from './screens/Portafolio';
 import PortafolioIdea from './screens/PortafolioIdea';
 import PortafolioProyecto from './screens/PortafolioProyecto';
+import Entrevista from './screens/Entrevista';
 
 /** Ruta protegida: sin sesion, al login. */
 function Privada({ children }) {
@@ -48,6 +49,7 @@ function Rutas() {
         <Route path="/portafolio" element={<Portafolio />} />
         <Route path="/portafolio/:id" element={<PortafolioIdea />} />
         <Route path="/portafolio/:id/proyecto" element={<PortafolioProyecto />} />
+        <Route path="/entrevista" element={<Entrevista />} />
         <Route path="/perfil" element={<Profile />} />
       </Route>
 
