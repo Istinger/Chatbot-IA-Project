@@ -57,6 +57,15 @@
      y para que el scrim del modal NO tape el asistente (queda visible y usable). */
   --asis-ancho: 400px;
 
+  /* Marco de la app: en escritorio la app vive dentro de un rectangulo 16:9
+     redondeado y centrado, con negro alrededor (ver .marco en ui.css).
+     `--alto-app` es el alto de ESE marco: lo usan todas las pantallas en vez de
+     100dvh, para que sigan cuadrando cuando la app no ocupa toda la ventana.
+     Por defecto (movil) el marco no existe y vale la pantalla entera. */
+  --alto-app: 100dvh;
+  --marco-gap: 0px;
+  --marco-radio: 0px;
+
   /* Capas */
   --z-bg: 0;
   --z-content: 10;

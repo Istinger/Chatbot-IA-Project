@@ -62,8 +62,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AmbientBackground />
-        <Rutas />
+        {/* Marco de la app: en escritorio es un rectangulo 16:9 redondeado y
+            centrado, con negro alrededor. El fondo animado va DENTRO, asi queda
+            recortado por las esquinas. En movil ocupa la pantalla entera. */}
+        <div className="marco">
+          <AmbientBackground />
+          <Rutas />
+        </div>
       </AuthProvider>
     </BrowserRouter>
   );
