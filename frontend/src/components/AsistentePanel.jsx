@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useVista } from '../lib/vista';
@@ -6,7 +7,6 @@ import { nombreDe } from '../lib/format';
 import { crearDictado, esBrave, mensajeDeError, soportado as vozSoportada } from '../lib/voz';
 import Icon from './Icon';
 import RichText from './RichText';
-import JobCard from './JobCard';
 
 const CLAVE_SESION = 'jobia_chat';
 
@@ -32,7 +32,9 @@ export default function AsistentePanel() {
   // Lo que el usuario ve ahora: la oferta abierta (modal compartido en el Shell)
   // y un resumen de la pantalla actual (p. ej. brechas/cursos de "Crecer"). Se
   // manda como contexto al chat para responder sobre lo que hay en pantalla.
-  const { ofertaActiva, setOfertaActiva, contextoPantalla, peticionIA, consumirIA } = useVista();
+  const { ofertaActiva, contextoPantalla, peticionIA, consumirIA, setOfertasSugeridas } =
+    useVista();
+  const navegar = useNavigate();
 
   const [mensajes, setMensajes] = useState([]);
   const [texto, setTexto] = useState('');
@@ -164,12 +166,21 @@ export default function AsistentePanel() {
             {mensajes.map((m, i) => (
               <article key={i} className={`burbuja burbuja--${m.role}`}>
                 {m.role === 'assistant' ? <RichText texto={m.content} /> : <p>{m.content}</p>}
+                {/* Las ofertas NO se pintan aqui: en una columna estrecha salen
+                    apretadas. Se mandan a "Buscar", que tiene sitio y filtros. */}
                 {m.jobs?.length > 0 && (
-                  <div className="asis__ofertas">
-                    {m.jobs.slice(0, 3).map((j) => (
-                      <JobCard key={j.id} job={j} onOpen={setOfertaActiva} />
-                    ))}
-                  </div>
+                  <button
+                    type="button"
+                    className="asis__verofertas"
+                    onClick={() => {
+                      setOfertasSugeridas(m.jobs);
+                      navegar('/buscar');
+                    }}
+                  >
+                    <Icon name="maletin" size={16} />
+                    Ver {m.jobs.length} {m.jobs.length === 1 ? 'oferta' : 'ofertas'}
+                    <Icon name="derecha" size={16} />
+                  </button>
                 )}
               </article>
             ))}

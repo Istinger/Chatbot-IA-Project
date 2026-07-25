@@ -29,6 +29,10 @@ export function VistaProvider({ children }) {
   // modal pero el indicador esta en las tarjetas, que son otro componente; si
   // cada uno leyera localStorage por su cuenta, no se enterarian entre ellos.
   const [guardadas, setGuardadas] = useState(() => idsGuardadas());
+  // Ofertas que el Asistente encontro. No se pintan en el chat (ahi salen
+  // apretadas en una columna estrecha): se mandan a la pantalla de Buscar, que
+  // es la que tiene sitio y filtros.
+  const [ofertasSugeridas, setOfertasSugeridas] = useState(null);
 
   const pedirIA = useCallback((texto) => setPeticionIA({ texto, id: Date.now() }), []);
   const consumirIA = useCallback(() => setPeticionIA(null), []);
@@ -48,6 +52,8 @@ export function VistaProvider({ children }) {
       consumirIA,
       guardadas,
       alternarOfertaGuardada,
+      ofertasSugeridas,
+      setOfertasSugeridas,
     }),
     [
       ofertaActiva,
@@ -57,6 +63,7 @@ export function VistaProvider({ children }) {
       consumirIA,
       guardadas,
       alternarOfertaGuardada,
+      ofertasSugeridas,
     ],
   );
   return <VistaContext.Provider value={valor}>{children}</VistaContext.Provider>;
