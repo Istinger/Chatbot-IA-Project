@@ -385,32 +385,36 @@ export const ideaPorId = (id) =>
  * "Tu propio portafolio web").
  */
 const TEMA_AREA = {
-  frontend: 'web,developer,screen',
-  backend: 'server,code,api',
-  fullstack: 'code,developer,laptop',
-  data: 'data,analytics,dashboard',
-  ux: 'design,wireframe,creative',
-  mobile: 'mobile,app,smartphone',
-  devops: 'server,cloud,datacenter',
-  branding: 'branding,design,logo',
-  qa: 'testing,software,laptop',
-  marketing: 'marketing,social,office',
+  frontend: 'website',
+  backend: 'server',
+  fullstack: 'programming',
+  data: 'analytics',
+  ux: 'design',
+  mobile: 'smartphone',
+  devops: 'datacenter',
+  branding: 'branding',
+  qa: 'software',
+  marketing: 'marketing',
 };
 
 /** Respaldo por tipo cuando la idea no trae area (p. ej. las estaticas de aqui). */
 const TEMA_TIPO = {
-  web: 'web,developer,screen',
-  backend: 'server,code,api',
-  data: 'data,analytics,dashboard',
-  'ui/ux': 'design,wireframe,creative',
-  branding: 'branding,design,logo',
-  fullstack: 'code,developer,laptop',
+  web: 'website',
+  backend: 'server',
+  data: 'analytics',
+  'ui/ux': 'design',
+  branding: 'branding',
+  fullstack: 'programming',
 };
 
 /** Imagen de la idea: acorde a su area y estable por su id. */
 export const imagenIdea = (idea, w, h) =>
   imagenTema(
-    TEMA_AREA[idea?.area] || TEMA_TIPO[String(idea?.tipo || '').toLowerCase()] || idea?.img,
+    TEMA_AREA[idea?.area] ||
+      TEMA_TIPO[String(idea?.tipo || '').toLowerCase()] ||
+      // Del `img` del backend solo la PRIMERA palabra: la lista entera reduciria
+      // el catalogo y todas las ideas saldrian con la misma foto.
+      String(idea?.img || '').split(',')[0],
     idea?.id,
     w,
     h,
