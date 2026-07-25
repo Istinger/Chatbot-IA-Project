@@ -1108,6 +1108,10 @@
 .card__visual {
   position: relative;
   aspect-ratio: 16 / 10;
+  /* No encoge NUNCA. Es un hijo flex y, si la tarjeta queda limitada en alto, se
+     comprimia para dejar sitio al texto: las ofertas con nombre de empresa largo
+     se quedaban sin portada y la rejilla parecia rota. */
+  flex: none;
   overflow: hidden;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(135deg, #071424, #02070d);
@@ -3274,6 +3278,25 @@
 .filtro-chip--on .filtro-chip__flecha { color: var(--glow); }
 
 .resultados__filtradas { color: var(--text-3); font-weight: 400; }
+
+/* Lleva a "Buscar" con las ofertas que encontro el Asistente: en su columna
+   estrecha salian apretadas. */
+.asis__verofertas {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--sp-1);
+  padding: 8px 14px;
+  border-radius: var(--r-full);
+  border: 1px solid rgba(79, 163, 255, 0.35);
+  background: rgba(79, 163, 255, 0.12);
+  color: var(--glow);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.asis__verofertas:hover { background: rgba(79, 163, 255, 0.22); }
 
 /* Aviso de que la IA reescribio la busqueda, con la salida para deshacerlo. */
 .buscar__reformulado {

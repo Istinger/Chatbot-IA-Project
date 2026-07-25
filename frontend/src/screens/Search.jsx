@@ -118,9 +118,26 @@ export default function Search() {
   // { original, consulta } cuando la IA reescribio la busqueda. Se enseña: cambiar
   // lo que el usuario pidio en silencio es confuso cuando los resultados no cuadran.
   const [reformulado, setReformulado] = useState(null);
+  // Los resultados actuales vienen del Asistente, no de una busqueda tuya.
+  const [delAsistente, setDelAsistente] = useState(false);
   // Modal compartido en el Shell: al abrir una oferta, el Asistente tambien
   // sabe cual estas viendo.
-  const { setOfertaActiva, setContextoPantalla } = useVista();
+  const { setOfertaActiva, setContextoPantalla, ofertasSugeridas, setOfertasSugeridas } =
+    useVista();
+
+  // Ofertas que trajo el Asistente: se pintan AQUI, donde hay sitio y filtros,
+  // en vez de apretadas en su columna. Se cargan una vez y luego mandan tus
+  // propias busquedas.
+  useEffect(() => {
+    if (ofertasSugeridas?.length) {
+      setResultados(ofertasSugeridas);
+      setTexto('');
+      setFiltros(SIN_FILTROS);
+      setReformulado(null);
+      setDelAsistente(true);
+      setOfertasSugeridas(null);
+    }
+  }, [ofertasSugeridas, setOfertasSugeridas]);
 
   // Lo que se pinta: los resultados pasados por los filtros activos.
   const visibles = useMemo(() => filtrar(resultados || [], filtros), [resultados, filtros]);
@@ -168,6 +185,7 @@ export default function Search() {
     setError(null);
     setBuscando(true);
     setReformulado(null);
+    setDelAsistente(false); // a partir de aqui manda tu busqueda
 
     let aBuscar = q;
     if (!tosco && necesitaReformular(q)) {
@@ -230,6 +248,14 @@ export default function Search() {
           {buscando ? 'Buscando…' : 'Buscar'}
         </button>
       </form>
+
+      {/* De donde salen estos resultados, para que no parezca que buscaste tu. */}
+      {delAsistente && (
+        <p className="buscar__reformulado">
+          <Icon name="asistente" size={15} />
+          <span>Estas viendo las ofertas que encontro el Asistente.</span>
+        </p>
+      )}
 
       {/* Que se vea que la busqueda cambio, y poder deshacerlo. */}
       {reformulado && (
