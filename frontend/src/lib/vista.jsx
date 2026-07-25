@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { alternarGuardada, idsGuardadas } from './ofertasGuardadas';
 
 /**
  * Contexto de "lo que el usuario esta viendo ahora mismo". Lo consume el
@@ -24,9 +25,17 @@ export function VistaProvider({ children }) {
   const [ofertaActiva, setOfertaActiva] = useState(null);
   const [contextoPantalla, setContextoPantalla] = useState(null);
   const [peticionIA, setPeticionIA] = useState(null); // { texto, id }
+  // Ofertas guardadas. Vive AQUI y no en cada componente: se guarda desde el
+  // modal pero el indicador esta en las tarjetas, que son otro componente; si
+  // cada uno leyera localStorage por su cuenta, no se enterarian entre ellos.
+  const [guardadas, setGuardadas] = useState(() => idsGuardadas());
 
   const pedirIA = useCallback((texto) => setPeticionIA({ texto, id: Date.now() }), []);
   const consumirIA = useCallback(() => setPeticionIA(null), []);
+  const alternarOfertaGuardada = useCallback(
+    (id) => setGuardadas(new Set(alternarGuardada(id))),
+    [],
+  );
 
   const valor = useMemo(
     () => ({
@@ -37,8 +46,18 @@ export function VistaProvider({ children }) {
       peticionIA,
       pedirIA,
       consumirIA,
+      guardadas,
+      alternarOfertaGuardada,
     }),
-    [ofertaActiva, contextoPantalla, peticionIA, pedirIA, consumirIA],
+    [
+      ofertaActiva,
+      contextoPantalla,
+      peticionIA,
+      pedirIA,
+      consumirIA,
+      guardadas,
+      alternarOfertaGuardada,
+    ],
   );
   return <VistaContext.Provider value={valor}>{children}</VistaContext.Provider>;
 }

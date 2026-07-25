@@ -1,5 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { api } from '../lib/api';
+import { useVista } from '../lib/vista';
 import Icon from './Icon';
+import RichText from './RichText';
 import { formatearSalario } from '../lib/format';
 
 /**
@@ -14,6 +17,43 @@ import { formatearSalario } from '../lib/format';
 export default function JobModal({ job, onClose }) {
   const cajaRef = useRef(null);
   const anterior = useRef(null);
+  const { guardadas, alternarOfertaGuardada } = useVista();
+
+  // Analisis de encaje. Se guarda por oferta para no re-pedirlo si vuelves a
+  // abrir la misma, y se limpia al cambiar de oferta (ver el efecto de abajo).
+  const [analisis, setAnalisis] = useState(null);
+  const [analizando, setAnalizando] = useState(false);
+  const [errorIA, setErrorIA] = useState(null);
+
+  useEffect(() => {
+    setAnalisis(null);
+    setErrorIA(null);
+  }, [job?.id]);
+
+  /**
+   * Compara tu perfil con esta oferta.
+   *
+   * Se manda el `jobId`, NO el texto de la oferta: el backend la resuelve contra
+   * su propia base y la inyecta delimitada junto a tu perfil (chat.prompt.js).
+   * Esa es la defensa anti-inyeccion del proyecto — las ofertas las escribe un
+   * tercero, asi que su texto nunca viaja como parte del mensaje del usuario.
+   */
+  const analizar = async () => {
+    setAnalizando(true);
+    setErrorIA(null);
+    try {
+      const r = await api.chat(
+        'Compara mi perfil con la oferta que tengo abierta. Dime en que encajo, que me falta y si merece la pena que postule. Se honesto y breve.',
+        undefined,
+        job.id,
+      );
+      setAnalisis(r.respuesta);
+    } catch (err) {
+      setErrorIA(err.message);
+    } finally {
+      setAnalizando(false);
+    }
+  };
 
   useEffect(() => {
     if (!job) return undefined;
@@ -115,6 +155,42 @@ export default function JobModal({ job, onClose }) {
             <span className="modal__etq">Descripcion</span>
             <p className="modal__desc">{job.description}</p>
           </>
+        )}
+
+        {/* Encaje con tu perfil: lo resuelve la IA con los datos que ya tiene el
+            backend (tu perfil + esta oferta), sin que tengas que contarle nada. */}
+        <div className="modal__acciones">
+          <button
+            type="button"
+            className="perfil__iabtn"
+            onClick={analizar}
+            disabled={analizando}
+          >
+            <Icon name="asistente" size={16} />
+            {analizando ? 'Comparando…' : analisis ? 'Volver a analizar' : '¿Encajo en esta oferta?'}
+          </button>
+
+          <button
+            type="button"
+            className="perfil__iabtn modal__guardar"
+            onClick={() => alternarOfertaGuardada(job.id)}
+            aria-pressed={guardadas.has(job.id)}
+          >
+            <Icon name="marcador" size={16} />
+            {guardadas.has(job.id) ? 'Guardada' : 'Guardar oferta'}
+          </button>
+        </div>
+
+        {errorIA && (
+          <p className="alerta" role="alert">
+            <Icon name="aviso" size={16} /> {errorIA}
+          </p>
+        )}
+
+        {analisis && (
+          <div className="modal__analisis">
+            <RichText texto={analisis} />
+          </div>
         )}
 
         {/* rel="noopener": sin esto, la pestana destino puede manipular la nuestra. */}
