@@ -3141,11 +3141,18 @@
 /* Videollamada + chat: la llamada a la izquierda y el chat en la columna que
    antes quedaba vacia (la ruta /entrevista oculta el panel del Asistente). */
 .entrev-video {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+  /* Flex y no grid: la llamada mide lo que le pide su proporcion, y el chat va
+     PEGADO a su lado (con grid quedaba un hueco entre ambos). El par se centra. */
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   gap: var(--sp-2);
-  align-items: start;
 }
+
+/* Dentro del par no se auto-centra: si no, se separa del chat. */
+.entrev-video .vc { flex: 0 1 auto; margin: 0; }
+
+.entrev-video .entrev-vchat { flex: 0 0 clamp(300px, 24vw, 400px); }
 
 .entrev-vchat {
   display: flex;
@@ -3183,8 +3190,8 @@
 
 @media (max-width: 1100px) {
   /* Sin sitio para dos columnas: el chat baja debajo de la llamada. */
-  .entrev-video { grid-template-columns: 1fr; }
-  .entrev-vchat { height: auto; max-height: 60dvh; }
+  .entrev-video { flex-direction: column; align-items: stretch; }
+  .entrev-video .entrev-vchat { flex: 1 1 auto; height: auto; max-height: 60dvh; }
 }
 
 /* El chat ocupa el alto del lienzo: hilo con scroll propio + barra abajo. */
