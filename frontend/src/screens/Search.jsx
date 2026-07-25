@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useVista } from '../lib/vista';
@@ -120,10 +120,39 @@ export default function Search() {
   const [reformulado, setReformulado] = useState(null);
   // Modal compartido en el Shell: al abrir una oferta, el Asistente tambien
   // sabe cual estas viendo.
-  const { setOfertaActiva } = useVista();
+  const { setOfertaActiva, setContextoPantalla } = useVista();
 
   // Lo que se pinta: los resultados pasados por los filtros activos.
   const visibles = useMemo(() => filtrar(resultados || [], filtros), [resultados, filtros]);
+
+  // El Asistente sabe que estas buscando y que estas viendo, para poder responder
+  // "buscame algo asi pero remoto" sin que se lo repitas. Se limpia al salir.
+  useEffect(() => {
+    const activos = FILTROS.filter((f) => filtros[f.id] !== 'todas').map(
+      (f) => `${f.etiqueta}: ${f.opciones.find((o) => o.v === filtros[f.id])?.txt}`,
+    );
+
+    setContextoPantalla(
+      [
+        'El usuario esta en la pantalla "Buscar ofertas" (busqueda por lenguaje natural).',
+        resultados === null
+          ? 'Todavia no ha buscado nada.'
+          : `Busco "${texto}" y ve ${visibles.length} ofertas.`,
+        visibles.length
+          ? `Las primeras son: ${visibles
+              .slice(0, 5)
+              .map((j) => `${j.title} (${j.company})`)
+              .join('; ')}.`
+          : '',
+        activos.length ? `Filtros activos: ${activos.join(', ')}.` : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+    );
+    return () => setContextoPantalla(null);
+    // `texto` cambia con cada tecla; el contexto solo importa tras buscar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resultados, visibles, filtros, setContextoPantalla]);
 
   /**
    * Busca. Si el texto lo pide, primero lo reescribe en afirmativo.
