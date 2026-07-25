@@ -39,6 +39,7 @@ const RUTAS = {
   ojoOff: <><path d="M4 4l16 16" /><path d="M9.5 9.5a3 3 0 0 0 4.2 4.2" /><path d="M6.6 6.6C3.8 8.2 2 12 2 12s3.5 6 10 6c1.8 0 3.4-.5 4.8-1.2" /><path d="M9.9 5.2A9.8 9.8 0 0 1 12 5c6.5 0 10 6 10 6a17 17 0 0 1-2.4 3" /></>,
   rejilla: <><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></>,
   lista: <><path d="M8 6h12M8 12h12M8 18h12" /><path d="M4 6h.01M4 12h.01M4 18h.01" /></>,
+  entrevista: <><path d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" /><path d="M8 9h8M8 12h5" /></>,
 };
 
 export default function Icon({ name, size = 20, className = '' }) {

@@ -3096,40 +3096,84 @@
 .port-card--esqueleto { min-height: 132px; display: block; }
 
 /* ---------------------------------------------------------------------------
-   Asistente: subseccion Entrevista (conmutador + flujo)
+   Entrevista simulada (pantalla propia, chat a ancho completo)
 --------------------------------------------------------------------------- */
-.asis-modo {
+/* En /entrevista el contenido se come la columna del Asistente: la entrevista ya
+   ES un chat, y tener otro al lado partia la atencion. */
+@media (min-width: 861px) {
+  .shell--full { grid-template-columns: 108px minmax(0, 1fr); }
+  .shell--full .asis-host { display: none; }
+}
+
+/* El chat ocupa el alto del lienzo: hilo con scroll propio + barra abajo. */
+.entrev-chat {
   display: flex;
-  gap: 4px;
-  padding: 4px;
-  margin: 0 0 var(--sp-1);
-  border-radius: var(--r-sm);
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-height: calc(100dvh - var(--sp-5) - var(--sp-6));
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.entrev-chat--setup { justify-content: center; }
+
+.entrev-chat__cab {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.entrev-chat__cab h1 { font-size: var(--fs-3); }
+.entrev-chat__info { flex: 1; min-width: 0; }
+.entrev-chat__meta { color: var(--text-3); font-size: 13px; margin-top: 2px; }
+
+.entrev-chat__hilo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  overflow-y: auto;
+  padding: var(--sp-1) 2px;
+}
+
+/* Barra de escritura: pegada abajo, a lo ancho, como cualquier chat. */
+.entrev-chat__barra {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-1);
+  padding: 8px 8px 8px var(--sp-2);
+  border-radius: var(--r-md);
   background: var(--glass);
   border: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
 }
 
-.asis-modo__btn {
+.entrev-chat__barra:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(79, 163, 255, 0.15);
+}
+
+.entrev-chat__input {
   flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 38px;
-  border-radius: 9px;
-  color: var(--text-3);
-  font-size: var(--fs-5);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background var(--t-fast), color var(--t-fast);
-}
-
-.asis-modo__btn.is-on {
+  min-width: 0;
+  min-height: 44px;
+  max-height: 160px;
+  padding: 11px 0;
+  background: none;
+  border: none;
   color: var(--text);
-  background: rgba(79, 163, 255, 0.16);
-  box-shadow: inset 0 0 0 1px var(--border-2);
+  font-size: 16px; /* 16px evita el zoom automatico de iOS */
+  line-height: 1.45;
+  resize: none;
 }
 
-.asis__cuerpo--entrev { display: block; }
+.entrev-chat__input:focus { outline: none; }
+.entrev-chat__input::placeholder { color: var(--text-3); opacity: 0.7; }
+.entrev-chat__error { flex: none; }
 
 .iconbtn--activo {
   color: var(--glow);
@@ -3154,7 +3198,18 @@
   color: var(--text);
   font-size: 15px;
 }
-.entrev__campo select { appearance: none; cursor: pointer; }
+.entrev__campo select {
+  appearance: none;
+  cursor: pointer;
+  /* El desplegable lo pinta el sistema, no el CSS de la app: sin `color-scheme`
+     Chrome lo dibuja claro y el texto claro heredado quedaba ilegible. */
+  color-scheme: dark;
+}
+/* Respaldo para navegadores que ignoran color-scheme en el popup (Firefox). */
+.entrev__campo select option {
+  background: var(--bg-2);
+  color: var(--text);
+}
 .entrev__fila { display: flex; gap: var(--sp-2); }
 
 .entrev__toggle {
@@ -3218,3 +3273,336 @@
 .entrev__bloque ul { padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
 .entrev__bloque li { color: var(--text-2); font-size: var(--fs-5); }
 .entrev__modelo-preg { color: var(--text-3); font-size: 13px; font-style: italic; }
+
+/* Entrevista en movil: la barra inferior de navegacion no debe tapar el input. */
+@media (max-width: 860px) {
+  .entrev-chat {
+    min-height: calc(100dvh - 200px);
+    max-width: none;
+  }
+  .entrev-chat__cab h1 { font-size: var(--fs-4); }
+  /* Con 6 rutas + Asistente la barra va justa: se aprieta un poco el texto. */
+  .tabbar__link span,
+  .tabbar__asis span { font-size: 10px; }
+  .tabbar__link { padding-inline: 2px; }
+}
+
+/* El setup se lee mejor en una columna acotada, no estirado a 900px. */
+.entrev-chat--setup .entrev-setup {
+  width: min(520px, 100%);
+  margin: 0 auto;
+}
+
+/* ---------------------------------------------------------------------------
+   Entrevista en video simulada (.vc = video call)
+--------------------------------------------------------------------------- */
+/* Selector de modalidad en el setup */
+.entrev__modos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  border: none;
+  padding: 0;
+}
+.entrev__modos legend { font-size: 13px; color: var(--text-3); margin-bottom: 6px; }
+
+.entrev__modo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px var(--sp-2);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.entrev__modo input { position: absolute; opacity: 0; pointer-events: none; }
+.entrev__modo:hover { border-color: var(--border-2); }
+.entrev__modo.is-on {
+  border-color: var(--blue);
+  background: rgba(79, 163, 255, 0.12);
+  color: var(--text);
+}
+.entrev__modo span { display: flex; flex-direction: column; line-height: 1.3; }
+.entrev__modo strong { font-size: var(--fs-5); }
+.entrev__modo em { font-size: 12px; color: var(--text-3); font-style: normal; }
+
+.entrev__aviso-video {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-3);
+  line-height: 1.45;
+}
+
+/* La llamada */
+.entrev-chat.vc, .vc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.vc__lienzo {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  min-height: 320px;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  /* "Sala" detras del avatar: el canvas 3D va transparente encima. */
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(38, 78, 132, 0.5), transparent 60%),
+    radial-gradient(80% 60% at 20% 100%, rgba(20, 44, 78, 0.6), transparent 70%),
+    linear-gradient(160deg, #0b1830, #040a14);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--t-base);
+}
+
+/* Cuando habla, la "sala" se ilumina un poco: refuerza quien tiene el turno. */
+.vc__lienzo--habla { box-shadow: var(--shadow-glow); }
+
+.vc__lienzo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.6);
+}
+
+.vc__escena { position: absolute; inset: 0; }
+.vc__escena canvas { display: block; width: 100%; height: 100%; }
+
+.vc__conectando {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  font-size: var(--fs-5);
+}
+
+/* Respaldo si no hay WebGL o falla el modelo: la llamada sigue. */
+.vc__sinvideo { position: absolute; inset: 0; display: grid; place-items: center; }
+.vc__sinvideo-ini {
+  width: 120px;
+  height: 120px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 40px;
+  font-weight: 600;
+  color: #cfe0ff;
+  background: linear-gradient(135deg, rgba(25, 68, 146, 0.9), rgba(14, 32, 78, 0.95));
+  border: 1px solid var(--border-2);
+}
+
+.vc__badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  color: var(--text-2);
+  background: rgba(3, 9, 17, 0.75);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+}
+
+.vc__reloj {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: var(--r-full);
+  font-size: 12px;
+  color: var(--text);
+  background: rgba(3, 9, 17, 0.75);
+  border: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+  backdrop-filter: blur(6px);
+}
+.vc__punto {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.vc__quien {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  background: rgba(3, 9, 17, 0.7);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+}
+.vc__quien strong { font-size: var(--fs-5); }
+.vc__estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.vc__estado.is-habla { color: var(--glow); }
+
+/* Ondas de "esta hablando" */
+.vc__ondas { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.vc__ondas i {
+  width: 2px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--glow);
+  animation: vcOnda 0.7s ease-in-out infinite;
+}
+.vc__ondas i:nth-child(2) { animation-delay: 0.15s; }
+.vc__ondas i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes vcOnda {
+  0%, 100% { height: 3px; opacity: 0.6; }
+  50%      { height: 12px; opacity: 1; }
+}
+
+/* Tu recuadro (PiP) */
+.vc__pip {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2;
+  width: clamp(120px, 18%, 200px);
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-2);
+  background: linear-gradient(160deg, #0a1626, #050b14);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+/* Espejado: uno espera verse como en un espejo, no invertido. */
+.vc__pipvideo { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.vc__pipini {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.vc__pipnom {
+  position: absolute;
+  left: 6px;
+  bottom: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: var(--r-full);
+  font-size: 10px;
+  color: var(--text);
+  background: rgba(3, 9, 17, 0.72);
+}
+.vc__pipmic { color: var(--glow); display: inline-flex; }
+
+/* Subtitulos */
+.vc__sub {
+  position: absolute;
+  left: 50%;
+  bottom: 82px;
+  transform: translateX(-50%);
+  z-index: 2;
+  width: min(72%, 620px);
+  padding: 10px 16px;
+  border-radius: var(--r-sm);
+  background: rgba(2, 6, 13, 0.82);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  text-align: center;
+}
+.vc__sub-preg { font-size: var(--fs-5); line-height: 1.45; }
+.vc__sub-tu { margin-top: 6px; font-size: 13px; color: var(--glow); font-style: italic; }
+
+/* Controles */
+.vc__barra {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+
+.vc__btn {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text-2);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+}
+.vc__btn:hover { color: var(--text); border-color: var(--border-2); }
+.vc__btn:active { transform: scale(0.96); }
+.vc__btn--on {
+  color: var(--glow);
+  border-color: var(--border-2);
+  background: rgba(79, 163, 255, 0.18);
+}
+.vc__btn--colgar {
+  color: #fff;
+  background: linear-gradient(180deg, #ff6b81, #d92c45);
+  border-color: rgba(255, 107, 129, 0.6);
+}
+.vc__btn--colgar:hover { color: #fff; box-shadow: 0 8px 26px rgba(217, 44, 69, 0.45); }
+
+.vc__error { flex: none; }
+
+/* Respaldo escrito dentro de la llamada (Firefox/Brave) */
+.vc__texto { display: flex; align-items: center; gap: var(--sp-1); }
+.vc__texto input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 16px;
+}
+.vc__texto input:focus { outline: none; border-color: var(--blue); }
+
+@media (max-width: 860px) {
+  .vc { max-width: none; }
+  .vc__lienzo { aspect-ratio: 3 / 4; min-height: 0; }
+  .vc__sub { width: 88%; bottom: 74px; }
+  .vc__pip { width: 96px; right: 10px; bottom: 10px; }
+  .vc__quien { left: 10px; bottom: 10px; padding: 8px 10px; }
+  /* Sin tapar la barra inferior de navegacion. */
+  .vc__barra { padding-bottom: var(--sp-2); }
+  .vc__btn { width: 48px; height: 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc__ondas i { animation: none; height: 8px; }
+}

@@ -25,11 +25,25 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 900 },
+        // Camara falsa para la entrevista en video: da un stream sintetico y evita
+        // el dialogo de permiso (headless no tiene webcam).
+        launchOptions: {
+          args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+        },
+      },
     },
     {
       name: 'movil',
-      use: { ...devices['Pixel 5'], viewport: { width: 390, height: 844 } },
+      use: {
+        ...devices['Pixel 5'],
+        viewport: { width: 390, height: 844 },
+        launchOptions: {
+          args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+        },
+      },
     },
   ],
 });
