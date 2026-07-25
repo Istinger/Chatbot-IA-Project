@@ -4009,3 +4009,60 @@
 @media (prefers-reduced-motion: reduce) {
   .vc__ondas i { animation: none; height: 8px; }
 }
+
+/* ==========================================================================
+   Movil: coherencia de las pantallas nuevas
+   Todo va DENTRO de media queries y al final del archivo: en escritorio no
+   cambia nada. Aqui solo se resuelve lo que en un telefono queda apretado.
+   ========================================================================== */
+@media (max-width: 860px) {
+  /* Aire simetrico: el lienzo tenia 0 a la derecha y los paneles llegaban a
+     tocar el borde de la pantalla. */
+  .lienzo { padding-right: var(--sp-2); }
+
+  /* Cabeceras de seccion: con poco ancho, la pastilla ("Basado en N ofertas")
+     estrujaba el titulo. Que baje debajo en vez de competir por el sitio. */
+  .seccion__cab { flex-wrap: wrap; }
+  .seccion__pill { order: 3; }
+
+  /* Perfil: el campo de añadir habilidad y su boton, cada uno en su linea si no
+     caben. */
+  .perfil__skilladd { flex-wrap: wrap; }
+  .perfil__skillinput { flex: 1 1 180px; }
+
+  /* Crecer: el pie de las tarjetas de curso (horas, demanda, gratis, flecha)
+     no cabe en una linea. */
+  .curso__foot { flex-wrap: wrap; }
+  .curso__ir { margin-left: auto; }
+
+  /* Crecer: las columnas ya no scrollean por dentro en movil (lo hace la
+     pagina), asi que tampoco deben limitar el alto de sus paneles. */
+  .crecer__ia { max-height: none; }
+
+  /* Entrevista: el historial no se come la pantalla. */
+  .entrev-lat__lista { max-height: 50dvh; }
+
+  /* Portafolio: las tarjetas guardadas a ancho completo. */
+  .port-guardadas__grid .port-card { width: 100%; }
+}
+
+/* Telefonos estrechos: la barra inferior lleva 6 destinos + el Asistente. Con
+   texto no caben, asi que se deja solo el icono. El texto NO se borra: se oculta
+   a la vista pero sigue ahi para los lectores de pantalla. */
+@media (max-width: 560px) {
+  .tabbar__link span,
+  .tabbar__asis span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .tabbar { height: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  .lienzo { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+}
