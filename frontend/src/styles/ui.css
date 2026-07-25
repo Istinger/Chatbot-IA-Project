@@ -3,8 +3,51 @@
    niebla, glow, particulas y viñeta, todo CSS. Fijo detras de TODO — el rail y
    el panel del asistente lo dejan ver a traves de su blur translucido.
 --------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+   Marco de la app
+   En escritorio la app no ocupa la ventana entera: vive dentro de un rectangulo
+   16:9 centrado y con las esquinas redondeadas, y alrededor se ve el negro del
+   body. Como el marco recorta (overflow), TODO lo de dentro —incluido el fondo
+   animado— queda con esas esquinas.
+
+   Ojo: al no scrollear el documento, el scroll pasa a ser interno (.lienzo). Por
+   eso las pantallas miden con `--alto-app` (el alto del marco) y no con 100dvh.
+--------------------------------------------------------------------------- */
+.marco {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Halos azules del fondo: antes estaban en el body, ahora viven aqui dentro. */
+  background:
+    radial-gradient(circle at 34% 26%, rgba(16, 76, 142, 0.16), transparent 42%),
+    radial-gradient(circle at 82% 10%, rgba(22, 65, 128, 0.12), transparent 30%),
+    var(--bg);
+}
+
+@media (min-width: 861px) {
+  :root {
+    --marco-gap: 14px;
+    --marco-radio: 22px;
+    /* El marco es el 16:9 mas grande que cabe en la ventana menos el margen: se
+       limita por el alto O por el ancho, lo que toque antes. */
+    --alto-app: min(
+      calc(100dvh - 2 * var(--marco-gap)),
+      calc((100vw - 2 * var(--marco-gap)) * 9 / 16)
+    );
+  }
+
+  .marco {
+    width: calc(var(--alto-app) * 16 / 9);
+    height: var(--alto-app);
+    border-radius: var(--marco-radio);
+    border: 1px solid var(--border);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  }
+}
+
 .ambient {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: var(--z-bg);
   overflow: hidden;
@@ -287,7 +330,9 @@
 .entrada {
   position: relative;
   z-index: var(--z-content);
-  min-height: 100dvh;
+  /* Va directo dentro del marco: scrollea por dentro si no cabe. */
+  height: var(--alto-app);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -415,7 +460,9 @@
 .onb {
   position: relative;
   z-index: var(--z-content);
-  min-height: 100dvh;
+  /* Va directo dentro del marco: scrollea por dentro si no cabe. */
+  height: var(--alto-app);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -568,7 +615,9 @@
 .shell {
   position: relative;
   z-index: var(--z-content);
-  min-height: 100dvh;
+  /* Alto EXACTO del marco (no min-height): el documento ya no scrollea, lo hace
+     la columna de contenido (.lienzo). */
+  height: var(--alto-app);
   display: grid;
   grid-template-columns: 108px minmax(0, 1fr) minmax(340px, var(--asis-ancho));
 }
@@ -577,7 +626,7 @@
   position: sticky;
   top: 0;
   z-index: var(--z-nav);
-  height: 100dvh;
+  height: var(--alto-app);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -687,6 +736,9 @@
 
 .lienzo {
   min-width: 0; /* sin esto, el carrusel desborda y aparece scroll horizontal */
+  /* El scroll de la app vive aqui (el documento ya no scrollea). */
+  min-height: 0;
+  overflow-y: auto;
   padding: var(--sp-5) var(--sp-4) var(--sp-6);
   display: flex;
   flex-direction: column;
@@ -699,7 +751,7 @@
 .asis-host {
   position: sticky;
   top: 0;
-  height: 100dvh;
+  height: var(--alto-app);
   border-left: 1px solid var(--border);
   background: rgba(5, 11, 20, 0.4);
   backdrop-filter: blur(20px);
@@ -942,7 +994,7 @@
 }
 
 .cargando {
-  min-height: 100dvh;
+  min-height: var(--alto-app);
   display: grid;
   place-items: center;
   color: var(--text-3);
@@ -1381,7 +1433,9 @@
    Modal
 --------------------------------------------------------------------------- */
 .modal {
-  position: fixed;
+  /* absolute y no fixed: asi queda DENTRO del marco de la app (position:fixed se
+     escapa del recorte y taparia tambien el negro de alrededor). */
+  position: absolute;
   inset: 0;
   z-index: var(--z-modal);
   display: grid;
@@ -1402,7 +1456,7 @@
 .modal__caja {
   position: relative;
   width: min(680px, 100%);
-  max-height: 88dvh;
+  max-height: calc(var(--alto-app) * 0.88);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1484,8 +1538,14 @@
    Movil: el rail lateral pasa a barra inferior
 --------------------------------------------------------------------------- */
 @media (max-width: 860px) {
-  /* Una sola columna: el rail lateral se oculta y navega la barra inferior. */
-  .shell { display: block; }
+  /* Una sola columna: el rail lateral se oculta y navega la barra inferior.
+     Flex y no block: el contenido (.lienzo) tiene que poder scrollear por dentro,
+     porque el documento ya no scrollea. */
+  .shell {
+    display: flex;
+    flex-direction: column;
+  }
+  .lienzo { flex: 1; }
   .rail { display: none; }
 
   /* El Asistente pasa a HOJA a pantalla completa (se abre desde la barra). */
@@ -1493,7 +1553,7 @@
     position: fixed;
     inset: 0;
     z-index: var(--z-modal);
-    height: 100dvh;
+    height: var(--alto-app);
     border-left: none;
     background: rgba(2, 7, 13, 0.98);
     transform: translateX(100%);
@@ -1612,7 +1672,7 @@
   flex-direction: column;
   gap: var(--sp-2);
   /* La conversacion ocupa el alto disponible; solo scrollea el hilo. */
-  height: calc(100dvh - var(--sp-5) - var(--sp-6));
+  height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6));
   padding-right: var(--sp-4);
 }
 
@@ -1824,7 +1884,7 @@
 
 @media (max-width: 860px) {
   .chat {
-    height: calc(100dvh - 190px);
+    height: calc(var(--alto-app) - 190px);
     padding-right: var(--sp-2);
   }
 
@@ -3023,10 +3083,10 @@
 }
 
 /* Escritorio: cada seccion de la home es una "pagina" con snap SUAVE. El scroller
-   es el root; solo .ofertas-pagina tiene snap-align, asi que otras rutas no se ven
-   afectadas. */
+   es .lienzo (la columna de contenido, dentro del marco); solo .ofertas-pagina
+   tiene snap-align, asi que otras rutas no se ven afectadas. */
 @media (min-width: 861px) {
-  html {
+  .lienzo {
     /* mandatory (no proximity): cada gesto ENGANCHA a la pagina, no se queda a
        medias. Es lo que da sentido a la nota "Haz scroll para ver mas ofertas". */
     scroll-snap-type: y mandatory;
@@ -3034,7 +3094,9 @@
   }
 
   .ofertas-pagina {
-    min-height: 100dvh;
+    /* Alto del scroller MENOS su padding vertical: si no, cada pagina desborda y
+       el snap se descuadra. */
+    min-height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6));
     scroll-snap-align: start;
     /* Cada tanda avanza de una en una: un gesto rapido no salta la pagina. */
     scroll-snap-stop: always;
@@ -3060,7 +3122,7 @@
   .ofertas-blink {
     position: sticky;
     top: 0;
-    min-height: 100dvh;
+    min-height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6));
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -3177,7 +3239,7 @@
   flex-direction: column;
   gap: var(--sp-2);
   /* Mismo alto que el lienzo de la llamada: el hilo scrollea por dentro. */
-  height: calc(100dvh - var(--sp-5) - var(--sp-6));
+  height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6));
   min-height: 320px;
   padding: var(--sp-2);
   border-radius: var(--r-lg);
@@ -3209,7 +3271,7 @@
 @media (max-width: 1100px) {
   /* Sin sitio para dos columnas: el chat baja debajo de la llamada. */
   .entrev-video { flex-direction: column; align-items: stretch; }
-  .entrev-video .entrev-vchat { flex: 1 1 auto; height: auto; max-height: 60dvh; }
+  .entrev-video .entrev-vchat { flex: 1 1 auto; height: auto; max-height: calc(var(--alto-app) * 0.6); }
 }
 
 /* El chat ocupa el alto del lienzo: hilo con scroll propio + barra abajo. */
@@ -3217,7 +3279,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  min-height: calc(100dvh - var(--sp-5) - var(--sp-6));
+  min-height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6));
   max-width: 900px;
   width: 100%;
   margin: 0 auto;
@@ -3255,7 +3317,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
-  max-height: 42dvh;
+  max-height: calc(var(--alto-app) * 0.42);
   overflow-y: auto;
 }
 
@@ -3327,7 +3389,7 @@
 /* Respuesta de la IA dentro del panel (aqui y no en el Asistente, que en
    /entrevista esta oculto en escritorio). */
 .entrev-lat__plan {
-  max-height: 34dvh;
+  max-height: calc(var(--alto-app) * 0.34);
   overflow-y: auto;
   padding: var(--sp-2);
   border-radius: var(--r-md);
@@ -3499,7 +3561,7 @@
 /* Entrevista en movil: la barra inferior de navegacion no debe tapar el input. */
 @media (max-width: 860px) {
   .entrev-chat {
-    min-height: calc(100dvh - 200px);
+    min-height: calc(var(--alto-app) - 200px);
     max-width: none;
   }
   .entrev-chat__cab h1 { font-size: var(--fs-4); }
@@ -3570,7 +3632,7 @@
      deriva del ALTO disponible (lienzo 16/10 + barra de controles). Asi ocupa
      todo lo que puede sin desbordar, en vez de quedarse en 1100px con la
      pantalla medio vacia. */
-  max-width: min(1600px, calc((100dvh - 190px) * 1.6));
+  max-width: min(1600px, calc((var(--alto-app) - 190px) * 1.6));
   margin: 0 auto;
 }
 
