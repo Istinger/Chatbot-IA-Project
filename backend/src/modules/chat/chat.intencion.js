@@ -30,6 +30,11 @@ const INTENCION = [
   'trabajo', 'trabajos', 'empleo', 'empleos', 'vacante', 'vacantes', 'oferta',
   'ofertas', 'puesto', 'puestos', 'plaza', 'plazas', 'postular', 'postulacion',
   'aplicar a', 'contratar', 'contratacion', 'reclutamiento', 'busco', 'buscando',
+  // Formas en imperativo: estaban "busco"/"buscando" pero NO "busca", asi que
+  // "busca algo que concuerde con mis gustos" no se reconocia como consulta de
+  // empleo y el chat respondia en abstracto, sin traer ni una oferta.
+  'busca', 'buscame', 'encuentra', 'encuentrame', 'sugiere', 'sugiereme',
+  'sugerencia', 'sugerencias', 'proponme', 'dame opciones',
   'recomiendame', 'recomiendame', 'recomienda', 'muestrame', 'ensename',
   'salario', 'sueldo', 'pagan', 'paga', 'remuneracion',
   'remoto', 'presencial', 'hibrido', 'freelance', 'medio tiempo', 'pasantia',

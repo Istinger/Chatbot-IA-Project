@@ -17,7 +17,7 @@ export default function Home() {
   const [filasExtra, setFilasExtra] = useState(0);
   // La oferta abierta vive en el contexto compartido: asi el Asistente sabe
   // cual estas viendo. El modal se monta una sola vez en el Shell.
-  const { setOfertaActiva } = useVista();
+  const { setOfertaActiva, setContextoPantalla } = useVista();
 
   useEffect(() => {
     const calcular = () => {
@@ -79,6 +79,19 @@ export default function Home() {
   const cargando = recomendadas === null;
   const destacada = recomendadas?.[0];
   const chicas = recomendadas?.slice(1, 4) ?? [];
+
+  // El Asistente sabe que ofertas tienes delante: asi "cual me conviene mas?" o
+  // "hablame de la primera" tienen sentido sin que se las describas.
+  useEffect(() => {
+    if (!recomendadas?.length) return undefined;
+    setContextoPantalla(
+      `El usuario esta en "Ofertas nuevas" (su home), viendo ${recomendadas.length} ofertas recomendadas para su perfil. Las de arriba son: ${recomendadas
+        .slice(0, 4)
+        .map((j) => `${j.title} en ${j.company}${j.score != null ? ` (${Math.round(j.score * 100)}% afin)` : ''}`)
+        .join('; ')}.`,
+    );
+    return () => setContextoPantalla(null);
+  }, [recomendadas, setContextoPantalla]);
 
   // "Mas ofertas": el resto de recomendadas + exterior + locales, sin repetir.
   // Asi la home conserva el valor de exterior/local que el mock no muestra.

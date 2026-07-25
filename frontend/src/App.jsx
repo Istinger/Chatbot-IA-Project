@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { api } from './lib/api';
+import { cargarFotos } from './lib/imagen';
 import { AuthProvider, useAuth } from './lib/auth';
 import AmbientBackground from './components/AmbientBackground';
 import Shell from './components/Shell';
@@ -58,7 +61,27 @@ function Rutas() {
   );
 }
 
+/**
+ * Fotos de portada: se piden UNA vez al arrancar y se reparten entre las ofertas
+ * (ver lib/imagen.js). Si falla o no hay clave de Pexels, cada portada cae en su
+ * respaldo y la app sigue igual.
+ */
+function useFotos() {
+  const [, setListo] = useState(false);
+  useEffect(() => {
+    api
+      .imagenes()
+      .then((r) => {
+        cargarFotos(r.temas);
+        setListo(true); // repinta para que las tarjetas cojan ya la foto buena
+      })
+      .catch(() => {});
+  }, []);
+}
+
 export default function App() {
+  useFotos();
+
   return (
     <BrowserRouter>
       <AuthProvider>

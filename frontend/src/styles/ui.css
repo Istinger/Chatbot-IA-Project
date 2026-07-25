@@ -1129,6 +1129,26 @@
   pointer-events: none;
 }
 
+/* Credito del fotografo: la licencia de Pexels lo pide. Discreto, en la esquina
+   de la portada, para cumplir sin ensuciar la tarjeta. */
+.card__credito {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 1;
+  padding: 2px 7px;
+  border-radius: var(--r-full);
+  background: rgba(2, 7, 13, 0.55);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 10px;
+  line-height: 1.4;
+  pointer-events: none;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .card__chips {
   position: absolute;
   top: 12px;
@@ -3506,7 +3526,11 @@
    el form se centraba en una columna enorme y quedaba un hueco en medio. */
 .entrev-inicio {
   display: grid;
-  grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
+  /* Ambas columnas acotadas y el par centrado. Con el panel a 1fr se comia todo
+     el ancho sobrante y las cajas quedaban larguisimas para el poco texto que
+     llevan. */
+  grid-template-columns: minmax(0, 480px) minmax(0, 620px);
+  justify-content: center;
   gap: var(--sp-3);
   align-items: center;
 }
