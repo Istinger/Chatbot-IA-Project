@@ -3138,6 +3138,55 @@
   .shell--full .asis-host { display: none; }
 }
 
+/* Videollamada + chat: la llamada a la izquierda y el chat en la columna que
+   antes quedaba vacia (la ruta /entrevista oculta el panel del Asistente). */
+.entrev-video {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+  gap: var(--sp-2);
+  align-items: start;
+}
+
+.entrev-vchat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  /* Mismo alto que el lienzo de la llamada: el hilo scrollea por dentro. */
+  height: calc(100dvh - var(--sp-5) - var(--sp-6));
+  min-height: 320px;
+  padding: var(--sp-2);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+}
+
+.entrev-vchat__cab {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding-bottom: var(--sp-1);
+  border-bottom: 1px solid var(--border);
+}
+.entrev-vchat__cab strong { display: block; font-size: var(--fs-5); }
+.entrev-vchat__cab span { font-size: 12px; color: var(--text-3); }
+
+.entrev-vchat__hilo {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+@media (max-width: 1100px) {
+  /* Sin sitio para dos columnas: el chat baja debajo de la llamada. */
+  .entrev-video { grid-template-columns: 1fr; }
+  .entrev-vchat { height: auto; max-height: 60dvh; }
+}
+
 /* El chat ocupa el alto del lienzo: hilo con scroll propio + barra abajo. */
 .entrev-chat {
   display: flex;
@@ -3377,7 +3426,11 @@
   flex-direction: column;
   gap: var(--sp-2);
   width: 100%;
-  max-width: 1100px;
+  /* Escala uniforme: la llamada crece hasta llenar el hueco, pero su ancho se
+     deriva del ALTO disponible (lienzo 16/10 + barra de controles). Asi ocupa
+     todo lo que puede sin desbordar, en vez de quedarse en 1100px con la
+     pantalla medio vacia. */
+  max-width: min(1600px, calc((100dvh - 190px) * 1.6));
   margin: 0 auto;
 }
 
@@ -3408,19 +3461,7 @@
   box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.6);
 }
 
-.vc__escena { position: absolute; inset: 0; }
-.vc__escena canvas { display: block; width: 100%; height: 100%; }
-
-.vc__conectando {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: var(--text-3);
-  font-size: var(--fs-5);
-}
-
-/* Respaldo si no hay WebGL o falla el modelo: la llamada sigue. */
+/* El entrevistador: avatar de iniciales sobre el fondo de sala (sin 3D). */
 .vc__sinvideo { position: absolute; inset: 0; display: grid; place-items: center; }
 .vc__sinvideo-ini {
   width: 120px;
@@ -3433,6 +3474,22 @@
   color: #cfe0ff;
   background: linear-gradient(135deg, rgba(25, 68, 146, 0.9), rgba(14, 32, 78, 0.95));
   border: 1px solid var(--border-2);
+  transition: box-shadow var(--t-fast), transform var(--t-fast);
+}
+
+/* Mientras habla, el halo late al ritmo de la voz (--pulso sube por palabra) y
+   respira de fondo: sin esto la llamada parece congelada. */
+.vc__sinvideo--habla .vc__sinvideo-ini {
+  transform: scale(calc(1 + var(--pulso, 0) * 0.05));
+  box-shadow:
+    0 0 0 calc(6px + var(--pulso, 0) * 10px) rgba(79, 163, 255, calc(0.1 + var(--pulso, 0) * 0.14)),
+    0 0 40px rgba(79, 163, 255, calc(0.35 + var(--pulso, 0) * 0.4));
+  animation: vc-respira 2.4s ease-in-out infinite;
+}
+
+@keyframes vc-respira {
+  0%, 100% { border-color: var(--border-2); }
+  50%      { border-color: rgba(130, 205, 255, 0.9); }
 }
 
 .vc__badge {
