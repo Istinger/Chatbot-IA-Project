@@ -135,12 +135,18 @@ export function callarVoz() {
   }
 }
 
-export function crearDictado({ onTexto, onFin, onError }) {
+/**
+ * `continuo`: por defecto el navegador CORTA el dictado en cuanto detecta un
+ * silencio corto (~1-2 s). Para una respuesta larga eso te interrumpe a media
+ * frase, asi que la entrevista lo activa y decide ella cuando termina el turno
+ * (ver la pausa de fin en screens/Entrevista.jsx).
+ */
+export function crearDictado({ onTexto, onFin, onError, continuo = false }) {
   if (!Reconocimiento) return null;
 
   const r = new Reconocimiento();
   r.lang = 'es-EC';
-  r.continuous = false;
+  r.continuous = continuo;
   r.interimResults = true; // el texto aparece mientras se habla
 
   r.onresult = (e) => {
