@@ -29,16 +29,14 @@
   :root {
     --marco-gap: 14px;
     --marco-radio: 22px;
-    /* El marco es el 16:9 mas grande que cabe en la ventana menos el margen: se
-       limita por el alto O por el ancho, lo que toque antes. */
-    --alto-app: min(
-      calc(100dvh - 2 * var(--marco-gap)),
-      calc((100vw - 2 * var(--marco-gap)) * 9 / 16)
-    );
+    /* El marco llena la ventana menos el margen. Se probo atarlo a 16:9, pero en
+       pantallas anchas dejaba franjas negras enormes a los lados: aqui el negro
+       es solo el filo que deja ver las esquinas redondeadas. */
+    --alto-app: calc(100dvh - 2 * var(--marco-gap));
   }
 
   .marco {
-    width: calc(var(--alto-app) * 16 / 9);
+    width: calc(100vw - 2 * var(--marco-gap));
     height: var(--alto-app);
     border-radius: var(--marco-radio);
     border: 1px solid var(--border);
@@ -3019,7 +3017,14 @@
   padding-right: var(--sp-4);
 }
 
-.ofertas__mas { margin-top: var(--sp-4); }
+/* z-index: la pagina 1 lleva un wrapper sticky con filtros (blink). Si por lo que
+   sea desborda, "Mas ofertas" tiene que pintarse ENCIMA, no mezclarse con ella. */
+.ofertas__mas {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--sp-4);
+  background: var(--bg);
+}
 .ofertas__mas .carrusel__title { font-size: var(--fs-2); }
 
 /* Buscar ofertas */

@@ -22,20 +22,36 @@ export default function Home() {
   useEffect(() => {
     const calcular = () => {
       // Como MUCHO una fila extra (2 filas en total): mas romperia el scroll-snap
-      // de la primera pagina. Y solo se añade si las 2 filas caben ENTERAS en el
-      // viewport, para que no asome una tercera ni desborde la pagina.
+      // de la primera pagina. Y solo se añade si las 2 filas caben ENTERAS, para
+      // que no asome una tercera ni desborde la pagina.
       if (window.innerWidth < 861) {
         setFilasExtra(0);
         return;
       }
-      const CHROME = 210; // cabecera + nota "haz scroll" + margenes
+
+      // Se mide el SCROLLER real (.lienzo), no la ventana: la app vive dentro de
+      // un marco mas pequeño, y medir con innerHeight metia una fila que no cabia
+      // y hacia que la pagina 1 se solapara con "Mas ofertas".
+      const lienzo = document.querySelector('.lienzo');
+      let disponible = window.innerHeight;
+      if (lienzo) {
+        const cs = getComputedStyle(lienzo);
+        disponible =
+          lienzo.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      }
+
+      const CHROME = 150; // cabecera de la seccion + nota "haz scroll"
       const FILA = 430; // alto real de una fila de tarjetas (imagen + cuerpo)
-      const filasQueCaben = Math.floor((window.innerHeight - CHROME) / FILA);
-      setFilasExtra(filasQueCaben >= 2 ? 1 : 0);
+      setFilasExtra(Math.floor((disponible - CHROME) / FILA) >= 2 ? 1 : 0);
     };
-    calcular();
+
+    // Tras el primer pintado: antes, .lienzo aun no esta en el DOM.
+    const id = requestAnimationFrame(calcular);
     window.addEventListener('resize', calcular);
-    return () => window.removeEventListener('resize', calcular);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener('resize', calcular);
+    };
   }, []);
 
   useEffect(() => {
