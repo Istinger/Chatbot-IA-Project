@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useVista } from '../lib/vista';
 import Icon from '../components/Icon';
+import SkillIcon from '../components/SkillIcon';
 import AvisosTelegram from '../components/AvisosTelegram';
 
 export default function Profile() {
@@ -116,7 +117,10 @@ export default function Profile() {
         </p>
       </header>
 
-      <section className="panel">
+      {/* Dos columnas: Habilidades (que es lo que mas ocupa) a la izquierda, y el
+          resto apilado a la derecha. */}
+      <div className="perfil">
+      <section className="panel perfil__skills">
         <header className="seccion__cab">
           <span className="seccion__icono seccion__icono--cursos"><Icon name="chispa" size={20} /></span>
           <div className="seccion__txt">
@@ -140,6 +144,8 @@ export default function Profile() {
                 disabled={ocupado}
                 aria-label={`Quitar ${s}`}
               >
+                {/* Logo real de la tecnologia (Devicon via CDN, ver SkillIcon). */}
+                <SkillIcon skill={s} size={20} />
                 {s}
                 <Icon name="cerrar" size={14} />
               </button>
@@ -172,6 +178,7 @@ export default function Profile() {
         </div>
       </section>
 
+      <div className="perfil__col">
       <section className="panel">
         <header className="seccion__cab">
           <span className="seccion__icono"><Icon name="maletin" size={20} /></span>
@@ -243,6 +250,8 @@ export default function Profile() {
           Cerrar sesion
         </button>
       </section>
+      </div>
+      </div>
     </>
   );
 }
