@@ -1943,15 +1943,20 @@
   list-style: none;
 }
 
+/* La fila clicable (.gap__fila) lleva las columnas; aqui solo se le suma el
+   boton de marcar al lado. Las columnas fijas hacen que las barras arranquen
+   todas en el mismo punto: si no, comparar de un vistazo es imposible. */
 .gap__item {
-  display: grid;
-  /* La skill a la izquierda, la barra ocupando el resto, el % alineado a la
-     derecha. Las tres columnas fijas hacen que las barras arranquen todas en el
-     mismo punto: si no, comparar de un vistazo es imposible. */
-  grid-template-columns: 130px 1fr 44px;
+  display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: 2px;
 }
+
+/* "Lo que ya tienes" no es clicable: sus hijos van sueltos en la fila, asi que
+   se les reparte el ancho aqui (en "Lo que te falta" lo hace .gap__fila). */
+.gap__item > .gap__skill { flex: none; width: 104px; }
+.gap__item > .barra { flex: 1; }
+.gap__item > .gap__pct { flex: none; width: 44px; }
 
 .gap__skill {
   font-size: var(--fs-5);
@@ -2046,19 +2051,91 @@
   gap: var(--sp-2);
   align-items: start;
 }
-.crecer__col { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+.crecer__col,
+.crecer__der { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
 
 @media (min-width: 861px) {
-  /* Alto del scroller menos su padding y la cabecera: lo que queda para el grid. */
-  .crecer__cursos { max-height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6) - 120px); }
-  /* min-height:0 -> sin esto un hijo flex no encoge y el scroll no aparece. */
-  .crecer__cursos .cursos { min-height: 0; overflow-y: auto; padding-right: 4px; }
+  /* Cada columna scrollea por dentro: la pantalla no crece aunque se abra el
+     detalle de una habilidad o el plan (los cursos siguen ahi, debajo). */
+  .crecer__col,
+  .crecer__der {
+    max-height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6) - 90px);
+    overflow-y: auto;
+  }
 }
 
 @media (max-width: 1000px) {
   .crecer { grid-template-columns: 1fr; }
-  .crecer__cursos { max-height: none; }
+  .crecer__col,
+  .crecer__der { max-height: none; overflow: visible; }
 }
+
+/* --- Fila de brecha: se pulsa para ver el detalle, y se marca el avance --- */
+.gap__fila {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 20px 104px 1fr 44px;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.gap__fila:hover { background: var(--glass-2); }
+
+.gap__marca {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+.gap__marca:hover { background: var(--glass-2); color: var(--text); }
+
+/* En progreso: destacada. Aprendida: tachada y atenuada, ya no es tu problema. */
+.gap__item--progreso .gap__skill { color: var(--glow); }
+.gap__item--progreso .gap__marca { color: var(--glow); }
+.gap__item--aprendida { opacity: 0.55; }
+.gap__item--aprendida .gap__skill { text-decoration: line-through; }
+.gap__item--aprendida .gap__marca { color: var(--success); }
+
+/* Proyeccion de lo marcado. Calculo local (ver lib/crecer.js), sin IA. */
+.gap__proy {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: var(--sp-2);
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: rgba(110, 231, 183, 0.1);
+  border: 1px solid rgba(110, 231, 183, 0.28);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.gap__proy svg { flex: none; color: var(--success); margin-top: 2px; }
+.gap__proy em { color: var(--text-3); font-style: normal; }
+
+/* Detalle de una habilidad / plan: se añaden ARRIBA, sin quitar los cursos. */
+.crecer__detalle { border-color: var(--border-2); }
+.crecer__ia {
+  align-self: stretch;
+  max-height: calc(var(--alto-app) * 0.36);
+  overflow-y: auto;
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(79, 163, 255, 0.25);
+  background: rgba(79, 163, 255, 0.07);
+  font-size: 13px;
+}
+.crecer__detcursos { align-self: stretch; border-top: none; margin-top: 0; }
 
 /* Perfil: dos columnas. Habilidades (lo que mas ocupa) a la izquierda y el resto
    —Curriculum, Telegram, Sesion— apilado a la derecha. */
@@ -2774,9 +2851,9 @@
 }
 
 @media (max-width: 600px) {
-  .gap__item {
-    grid-template-columns: 96px 1fr 40px;
-  }
+  .gap__fila { grid-template-columns: 20px 76px 1fr 40px; }
+  .gap__item > .gap__skill { width: 76px; }
+  .gap__item > .gap__pct { width: 40px; }
 }
 
 /* ==========================================================================
@@ -3103,9 +3180,12 @@
    tiene snap-align, asi que otras rutas no se ven afectadas. */
 @media (min-width: 861px) {
   .lienzo {
-    /* mandatory (no proximity): cada gesto ENGANCHA a la pagina, no se queda a
-       medias. Es lo que da sentido a la nota "Haz scroll para ver mas ofertas". */
-    scroll-snap-type: y mandatory;
+    /* proximity y NO mandatory: "Mas ofertas" es mas alta que la pantalla y con
+       mandatory quedaba atrapada —su unico anclaje es su inicio, asi que al
+       scrollear dentro te devolvia arriba y no se podian ver las de abajo—.
+       Con proximity el salto entre paginas sigue enganchando al soltar cerca,
+       pero dentro de una pagina larga se scrollea libre. */
+    scroll-snap-type: y proximity;
     scroll-behavior: smooth;
   }
 
@@ -3114,8 +3194,6 @@
        el snap se descuadra. */
     min-height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6));
     scroll-snap-align: start;
-    /* Cada tanda avanza de una en una: un gesto rapido no salta la pagina. */
-    scroll-snap-stop: always;
     scroll-margin-top: var(--sp-3);
     display: flex;
     flex-direction: column;
@@ -3136,6 +3214,9 @@
     /* la seccion deja de centrar: de eso se encarga el wrapper sticky */
     display: block;
     view-timeline: --ofertas-1 block;
+    /* Solo la PRIMERA pagina obliga a parar: un gesto rapido no se la salta. En
+       "Mas ofertas" seria un freno, porque ahi se scrollea de largo. */
+    scroll-snap-stop: always;
   }
 
   .ofertas-blink {
@@ -3306,15 +3387,26 @@
 
 .entrev-chat--setup { justify-content: safe center; }
 
-/* Pantalla inicial: el formulario y, al lado, lo que ya practicaste. */
+/* Pantalla inicial: el formulario y, al lado, lo que ya practicaste.
+   El formulario se acota (unos campos de 1200px no se leen bien) y el espacio
+   sobrante se lo queda el panel, que si tiene contenido que lo aprovecha: antes
+   el form se centraba en una columna enorme y quedaba un hueco en medio. */
 .entrev-inicio {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
   gap: var(--sp-3);
   align-items: center;
 }
 
-.entrev-lat { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+/* Dentro del par no se auto-centra: se pega a su columna. */
+.entrev-inicio .entrev-chat--setup { max-width: none; margin: 0; }
+
+.entrev-lat { display: grid; grid-template-columns: 1fr; gap: var(--sp-2); min-width: 0; }
+
+/* Con sitio de sobra, historial y consejos van lado a lado en vez de estirarse. */
+@media (min-width: 1500px) {
+  .entrev-lat { grid-template-columns: 1fr 1fr; align-items: start; }
+}
 
 .entrev-lat__caja {
   display: flex;
