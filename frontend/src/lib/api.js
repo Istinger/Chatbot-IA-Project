@@ -95,6 +95,9 @@ export const api = {
   /** Skill gap + cursos. Cero IA: diferencia de conjuntos y catalogo estatico. */
   certificados: () => request('/certs/suggestions'),
 
+  /** Fotos de portada por tema (Pexels via backend: la clave no sale del server). */
+  imagenes: () => request('/imagenes'),
+
   /** Ideas de portafolio personalizadas (perfil + brecha). El backend cachea. */
   portafolioIdeas: () => request('/portafolio/ideas'),
   portafolioIdea: (id) => request(`/portafolio/ideas/${encodeURIComponent(id)}`),

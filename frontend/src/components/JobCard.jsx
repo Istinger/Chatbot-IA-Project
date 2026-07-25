@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Icon from './Icon';
 import { useVista } from '../lib/vista';
 import { formatearSalario } from '../lib/format';
-import { imagenOferta, imagenFallback } from '../lib/imagen';
+import { creditoOferta, imagenOferta, imagenFallback } from '../lib/imagen';
 
 /**
  * Iniciales de la empresa para el badge (mock: "ID", "AX", "PS"...).
@@ -33,6 +33,7 @@ export default function JobCard({ job, onOpen, destacada = false }) {
   const [imgError, setImgError] = useState(false);
   const { guardadas } = useVista();
   const guardada = guardadas?.has(job.id);
+  const credito = creditoOferta(job);
   const salario = formatearSalario(job);
   const score = job.score != null ? Math.round(job.score * 100) : null;
   const ubicacion = [job.location, job.country].filter(Boolean).join(' · ');
@@ -53,6 +54,11 @@ export default function JobCard({ job, onOpen, destacada = false }) {
           width="640"
           height="420"
         />
+        {/* La licencia de Pexels pide acreditar al fotografo. Solo aparece si la
+            foto viene de ahi (con el respaldo no hay a quien acreditar). */}
+        {!imgError && credito?.autor && (
+          <span className="card__credito">Foto: {credito.autor}</span>
+        )}
         <div className="card__chips">
           <span className={`chip chip--${job.isForeign ? 'exterior' : 'local'}`}>
             <Icon name={job.isForeign ? 'globo' : 'brujula'} size={14} />

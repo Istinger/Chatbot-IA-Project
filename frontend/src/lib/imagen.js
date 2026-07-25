@@ -80,6 +80,30 @@ function lockDe(semilla) {
   return n;
 }
 
+/* ---------------------------------------------------------------------------
+   Fotos de Pexels
+
+   El backend pide ~30 fotos por tema (una vez, cacheadas) y aqui se reparten
+   entre las ofertas de ese tema segun su id. Asi cada oferta tiene una foto
+   RELEVANTE y estable, y ~1000 ofertas cuestan 15 peticiones a Pexels, no 1000.
+
+   Sin clave configurada el mapa llega vacio y todo cae en el respaldo de abajo:
+   la app funciona igual.
+--------------------------------------------------------------------------- */
+let TEMAS_FOTOS = {};
+
+/** Lo llama la app al arrancar (ver App.jsx). Nunca lanza. */
+export function cargarFotos(temas) {
+  TEMAS_FOTOS = temas && typeof temas === 'object' ? temas : {};
+}
+
+/** La foto de Pexels que le toca a esta semilla dentro de su tema, si la hay. */
+function fotoDe(tema, semilla) {
+  const fotos = TEMAS_FOTOS[tema];
+  if (!fotos?.length) return null;
+  return fotos[lockDe(semilla) % fotos.length];
+}
+
 /**
  * Foto por palabras clave, fija para una semilla dada.
  *
@@ -87,13 +111,27 @@ function lockDe(semilla) {
  * proveedor y como se mantiene estable la imagen.
  */
 export function imagenTema(palabrasClave, semilla, ancho = 640, alto = 420) {
-  const kw = encodeURIComponent(palabrasClave || GENERICO);
-  return `https://loremflickr.com/${ancho}/${alto}/${kw}?lock=${lockDe(semilla)}`;
+  const tema = palabrasClave || GENERICO;
+  const foto = fotoDe(tema, semilla);
+  if (foto?.url) return foto.url;
+
+  // Respaldo sin clave de Pexels: fotos por palabra clave, sin relacion fina.
+  return `https://loremflickr.com/${ancho}/${alto}/${encodeURIComponent(tema)}?lock=${lockDe(semilla)}`;
+}
+
+/** A quien hay que acreditar esa foto (la licencia de Pexels lo pide). */
+export function creditoTema(palabrasClave, semilla) {
+  return fotoDe(palabrasClave || GENERICO, semilla);
 }
 
 /** Imagen de portada de una oferta: acorde al puesto y estable por `job.id`. */
 export function imagenOferta(job, ancho = 640, alto = 420) {
   return imagenTema(temaDe(job), job?.id || job?.externalId, ancho, alto);
+}
+
+/** Credito de la portada de una oferta. */
+export function creditoOferta(job) {
+  return creditoTema(temaDe(job), job?.id || job?.externalId);
 }
 
 /** Placeholder si la imagen externa falla (sin red). */
