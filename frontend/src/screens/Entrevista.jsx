@@ -376,21 +376,87 @@ export default function Entrevista() {
   // presentacion. Al colgar se muestran las recomendaciones.
   if (fase === 'video' && !terminada) {
     return (
-      <VideoLlamada
-        nombreUsuario={nombreDe(perfil?.email)}
-        hablando={hablando}
-        escuchando={escuchando}
-        pregunta={actual?.texto}
-        pulso={pulso}
-        transcripcion={respuesta}
-        error={error}
-        puedeDictar={vozSoportada}
-        respuestaTexto={respuesta}
-        onCambiarTexto={setRespuesta}
-        onEnviarTexto={() => responder(false)}
-        onMic={micVideo}
-        onColgar={() => responder(true)}
-      />
+      <div className="entrev-video">
+        <VideoLlamada
+          nombreUsuario={nombreDe(perfil?.email)}
+          hablando={hablando}
+          escuchando={escuchando}
+          pregunta={actual?.texto}
+          pulso={pulso}
+          transcripcion={respuesta}
+          error={error}
+          puedeDictar={vozSoportada}
+          respuestaTexto={respuesta}
+          onCambiarTexto={setRespuesta}
+          onEnviarTexto={() => responder(false)}
+          onMic={micVideo}
+          onColgar={() => responder(true)}
+          // El texto se escribe en el chat lateral: aqui sobraria un segundo campo.
+          ocultarTexto
+        />
+
+        {/* Chat de la llamada: la transcripcion en vivo y un campo para responder
+            escribiendo. Ocupa la columna que quedaba vacia a la derecha. */}
+        <aside className="entrev-vchat" aria-label="Chat de la entrevista">
+          <header className="entrev-vchat__cab">
+            <span className="port-ico port-ico--sm"><Icon name="teclado" size={16} /></span>
+            <div>
+              <strong>Chat de la entrevista</strong>
+              <span>{cfg.puesto || 'Puesto general'} · {cfg.nivel}</span>
+            </div>
+          </header>
+
+          <div className="entrev-vchat__hilo" aria-live="polite">
+            {hilo.map((m, i) => (
+              <article key={i} className={`burbuja burbuja--${m.role}`}>
+                {m.rep && (
+                  <span className="entrev__rep"><Icon name="chispa" size={13} /> Repregunta</span>
+                )}
+                <p>{m.content}</p>
+              </article>
+            ))}
+            {pensando && (
+              <div className="burbuja burbuja--assistant burbuja--pensando">
+                <span /><span /><span />
+              </div>
+            )}
+            <div ref={finRef} />
+          </div>
+
+          <form
+            className="entrev-chat__barra"
+            onSubmit={(e) => {
+              e.preventDefault();
+              responder(false);
+            }}
+          >
+            <label htmlFor="resp-video" className="sr-only">Tu respuesta</label>
+            <textarea
+              id="resp-video"
+              className="entrev-chat__input"
+              rows={1}
+              value={respuesta}
+              onChange={(e) => setRespuesta(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  responder(false);
+                }
+              }}
+              placeholder={escuchando ? 'Te escucho…' : 'Escribe tu respuesta…'}
+              disabled={pensando}
+            />
+            <button
+              type="submit"
+              className="iconbtn iconbtn--enviar"
+              disabled={pensando || !respuesta.trim()}
+              aria-label="Enviar respuesta"
+            >
+              <Icon name="enviar" />
+            </button>
+          </form>
+        </aside>
+      </div>
     );
   }
 
