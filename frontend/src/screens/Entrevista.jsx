@@ -69,6 +69,10 @@ export default function Entrevista() {
   const [enviarTrasDictado, setEnviarTrasDictado] = useState(false);
 
   const dictadoRef = useRef(null);
+  // Al parar el dictado todavia llega un ultimo `onresult`. Si ya se envio (o el
+  // usuario se puso a teclear), ese texto tardio NO debe repoblar la respuesta:
+  // parecia que enviar "no hacia nada" porque el campo se volvia a llenar solo.
+  const ignorarDictado = useRef(false);
   const braveRef = useRef(false);
   const finRef = useRef(null);
 
@@ -151,6 +155,8 @@ export default function Entrevista() {
 
   const responder = async (terminar = false) => {
     if (!actual || pensando) return;
+    // La transcripcion que llegue tarde ya no cuenta: esta respuesta se envia.
+    ignorarDictado.current = true;
     detenerDictado();
     callarVoz();
     setHablando(false);
@@ -197,9 +203,20 @@ export default function Entrevista() {
   const abrirDictado = () => {
     setError(null);
     callarVoz(); // no dictar encima de la lectura
+    ignorarDictado.current = false;
+    const esVideo = cfg.modalidad === 'video';
     const d = crearDictado({
-      onTexto: (t) => setRespuesta(t),
-      onFin: () => setEscuchando(false),
+      onTexto: (t) => {
+        if (!ignorarDictado.current) setRespuesta(t);
+      },
+      onFin: () => {
+        setEscuchando(false);
+        // El dictado no es `continuous`: el navegador lo corta SOLO tras una pausa.
+        // En video esa pausa ES el final de la respuesta, asi que se envia sola
+        // (como en una entrevista real, sin pulsar nada). Antes se quedaba ahi
+        // parada: el micro se cerraba y no pasaba nada.
+        if (esVideo && !ignorarDictado.current) setEnviarTrasDictado(true);
+      },
       onError: (codigo) => {
         setEscuchando(false);
         const msg = mensajeDeError(codigo, { brave: braveRef.current });
@@ -247,6 +264,7 @@ export default function Entrevista() {
   const detenerDictado = () => dictadoRef.current?.stop();
 
   const reiniciar = () => {
+    ignorarDictado.current = true; // parada a proposito: no autoenvia al salir
     detenerDictado();
     callarVoz();
     setHablando(false);
@@ -436,7 +454,16 @@ export default function Entrevista() {
               className="entrev-chat__input"
               rows={1}
               value={respuesta}
-              onChange={(e) => setRespuesta(e.target.value)}
+              onChange={(e) => {
+                // El micro se abre solo en video y el dictado escribe en este mismo
+                // estado: si el usuario teclea, manda el teclado y se corta el
+                // dictado (si no, la transcripcion le pisa o le vacia lo escrito).
+                if (escuchando) {
+                  ignorarDictado.current = true; // parada a proposito: no autoenvia
+                  detenerDictado();
+                }
+                setRespuesta(e.target.value);
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
