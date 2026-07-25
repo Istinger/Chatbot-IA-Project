@@ -237,6 +237,14 @@
   transition: background var(--t-fast), color var(--t-fast), opacity var(--t-fast);
 }
 
+/* Dictando: el microfono tiene que verse encendido, o no se sabe si escucha. */
+.iconbtn--escuchando {
+  color: var(--glow);
+  border-color: var(--border-2);
+  background: rgba(79, 163, 255, 0.16);
+  animation: pulso 1.6s ease-in-out infinite;
+}
+
 .iconbtn:hover:not(:disabled) {
   background: var(--glass-2);
   color: var(--glow);
@@ -1207,6 +1215,14 @@
   background: var(--glass);
 }
 
+/* Guardada: el marcador se enciende. Es solo INDICADOR — se guarda y se quita
+   desde el detalle de la oferta (la tarjeta entera ya es un boton). */
+.card__marcador.is-guardada {
+  color: var(--glow);
+  border-color: rgba(79, 163, 255, 0.5);
+  background: rgba(79, 163, 255, 0.16);
+}
+
 .card__top {
   display: flex;
   gap: 6px;
@@ -1525,6 +1541,32 @@
   font-size: var(--fs-5);
   line-height: 1.7;
   max-width: 68ch;
+}
+
+/* Acciones de IA / guardar dentro del detalle de la oferta. */
+.modal__acciones {
+  align-self: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+}
+.modal__guardar[aria-pressed='true'] {
+  border-color: rgba(110, 231, 183, 0.45);
+  background: rgba(110, 231, 183, 0.12);
+  color: var(--success);
+}
+
+/* Respuesta del analisis: con scroll propio para que no estire el modal. */
+.modal__analisis {
+  align-self: stretch;
+  max-height: calc(var(--alto-app) * 0.32);
+  overflow-y: auto;
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(79, 163, 255, 0.25);
+  background: rgba(79, 163, 255, 0.07);
+  font-size: 13px;
 }
 
 .modal__cta {
@@ -3184,8 +3226,58 @@
   background: var(--glass);
   border: 1px solid var(--border);
 }
-.filtro-chip--mas { color: var(--text); }
+.filtro-chip--mas { color: var(--text); cursor: pointer; }
 .filtro-chip__flecha { color: var(--text-3); transform: rotate(90deg); }
+
+/* El chip envuelve un <select> nativo: accesible y con teclado y movil gratis.
+   Se le quita la apariencia del sistema para que parezca el chip del mock. */
+.filtro-chip select {
+  appearance: none;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-5);
+  cursor: pointer;
+  padding-right: 2px;
+  max-width: 150px;
+}
+.filtro-chip select option { background: var(--surface); color: var(--text); }
+.filtro-chip:focus-within { border-color: var(--blue); }
+
+/* Filtro activo: se distingue del que esta en "cualquiera". */
+.filtro-chip--on {
+  color: var(--glow);
+  border-color: rgba(79, 163, 255, 0.5);
+  background: rgba(79, 163, 255, 0.12);
+}
+.filtro-chip--on .filtro-chip__flecha { color: var(--glow); }
+
+.resultados__filtradas { color: var(--text-3); font-weight: 400; }
+
+/* Aviso de que la IA reescribio la busqueda, con la salida para deshacerlo. */
+.buscar__reformulado {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px var(--sp-1);
+  margin-top: var(--sp-2);
+  padding: 8px 12px;
+  border-radius: var(--r-full);
+  border: 1px solid rgba(79, 163, 255, 0.25);
+  background: rgba(79, 163, 255, 0.08);
+  color: var(--text-2);
+  font-size: 13px;
+}
+.buscar__reformulado svg { flex: none; color: var(--glow); }
+.buscar__reformulado strong { color: var(--text); font-weight: 600; }
+.buscar__reformulado button {
+  margin-left: auto;
+  color: var(--glow);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
 
 .resultados__barra {
   display: flex;
@@ -3422,11 +3514,21 @@
 /* Dentro del par no se auto-centra: se pega a su columna. */
 .entrev-inicio .entrev-chat--setup { max-width: none; margin: 0; }
 
-.entrev-lat { display: grid; grid-template-columns: 1fr; gap: var(--sp-2); min-width: 0; }
+/* Apilados, no lado a lado: en columnas quedaban dos cajas bajas con un hueco
+   grande debajo. Uno encima del otro llenan el alto disponible. */
+.entrev-lat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
 
-/* Con sitio de sobra, historial y consejos van lado a lado en vez de estirarse. */
-@media (min-width: 1500px) {
-  .entrev-lat { grid-template-columns: 1fr 1fr; align-items: start; }
+@media (min-width: 861px) {
+  /* El panel ocupa el alto del formulario; el historial crece y scrollea por
+     dentro si acumulas muchas entrevistas. */
+  .entrev-inicio { align-items: stretch; }
+  .entrev-lat > :first-child { flex: 1; min-height: 0; }
+  .entrev-lat__lista { flex: 1; }
 }
 
 .entrev-lat__caja {
