@@ -334,7 +334,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
   gap: var(--sp-4);
   padding: var(--sp-3);
 }
@@ -464,7 +464,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
   gap: var(--sp-3);
   padding: var(--sp-3);
 }
@@ -2037,16 +2037,27 @@
 .seccion__titulo { font-size: var(--fs-3); font-weight: 600; line-height: 1.1; }
 .seccion__sub { margin-top: 2px; font-size: 13px; color: var(--text-3); }
 
-/* Asa decorativa (puntitos) en la esquina de las tarjetas del perfil. */
-.panel__grip {
-  flex: none;
-  align-self: flex-start;
-  width: 16px;
-  height: 22px;
-  color: var(--text-3);
-  opacity: 0.45;
-  background-image: radial-gradient(currentColor 1.3px, transparent 1.6px);
-  background-size: 8px 7px;
+/* Crecer: dos columnas para que quepa sin scroll de pagina. Las dos listas de
+   brechas a la izquierda; los cursos a la derecha, con scroll propio si son
+   muchos (asi la pantalla no crece). */
+.crecer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: var(--sp-2);
+  align-items: start;
+}
+.crecer__col { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+
+@media (min-width: 861px) {
+  /* Alto del scroller menos su padding y la cabecera: lo que queda para el grid. */
+  .crecer__cursos { max-height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6) - 120px); }
+  /* min-height:0 -> sin esto un hijo flex no encoge y el scroll no aparece. */
+  .crecer__cursos .cursos { min-height: 0; overflow-y: auto; padding-right: 4px; }
+}
+
+@media (max-width: 1000px) {
+  .crecer { grid-template-columns: 1fr; }
+  .crecer__cursos { max-height: none; }
 }
 
 /* Perfil: dos columnas. Habilidades (lo que mas ocupa) a la izquierda y el resto
@@ -3017,13 +3028,13 @@
   padding-right: var(--sp-4);
 }
 
-/* z-index: la pagina 1 lleva un wrapper sticky con filtros (blink). Si por lo que
-   sea desborda, "Mas ofertas" tiene que pintarse ENCIMA, no mezclarse con ella. */
+/* z-index: la pagina 1 lleva un wrapper sticky con filtros (blink); "Mas ofertas"
+   se pinta ENCIMA, nunca mezclada con ella. Sin fondo propio, para que siga
+   viendose el fondo animado a traves. */
 .ofertas__mas {
   position: relative;
   z-index: 1;
   margin-top: var(--sp-4);
-  background: var(--bg);
 }
 .ofertas__mas .carrusel__title { font-size: var(--fs-2); }
 
@@ -3108,7 +3119,10 @@
     scroll-margin-top: var(--sp-3);
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    /* `safe`: si el contenido NO cabe (la rejilla de "Mas ofertas" es mas alta que
+       una pagina), centrar lo desborda por ARRIBA y se monta sobre la pagina
+       anterior. Con safe, en ese caso se alinea al inicio en vez de centrar. */
+    justify-content: safe center;
     gap: var(--sp-3);
   }
 
@@ -3130,7 +3144,7 @@
     min-height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6));
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: safe center;
     gap: var(--sp-3);
     /* Sin fondo propio: se ve el mismo fondo ambiental que "Mas ofertas". El blur
        y el fundido bastan para la transicion; no hace falta tapar el body. */
@@ -3290,7 +3304,7 @@
   margin: 0 auto;
 }
 
-.entrev-chat--setup { justify-content: center; }
+.entrev-chat--setup { justify-content: safe center; }
 
 /* Pantalla inicial: el formulario y, al lado, lo que ya practicaste. */
 .entrev-inicio {
