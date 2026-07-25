@@ -3115,6 +3115,26 @@
 }
 .ofertas__mas .carrusel__title { font-size: var(--fs-2); }
 
+@media (min-width: 861px) {
+  /* CLAVE del snap: un bloque MAS ALTO que la pantalla no se puede enganchar
+     (el navegador no fuerza el snap sobre el, y el scroll se quedaba a medio
+     camino entre las dos paginas). Asi que "Mas ofertas" mide una pantalla
+     justa y es su rejilla la que scrollea por dentro: sigue viendose todo, y
+     el enganche entre paginas vuelve a ser firme. */
+  .ofertas__mas {
+    height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6));
+    justify-content: flex-start;
+  }
+
+  .ofertas__mas .ofertas__rejilla {
+    flex: 1;
+    min-height: 0; /* sin esto un hijo flex no encoge y no aparece el scroll */
+    overflow-y: auto;
+    align-content: start;
+    padding-bottom: var(--sp-2);
+  }
+}
+
 /* Buscar ofertas */
 .buscar__cab {
   display: flex;
@@ -3180,12 +3200,13 @@
    tiene snap-align, asi que otras rutas no se ven afectadas. */
 @media (min-width: 861px) {
   .lienzo {
-    /* proximity y NO mandatory: "Mas ofertas" es mas alta que la pantalla y con
-       mandatory quedaba atrapada —su unico anclaje es su inicio, asi que al
-       scrollear dentro te devolvia arriba y no se podian ver las de abajo—.
-       Con proximity el salto entre paginas sigue enganchando al soltar cerca,
-       pero dentro de una pagina larga se scrollea libre. */
-    scroll-snap-type: y proximity;
+    /* mandatory: cada gesto ENGANCHA a la pagina, que es lo que da sentido a la
+       nota "Haz scroll para ver mas ofertas". Con proximity el enganche quedaba
+       flojo y parecia una pagina normal.
+       Para que mandatory no atrape, NINGUNA pagina puede ser mas alta que la
+       pantalla: "Mas ofertas" mide una pantalla justa y su rejilla scrollea por
+       dentro (ver .ofertas__mas). */
+    scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
   }
 
