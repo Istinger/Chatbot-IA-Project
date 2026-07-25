@@ -7,17 +7,15 @@ import { crearDictado, esBrave, mensajeDeError, soportado as vozSoportada } from
 import Icon from './Icon';
 import RichText from './RichText';
 import JobCard from './JobCard';
-import VozOverlay from './VozOverlay';
 
 const CLAVE_SESION = 'jobia_chat';
 
 /**
  * Panel del Asistente: el CENTRO de la navegacion (no las pestañas).
  *
- * Reune tres cosas que antes vivian en pantallas separadas:
- *   1. Tarjetas de accion que llevan a cada zona (ofertas, buscar, CV, crecer).
- *   2. El chat con el LLM (RAG + defensa anti-inyeccion, igual que antes).
- *   3. El modo voz a pantalla completa (mock: escuchando.html).
+ * Es el chat con el LLM (RAG + defensa anti-inyeccion) y el dictado por voz, que
+ * escribe en la propia caja de texto: pulsar el microfono NO abre ninguna vista
+ * aparte, solo enciende y apaga el dictado.
  *
  * Vive SIEMPRE montado en el Shell (derecha en escritorio, vista principal en
  * movil), asi que la conversacion no se pierde al moverse por la app.
@@ -41,7 +39,6 @@ export default function AsistentePanel() {
   const [pensando, setPensando] = useState(false);
   const [error, setError] = useState(null);
   const [escuchando, setEscuchando] = useState(false);
-  const [vozAbierta, setVozAbierta] = useState(false);
 
   const sesion = useRef(localStorage.getItem(CLAVE_SESION));
   const finRef = useRef(null);
@@ -97,14 +94,26 @@ export default function AsistentePanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [peticionIA]);
 
+  /**
+   * Microfono de la barra: dicta EN EL PROPIO CHAT.
+   *
+   * Antes abria un overlay de voz a pantalla completa; ahora solo enciende y
+   * apaga el dictado, que escribe en la caja de texto. Desde ahi el mensaje se
+   * envia como cualquier otro (se puede corregir antes de mandarlo).
+   */
   const alternarVoz = () => {
     if (escuchando) {
       dictadoRef.current?.stop();
       return;
     }
+    setError(null);
     const d = crearDictado({
       onTexto: (t) => setTexto(t),
-      onFin: () => setEscuchando(false),
+      onFin: () => {
+        setEscuchando(false);
+        // Al terminar, el foco vuelve a la caja para poder rematar y enviar.
+        setTimeout(() => document.getElementById('msg')?.focus(), 0);
+      },
       onError: (codigo) => {
         setEscuchando(false);
         const msg = mensajeDeError(codigo, { brave: braveRef.current });
@@ -115,22 +124,6 @@ export default function AsistentePanel() {
     dictadoRef.current = d;
     setEscuchando(true);
     d.start();
-  };
-
-  const abrirVoz = () => {
-    setError(null);
-    setVozAbierta(true);
-    if (!escuchando) alternarVoz();
-  };
-  const cerrarVozAlTeclado = () => {
-    dictadoRef.current?.stop();
-    setVozAbierta(false);
-    setTimeout(() => document.getElementById('msg')?.focus(), 0);
-  };
-  const cerrarVoz = () => {
-    dictadoRef.current?.stop();
-    setVozAbierta(false);
-    setTexto('');
   };
 
   const vacio = mensajes.length === 0;
@@ -190,7 +183,7 @@ export default function AsistentePanel() {
         )}
       </div>
 
-      {error && !vozAbierta && (
+      {error && (
         <p className="alerta asis__error" role="alert">
           <Icon name="aviso" size={16} />
           {error}
@@ -214,7 +207,14 @@ export default function AsistentePanel() {
           disabled={pensando}
         />
         {vozSoportada && (
-          <button type="button" className="iconbtn" onClick={abrirVoz} aria-label="Hablar por voz">
+          <button
+            type="button"
+            className={`iconbtn ${escuchando ? 'iconbtn--escuchando' : ''}`}
+            onClick={alternarVoz}
+            aria-pressed={escuchando}
+            aria-label={escuchando ? 'Dejar de dictar' : 'Dictar por voz'}
+            title={escuchando ? 'Dejar de dictar' : 'Dictar por voz'}
+          >
             <Icon name="micro" />
           </button>
         )}
@@ -227,18 +227,6 @@ export default function AsistentePanel() {
           <Icon name="enviar" />
         </button>
       </form>
-
-      {vozAbierta && (
-        <VozOverlay
-          nombre={nombreDe(perfil?.email)}
-          escuchando={escuchando}
-          transcripcion={texto}
-          error={error}
-          onMic={alternarVoz}
-          onTeclado={cerrarVozAlTeclado}
-          onCerrar={cerrarVoz}
-        />
-      )}
     </aside>
   );
 }
