@@ -101,7 +101,6 @@ export default function AvisosTelegram() {
             <h2 className="seccion__titulo">Avisos por Telegram</h2>
             <p className="seccion__sub">No estan configurados en este servidor.</p>
           </div>
-          <span className="panel__grip" aria-hidden="true" />
         </header>
       </section>
     );
@@ -120,7 +119,6 @@ export default function AvisosTelegram() {
             </p>
           )}
         </div>
-        <span className="panel__grip" aria-hidden="true" />
       </header>
 
       {!estado.vinculado && (

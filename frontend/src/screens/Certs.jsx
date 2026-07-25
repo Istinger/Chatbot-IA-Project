@@ -113,6 +113,10 @@ export default function Certs() {
         </section>
       )}
 
+      {/* Dos columnas para que quepa sin scroll: las dos listas de brechas a la
+          izquierda y los cursos a la derecha (como en "Tu perfil"). */}
+      <div className="crecer">
+      <div className="crecer__col">
       {faltantes.length > 0 && (
         <section className="panel">
           <header className="seccion__cab">
@@ -161,8 +165,10 @@ export default function Certs() {
         </section>
       )}
 
+      </div>
+
       {cursos.length > 0 && (
-        <section className="panel">
+        <section className="panel crecer__cursos">
           <header className="seccion__cab">
             <span className="seccion__icono seccion__icono--cursos"><Icon name="crecer" size={20} /></span>
             <div className="seccion__txt">
@@ -238,6 +244,7 @@ export default function Certs() {
           </div>
         </section>
       )}
+      </div>
     </>
   );
 }

@@ -35,6 +35,40 @@ body {
   overflow-x: hidden;
 }
 
+/* Scrollbars a juego con el tema: los del sistema salen claros y cantan mucho
+   sobre el fondo oscuro. Firefox usa scrollbar-*, el resto ::-webkit-scrollbar. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(94, 131, 190, 0.45) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  /* El borde transparente + background-clip deja aire alrededor de la barra:
+     parece mas fina sin perder area para agarrarla con el raton. */
+  background: rgba(94, 131, 190, 0.4);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: var(--r-full);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(118, 175, 255, 0.6);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 h1,
 h2,
 h3 {

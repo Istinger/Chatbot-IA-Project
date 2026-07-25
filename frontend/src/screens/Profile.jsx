@@ -131,7 +131,6 @@ export default function Profile() {
                 : 'Aun no tienes habilidades. Sube tu CV.'}
             </p>
           </div>
-          <span className="panel__grip" aria-hidden="true" />
         </header>
 
         <ul className="chips chips--grandes">
@@ -190,7 +189,6 @@ export default function Profile() {
                 : 'No tenemos tu CV.'}
             </p>
           </div>
-          <span className="panel__grip" aria-hidden="true" />
         </header>
 
         <button
@@ -242,7 +240,6 @@ export default function Profile() {
               )}
             </p>
           </div>
-          <span className="panel__grip" aria-hidden="true" />
         </header>
 
         <button type="button" className="btn btn--salir" onClick={salir}>
