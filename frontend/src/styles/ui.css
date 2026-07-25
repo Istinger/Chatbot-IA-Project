@@ -3523,13 +3523,9 @@
   min-width: 0;
 }
 
-@media (min-width: 861px) {
-  /* El panel ocupa el alto del formulario; el historial crece y scrollea por
-     dentro si acumulas muchas entrevistas. */
-  .entrev-inicio { align-items: stretch; }
-  .entrev-lat > :first-child { flex: 1; min-height: 0; }
-  .entrev-lat__lista { flex: 1; }
-}
+/* Cada caja mide lo que ocupa su contenido. Se probo estirarlas al alto del
+   formulario y quedaba un hueco enorme dentro del historial: mejor que el par
+   quede compacto y centrado. */
 
 .entrev-lat__caja {
   display: flex;

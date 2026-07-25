@@ -14,44 +14,53 @@
  * cambia aqui y nada mas.
  */
 
-/* Temas por skill. El primero que encaje manda, asi que van de lo mas especifico
-   a lo mas generico. */
+/**
+ * UNA sola palabra por tema, nunca una lista.
+ *
+ * El proveedor combina las palabras con AND, asi que cada palabra extra reduce el
+ * catalogo: con "server,datacenter,cloud" quedaba UNA foto y todas las ofertas de
+ * infraestructura salian con la misma imagen (se comprobo: 8 semillas distintas,
+ * la misma foto las 8). Con una palabra ancha, 8 semillas dan 8 fotos distintas.
+ */
+
+/* Temas por skill. El primero que encaje manda: de lo mas especifico a lo mas
+   generico. */
 const TEMAS_SKILL = [
-  { skills: ['figma', 'ux', 'ui'], kw: 'design,workspace,creative' },
+  { skills: ['figma', 'ux', 'ui'], kw: 'design' },
   {
     skills: ['docker', 'kubernetes', 'aws', 'azure', 'gcp', 'terraform', 'linux', 'ci/cd'],
-    kw: 'server,datacenter,cloud',
+    kw: 'datacenter',
   },
   {
     skills: ['machine learning', 'tensorflow', 'pytorch', 'pandas', 'power bi', 'tableau', 'etl', 'airflow'],
-    kw: 'data,analytics,dashboard',
+    kw: 'analytics',
   },
-  { skills: ['sql', 'postgresql', 'mysql', 'mongodb', 'redis'], kw: 'database,data,code' },
-  { skills: ['testing', 'selenium', 'cypress'], kw: 'software,testing,laptop' },
+  { skills: ['sql', 'postgresql', 'mysql', 'mongodb', 'redis'], kw: 'database' },
+  { skills: ['testing', 'selenium', 'cypress'], kw: 'software' },
   {
     skills: ['react', 'angular', 'vue', 'nextjs', 'html', 'css', 'tailwind', 'javascript', 'typescript'],
-    kw: 'web,developer,screen',
+    kw: 'website',
   },
   {
     skills: ['java', 'spring', 'c#', 'php', 'go', 'kotlin', 'swift', 'ruby', 'node.js', 'express', 'django', 'laravel', 'fastapi', 'flask', 'microservicios'],
-    kw: 'code,programming,keyboard',
+    kw: 'programming',
   },
 ];
 
 /* Por titulo, para las vacantes que no son de programacion (las hay: logistica,
    comercial, arquitectura...). */
 const TEMAS_TITULO = [
-  { re: /market|comercial|ventas|sales/i, kw: 'marketing,office,meeting' },
-  { re: /logistic|operacion|operations|almacen|supply/i, kw: 'logistics,warehouse' },
-  { re: /arquitect|architect|construc|civil|cad/i, kw: 'architecture,blueprint' },
-  { re: /diseñ|design|grafic/i, kw: 'design,studio,creative' },
-  { re: /conta|financ|admin|rrhh|recursos humanos|hr\b/i, kw: 'business,office,desk' },
-  { re: /soporte|support|helpdesk|atencion/i, kw: 'support,headset,office' },
-  { re: /data|analyst|analista de datos|bi\b/i, kw: 'data,analytics,dashboard' },
-  { re: /develop|program|software|full ?stack|backend|frontend|ingenier/i, kw: 'code,programming,laptop' },
+  { re: /market|comercial|ventas|sales/i, kw: 'marketing' },
+  { re: /logistic|operacion|operations|almacen|supply/i, kw: 'warehouse' },
+  { re: /arquitect|architect|construc|civil|cad/i, kw: 'architecture' },
+  { re: /diseñ|design|grafic/i, kw: 'design' },
+  { re: /conta|financ|admin|rrhh|recursos humanos|hr\b/i, kw: 'business' },
+  { re: /soporte|support|helpdesk|atencion/i, kw: 'office' },
+  { re: /data|analyst|analista de datos|bi\b/i, kw: 'analytics' },
+  { re: /develop|program|software|full ?stack|backend|frontend|ingenier/i, kw: 'programming' },
 ];
 
-const GENERICO = 'office,laptop,technology';
+const GENERICO = 'office';
 
 /** Palabras clave que describen la oferta. */
 function temaDe(job) {
