@@ -4489,6 +4489,12 @@
     margin-top: var(--sp-3);
     margin-bottom: var(--sp-1);
   }
+  .entrev-inicio--entrevista .entrev-lat {
+    display: none;
+  }
+  .entrev-inicio--historial .entrev-chat--setup {
+    display: none;
+  }
   .entrev-lat__lista { max-height: 50dvh; }
 
   /* Portafolio: las tarjetas guardadas a ancho completo. */
