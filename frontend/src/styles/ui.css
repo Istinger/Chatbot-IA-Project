@@ -2537,9 +2537,14 @@
 .port-guardadas__vacio svg { flex: none; color: var(--text-3); opacity: 0.7; }
 .port-guardadas__vacio strong { color: var(--text-2); }
 
-/* --- Ofertas guardadas (en "Tu perfil") --- */
+/* --- Pantalla "Guardados": ofertas e ideas marcadas --- */
+.guardadas__seccion { display: flex; flex-direction: column; gap: var(--sp-2); }
+.guardadas__seccion + .guardadas__seccion { margin-top: var(--sp-4); }
+/* El boton de comparar se va al extremo de la cabecera, sin empujar el titulo. */
+.guardadas__seccion .seccion__cab .perfil__iabtn { margin-left: auto; flex: none; }
+
 /* Rejilla propia, no la de la home: alli las tarjetas viven en un contenedor con
-   scroll y alto fijo; aqui crecen a lo largo del panel. */
+   scroll y alto fijo; aqui crecen a lo largo de la pagina. */
 .guardadas__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -3480,16 +3485,51 @@
   /* El snap y el blink funcionan igual que en escritorio (ver el bloque de
      .ofertas-pagina): antes se apagaban aqui y la home se sentia distinta al
      estrechar la ventana. */
-  .ofertas__fila .card__visual { height: clamp(170px, 45vw, 240px); }
+  /* En escritorio estos bloques reservan sitio a la derecha; en movil no hay
+     columna que esquivar. OJO: .buscar__barra NO entra aqui — su padding no es
+     margen de escritorio, es el aire interior de la pildora, y al ponerlo a 0
+     el boton "Buscar" quedaba pegado al borde. */
   .ofertas__cab,
   .ofertas__fila,
   .ofertas__rejilla,
   .buscar__cab,
-  .buscar__barra,
   .buscar__filtros,
   .resultados__barra { padding-right: 0; }
+  /* Lo que si sobra de la barra es su margen derecho: la dejaba 24px mas
+     estrecha que la cabecera y que los chips de filtro, y se notaba. */
+  .buscar__barra { margin-right: 0; }
   .ofertas__cab h1,
   .buscar__cab h1 { font-size: var(--fs-2); }
+
+  /* El lienzo ya separa sus hijos con gap; estos margenes lo duplicaban y
+     dejaban bandas vacias alrededor de la barra de busqueda. */
+  .buscar__cab { margin-bottom: 0; }
+  .buscar__filtros { margin-top: 0; }
+
+  /* Las 4 ofertas de la primera pagina, igual que en escritorio. Aqui se apilan
+     y no caben en la pantalla, asi que se aplica la MISMA solucion que ya usa
+     "Mas ofertas": la pagina mide una pantalla EXACTA (height, no min-height) y
+     la fila scrollea por dentro. Si la pagina creciera, scroll-snap-type
+     mandatory la atraparia y no se podria pasar a la siguiente. */
+  .ofertas-blink {
+    height: var(--alto-pagina);
+    justify-content: flex-start;
+  }
+  .ofertas__fila {
+    flex: 1;
+    min-height: 0; /* sin esto un hijo flex no encoge y no aparece el scroll */
+    overflow-y: auto;
+    align-content: start;
+    /* Las filas miden lo que pide su contenido y NO se comprimen: si no, las
+       tarjetas se encogen y su overflow:hidden recorta el cuerpo. */
+    grid-auto-rows: max-content;
+    scrollbar-width: none;
+  }
+  .ofertas__fila::-webkit-scrollbar { display: none; }
+
+  /* Portada mas baja: con 4 tarjetas apiladas, la de escritorio obligaba a
+     scrollear mucho para llegar a la cuarta. */
+  .ofertas__fila .card__visual { height: clamp(120px, 32vw, 170px); }
 
   /* Cuando solo cabe UNA tarjeta por fila, estirarla a todo el ancho la deja
      desproporcionada (portada enorme, texto perdido). Se le pone un tope y se
@@ -3507,6 +3547,45 @@
   /* Las habilidades se ocultan en movil: en una columna estrecha la lista se
      parte y solo cabe "+N", que no dice nada. Estan enteras en el detalle. */
   .card__skills { display: none; }
+
+  /* --- Titulo fijo al desplazar -------------------------------------------
+     En una pantalla estrecha el titulo se pierde a las dos pasadas de dedo y
+     hay que subir del todo para saber donde estas. Se queda pegado arriba.
+     La home NO entra: su cabecera vive dentro del wrapper sticky del blink y
+     ya se queda quieta gracias al scroll-snap; hacerla sticky ademas pelearia
+     con esa animacion. */
+  /* "Solo el titulo": la cabecera deja de ser una caja (display: contents), asi
+     el h1 y el subtitulo pasan a colgar directamente del lienzo. Importa porque
+     un elemento sticky solo se queda fijo mientras su PADRE esta a la vista: con
+     el h1 dentro de la cabecera se iria con ella, y colgando del lienzo (que
+     abarca todo el scroll) se queda arriba toda la pagina. El subtitulo, en
+     cambio, se va con el scroll como cualquier otro contenido. */
+  .saludo {
+    display: contents;
+  }
+
+  .saludo h1 {
+    position: sticky;
+    /* Negativo a proposito: por defecto se pegaria en el borde del PADDING del
+       lienzo y quedaba una banda por la que asomaba el contenido al pasar por
+       debajo. Asi se pega a ras del borde superior. */
+    top: calc(var(--lienzo-pt) * -1);
+    z-index: var(--z-nav);
+    /* Se estira hasta los bordes para tapar los laterales del lienzo: si no,
+       el contenido asoma por los huecos al pasar por debajo. */
+    margin: 0 calc(var(--sp-2) * -1);
+    padding: var(--lienzo-pt) var(--sp-2) var(--sp-1);
+    background: rgba(2, 7, 13, 0.85);
+    backdrop-filter: blur(16px);
+  }
+
+  /* Al colgar del lienzo, el subtitulo hereda su gap (grande, pensado para
+     separar secciones). Se pega de nuevo a su titulo. El selector de hijo
+     directo importa: el mismo .saludo__sub se usa en la home dentro de
+     .ofertas__cab, que NO es display:contents y no debe descuadrarse. */
+  .saludo > .saludo__sub {
+    margin-top: calc(var(--sp-5) * -1 + var(--sp-1));
+  }
 }
 
 /* --- Portafolio: pista de personalizacion, "por que ti" y esqueletos --- */
