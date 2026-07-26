@@ -492,8 +492,6 @@ export default function Entrevista() {
           <button type="button" onClick={() => setVistaInicio('entrevista')}>
             Entrevista
           </button>
-          <Icon name="derecha" size={14} />
-          <span>Historial y mejoras</span>
         </nav>
 
         <section className="entrev-lat__caja">
