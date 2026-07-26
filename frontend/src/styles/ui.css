@@ -3806,6 +3806,11 @@
   color: var(--text-2);
 }
 
+.entrev-miga-btn,
+.entrev-migas {
+  display: none;
+}
+
 /* Apilados, no lado a lado: en columnas quedaban dos cajas bajas con un hueco
    grande debajo. Uno encima del otro llenan el alto disponible. */
 .entrev-lat {
@@ -4474,6 +4479,12 @@
   .crecer__ia { max-height: none; }
 
   /* Entrevista: el historial no se come la pantalla. */
+  .entrev-miga-btn {
+    display: inline-flex;
+  }
+  .entrev-migas {
+    display: flex;
+  }
   .entrev-lat__lista { max-height: 50dvh; }
 
   /* Portafolio: las tarjetas guardadas a ancho completo. */
