@@ -4465,6 +4465,10 @@
   /* Cabeceras de seccion: con poco ancho, la pastilla ("Basado en N ofertas")
      estrujaba el titulo. Que baje debajo en vez de competir por el sitio. */
   .seccion__cab { flex-wrap: wrap; }
+  .seccion__cab .seccion__txt {
+    order: 2;
+    flex: 1 0 100%;
+  }
   .seccion__pill { order: 3; }
 
   /* Perfil: el campo de añadir habilidad y su boton, cada uno en su linea si no
