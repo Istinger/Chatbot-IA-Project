@@ -55,9 +55,8 @@ function ShellInterno() {
   const { ofertaActiva, setOfertaActiva } = useVista();
   const { pathname } = useLocation();
 
-  // En las rutas "full" el contenido se come la columna del Asistente. El panel
-  // se sigue MONTANDO (en movil es la hoja que abre la barra inferior); solo se
-  // oculta por CSS en escritorio.
+  // En las rutas "full" el contenido se come la columna del Asistente. La
+  // entrevista ya es un chat, asi que tampoco se abre como hoja en movil.
   const full = RUTAS_FULL.some((r) => pathname.startsWith(r));
 
   useEffect(() => {
@@ -109,18 +108,19 @@ function ShellInterno() {
         <Outlet />
       </main>
 
-      {/* Asistente: fijo a la derecha en escritorio; hoja en movil. */}
-      <div className={`asis-host ${asisAbierto ? 'asis-host--abierto' : ''}`}>
-        <button
-          type="button"
-          className="asis-host__cerrar"
-          onClick={() => setAsisAbierto(false)}
-          aria-label="Cerrar asistente"
-        >
-          <Icon name="cerrar" size={20} />
-        </button>
-        <AsistentePanel />
-      </div>
+      {!full && (
+        <div className={`asis-host ${asisAbierto ? 'asis-host--abierto' : ''}`}>
+          <button
+            type="button"
+            className="asis-host__cerrar"
+            onClick={() => setAsisAbierto(false)}
+            aria-label="Cerrar asistente"
+          >
+            <Icon name="cerrar" size={20} />
+          </button>
+          <AsistentePanel />
+        </div>
+      )}
 
       {/* Barra inferior (solo movil) con el Asistente en el centro y las rutas
           repartidas a ambos lados (ver CORTE). */}
@@ -132,7 +132,12 @@ function ShellInterno() {
           </NavLink>
         ))}
 
-        <button type="button" className="tabbar__asis" onClick={() => setAsisAbierto(true)}>
+        <button
+          type="button"
+          className="tabbar__asis"
+          onClick={() => !full && setAsisAbierto(true)}
+          disabled={full}
+        >
           <Icon name="asistente" size={26} />
           <span>Asistente</span>
         </button>
