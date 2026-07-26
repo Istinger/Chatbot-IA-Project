@@ -4483,6 +4483,9 @@
 
   /* Crecer: las columnas ya no scrollean por dentro en movil (lo hace la
      pagina), asi que tampoco deben limitar el alto de sus paneles. */
+  .crecer__cursos .seccion__cab {
+    position: static;
+  }
   .crecer__ia { max-height: none; }
 
   /* Entrevista: el historial no se come la pantalla. */
