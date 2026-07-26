@@ -487,6 +487,7 @@ export default function Entrevista() {
 
       {/* Panel lateral: lo que ya practicaste y en que fallas mas. */}
       <aside className="entrev-lat">
+        <h1 className="entrev-lat__titulo">Historial y mejoras</h1>
         <nav className="entrev-migas" aria-label="Migas de pan">
           <button type="button" onClick={() => setVistaInicio('entrevista')}>
             Entrevista

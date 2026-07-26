@@ -3821,6 +3821,10 @@
   min-width: 0;
 }
 
+.entrev-lat__titulo {
+  display: none;
+}
+
 /* Cada caja mide lo que ocupa su contenido. Se probo estirarlas al alto del
    formulario y quedaba un hueco enorme dentro del historial: mejor que el par
    quede compacto y centrado. */
@@ -4489,6 +4493,12 @@
     display: flex;
     margin-top: var(--sp-3);
     margin-bottom: var(--sp-1);
+  }
+  .entrev-lat__titulo {
+    display: block;
+    font-size: var(--fs-2);
+    line-height: 1.1;
+    font-weight: 500;
   }
   .entrev-inicio--entrevista .entrev-lat {
     display: none;
