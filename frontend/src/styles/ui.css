@@ -3624,7 +3624,8 @@
   .port-cab,
   .entrev-chat__cab,
   .portproy__dethead {
-    background: var(--glass);
+    background: transparent;
+    backdrop-filter: none;
   }
 
 }
