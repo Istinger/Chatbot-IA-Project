@@ -3580,18 +3580,9 @@
   }
 
   .saludo h1 {
-    position: sticky;
-    /* Negativo a proposito: por defecto se pegaria en el borde del PADDING del
-       lienzo y quedaba una banda por la que asomaba el contenido al pasar por
-       debajo. Asi se pega a ras del borde superior. */
-    top: calc(var(--lienzo-pt) * -1);
-    z-index: var(--z-nav);
-    /* Se estira hasta los bordes para tapar los laterales del lienzo: si no,
-       el contenido asoma por los huecos al pasar por debajo. */
-    margin: 0 calc(var(--sp-2) * -1);
-    padding: var(--lienzo-pt) var(--sp-2) var(--sp-1);
-    background: rgba(2, 7, 13, 0.85);
-    backdrop-filter: blur(16px);
+    position: static;
+    margin: 0;
+    padding: 0;
   }
 
   /* Al colgar del lienzo, el subtitulo hereda su gap (grande, pensado para
@@ -3606,24 +3597,25 @@
   .port-cab,
   .entrev-chat__cab,
   .portproy__dethead {
-    position: sticky;
-    top: calc(var(--lienzo-pt) * -1);
-    z-index: var(--z-nav);
-    margin: 0 calc(var(--sp-2) * -1);
-    padding: var(--lienzo-pt) var(--sp-2) var(--sp-1);
-    background: rgba(2, 7, 13, 0.85);
-    backdrop-filter: blur(16px);
+    position: static;
+    margin: 0;
+    padding: 0;
   }
 
   .buscar__cab {
     align-items: flex-start;
   }
 
-  .saludo h1,
-  .buscar__cab,
-  .port-cab,
-  .entrev-chat__cab,
-  .portproy__dethead {
+  .lienzo--scrolled .saludo h1,
+  .lienzo--scrolled .buscar__cab,
+  .lienzo--scrolled .port-cab,
+  .lienzo--scrolled .entrev-chat__cab,
+  .lienzo--scrolled .portproy__dethead {
+    position: sticky;
+    top: calc(var(--lienzo-pt) * -1);
+    z-index: var(--z-nav);
+    margin: 0 calc(var(--sp-2) * -1);
+    padding: var(--lienzo-pt) var(--sp-2) var(--sp-1);
     background: transparent;
     backdrop-filter: none;
   }

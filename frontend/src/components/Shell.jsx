@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { VistaProvider, useVista } from '../lib/vista';
@@ -50,6 +50,8 @@ export default function Shell() {
 function ShellInterno() {
   const { salir } = useAuth();
   const [asisAbierto, setAsisAbierto] = useState(false);
+  const [lienzoScrolled, setLienzoScrolled] = useState(false);
+  const lienzoRef = useRef(null);
   const { ofertaActiva, setOfertaActiva } = useVista();
   const { pathname } = useLocation();
 
@@ -57,6 +59,17 @@ function ShellInterno() {
   // se sigue MONTANDO (en movil es la hoja que abre la barra inferior); solo se
   // oculta por CSS en escritorio.
   const full = RUTAS_FULL.some((r) => pathname.startsWith(r));
+
+  useEffect(() => {
+    const lienzo = lienzoRef.current;
+    if (!lienzo) return;
+    lienzo.scrollTop = 0;
+    setLienzoScrolled(false);
+  }, [pathname]);
+
+  const manejarScrollLienzo = (e) => {
+    setLienzoScrolled(e.currentTarget.scrollTop > 8);
+  };
 
   return (
     <div className={`shell ${full ? 'shell--full' : ''}`}>
@@ -87,7 +100,11 @@ function ShellInterno() {
       </nav>
 
       {/* Contenido */}
-      <main className="lienzo">
+      <main
+        ref={lienzoRef}
+        className={`lienzo ${lienzoScrolled ? 'lienzo--scrolled' : ''}`}
+        onScroll={manejarScrollLienzo}
+      >
         <Outlet />
       </main>
 
