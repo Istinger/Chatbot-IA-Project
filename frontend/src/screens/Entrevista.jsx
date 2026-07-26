@@ -99,6 +99,8 @@ export default function Entrevista() {
   const silencioRef = useRef(null);
   const braveRef = useRef(false);
   const finRef = useRef(null);
+  const setupRef = useRef(null);
+  const historialBloqueRef = useRef(null);
 
   useEffect(() => {
     if (vozSoportada) esBrave().then((b) => (braveRef.current = b));
@@ -343,6 +345,10 @@ export default function Entrevista() {
     setRespuesta('');
   };
 
+  const moverA = (ref) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   // --- SETUP -----------------------------------------------------------------
   if (fase === 'setup') {
     const recurrentes = puntosRecurrentes(entrevistas);
@@ -370,14 +376,22 @@ export default function Entrevista() {
 
     return (
       <div className="entrev-inicio">
-      <div className="entrev-chat entrev-chat--setup">
-        <header className="entrev-chat__cab">
+      <div className="entrev-chat entrev-chat--setup" ref={setupRef}>
+        <header className="entrev-chat__cab entrev-inicio__cab">
           <div>
             <h1>Entrevista simulada</h1>
             <p className="saludo__sub">
               Practica con preguntas de tu area. Al final recibes recomendaciones.
             </p>
           </div>
+          <button
+            type="button"
+            className="entrev-miga-btn"
+            onClick={() => moverA(historialBloqueRef)}
+          >
+            <Icon name="reloj" size={16} />
+            Historial y mejoras
+          </button>
         </header>
 
         <div className="entrev entrev-setup">
@@ -477,7 +491,15 @@ export default function Entrevista() {
       </div>
 
       {/* Panel lateral: lo que ya practicaste y en que fallas mas. */}
-      <aside className="entrev-lat">
+      <aside className="entrev-lat" ref={historialBloqueRef}>
+        <nav className="entrev-migas" aria-label="Migas de pan">
+          <button type="button" onClick={() => moverA(setupRef)}>
+            Entrevista
+          </button>
+          <Icon name="derecha" size={14} />
+          <span>Historial y mejoras</span>
+        </nav>
+
         <section className="entrev-lat__caja">
           <header className="entrev-lat__cab">
             <span className="port-ico port-ico--sm"><Icon name="reloj" size={16} /></span>

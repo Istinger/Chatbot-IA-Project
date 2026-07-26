@@ -23,8 +23,12 @@ const RUTAS = [
   { to: '/crecer', icono: 'crecer', texto: 'Crecer' },
   { to: '/portafolio', icono: 'maletin', texto: 'Portafolio' },
   { to: '/entrevista', icono: 'entrevista', texto: 'Entrevista' },
+  { to: '/ofertas-guardadas', icono: 'marcador', texto: 'Ofertas' },
   { to: '/perfil', icono: 'usuario', texto: 'Perfil' },
 ];
+
+/** Donde parte la barra de movil: mitad a cada lado del boton del Asistente. */
+const CORTE = Math.ceil(RUTAS.length / 2);
 
 /**
  * Rutas que se ven a PANTALLA COMPLETA: ocupan tambien la columna del Asistente.
@@ -100,10 +104,10 @@ function ShellInterno() {
         <AsistentePanel />
       </div>
 
-      {/* Barra inferior (solo movil) con el Asistente en el centro: 3 rutas a cada
-          lado para que quede simetrico. */}
+      {/* Barra inferior (solo movil) con el Asistente en el centro y las rutas
+          repartidas a ambos lados (ver CORTE). */}
       <nav className="tabbar" aria-label="Navegacion">
-        {RUTAS.slice(0, 3).map((r) => (
+        {RUTAS.slice(0, CORTE).map((r) => (
           <NavLink key={r.to} to={r.to} end={r.to === '/'} className="tabbar__link">
             <Icon name={r.icono} size={22} />
             <span>{r.texto}</span>
@@ -115,7 +119,7 @@ function ShellInterno() {
           <span>Asistente</span>
         </button>
 
-        {RUTAS.slice(3).map((r) => (
+        {RUTAS.slice(CORTE).map((r) => (
           <NavLink key={r.to} to={r.to} className="tabbar__link">
             <Icon name={r.icono} size={22} />
             <span>{r.texto}</span>

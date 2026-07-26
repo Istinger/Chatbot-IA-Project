@@ -2098,6 +2098,18 @@
   margin-top: var(--sp-2);
 }
 
+.crecer__cursos .seccion__cab {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: calc(var(--sp-3) * -1) calc(var(--sp-3) * -1) var(--sp-1);
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  border-radius: var(--r-lg) var(--r-lg) var(--r-sm) var(--r-sm);
+  background: linear-gradient(180deg, rgba(10, 22, 38, 0.98), rgba(10, 22, 38, 0.88));
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(18px);
+}
+
 /* Cabecera de seccion (icono + titulo + subtitulo, y pill opcional a la derecha). */
 .seccion__cab {
   align-self: stretch;
@@ -2537,9 +2549,14 @@
 .port-guardadas__vacio svg { flex: none; color: var(--text-3); opacity: 0.7; }
 .port-guardadas__vacio strong { color: var(--text-2); }
 
-/* --- Ofertas guardadas (en "Tu perfil") --- */
+/* --- Pantalla "Guardados": ofertas e ideas marcadas --- */
+.guardadas__seccion { display: flex; flex-direction: column; gap: var(--sp-2); }
+.guardadas__seccion + .guardadas__seccion { margin-top: var(--sp-4); }
+/* El boton de comparar se va al extremo de la cabecera, sin empujar el titulo. */
+.guardadas__seccion .seccion__cab .perfil__iabtn { margin-left: auto; flex: none; }
+
 /* Rejilla propia, no la de la home: alli las tarjetas viven en un contenedor con
-   scroll y alto fijo; aqui crecen a lo largo del panel. */
+   scroll y alto fijo; aqui crecen a lo largo de la pagina. */
 .guardadas__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -3257,18 +3274,21 @@
 }
 
 /* Buscar ofertas */
+.buscar-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
 .buscar__cab {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   padding-right: var(--sp-4);
-  margin-bottom: var(--sp-3);
   animation: entrar var(--t-slow) var(--ease-out) both;
 }
 
 .buscar__cab h1 { font-size: var(--fs-1); }
-
-.iconbtn--volver { flex: none; }
 
 .buscar__barra { max-width: none; margin-right: var(--sp-4); }
 
@@ -3480,16 +3500,51 @@
   /* El snap y el blink funcionan igual que en escritorio (ver el bloque de
      .ofertas-pagina): antes se apagaban aqui y la home se sentia distinta al
      estrechar la ventana. */
-  .ofertas__fila .card__visual { height: clamp(170px, 45vw, 240px); }
+  /* En escritorio estos bloques reservan sitio a la derecha; en movil no hay
+     columna que esquivar. OJO: .buscar__barra NO entra aqui — su padding no es
+     margen de escritorio, es el aire interior de la pildora, y al ponerlo a 0
+     el boton "Buscar" quedaba pegado al borde. */
   .ofertas__cab,
   .ofertas__fila,
   .ofertas__rejilla,
   .buscar__cab,
-  .buscar__barra,
   .buscar__filtros,
   .resultados__barra { padding-right: 0; }
+  /* Lo que si sobra de la barra es su margen derecho: la dejaba 24px mas
+     estrecha que la cabecera y que los chips de filtro, y se notaba. */
+  .buscar__barra { margin-right: 0; }
   .ofertas__cab h1,
   .buscar__cab h1 { font-size: var(--fs-2); }
+
+  /* El lienzo ya separa sus hijos con gap; estos margenes lo duplicaban y
+     dejaban bandas vacias alrededor de la barra de busqueda. */
+  .buscar__cab { margin-bottom: 0; }
+  .buscar__filtros { margin-top: 0; }
+
+  /* Las 4 ofertas de la primera pagina, igual que en escritorio. Aqui se apilan
+     y no caben en la pantalla, asi que se aplica la MISMA solucion que ya usa
+     "Mas ofertas": la pagina mide una pantalla EXACTA (height, no min-height) y
+     la fila scrollea por dentro. Si la pagina creciera, scroll-snap-type
+     mandatory la atraparia y no se podria pasar a la siguiente. */
+  .ofertas-blink {
+    height: var(--alto-pagina);
+    justify-content: flex-start;
+  }
+  .ofertas__fila {
+    flex: 1;
+    min-height: 0; /* sin esto un hijo flex no encoge y no aparece el scroll */
+    overflow-y: auto;
+    align-content: start;
+    /* Las filas miden lo que pide su contenido y NO se comprimen: si no, las
+       tarjetas se encogen y su overflow:hidden recorta el cuerpo. */
+    grid-auto-rows: max-content;
+    scrollbar-width: none;
+  }
+  .ofertas__fila::-webkit-scrollbar { display: none; }
+
+  /* Portada mas baja: con 4 tarjetas apiladas, la de escritorio obligaba a
+     scrollear mucho para llegar a la cuarta. */
+  .ofertas__fila .card__visual { height: clamp(120px, 32vw, 170px); }
 
   /* Cuando solo cabe UNA tarjeta por fila, estirarla a todo el ancho la deja
      desproporcionada (portada enorme, texto perdido). Se le pone un tope y se
@@ -3507,6 +3562,63 @@
   /* Las habilidades se ocultan en movil: en una columna estrecha la lista se
      parte y solo cabe "+N", que no dice nada. Estan enteras en el detalle. */
   .card__skills { display: none; }
+
+  /* --- Titulo fijo al desplazar -------------------------------------------
+     En una pantalla estrecha el titulo se pierde a las dos pasadas de dedo y
+     hay que subir del todo para saber donde estas. Se queda pegado arriba.
+     La home NO entra: su cabecera vive dentro del wrapper sticky del blink y
+     ya se queda quieta gracias al scroll-snap; hacerla sticky ademas pelearia
+     con esa animacion. */
+  /* "Solo el titulo": la cabecera deja de ser una caja (display: contents), asi
+     el h1 y el subtitulo pasan a colgar directamente del lienzo. Importa porque
+     un elemento sticky solo se queda fijo mientras su PADRE esta a la vista: con
+     el h1 dentro de la cabecera se iria con ella, y colgando del lienzo (que
+     abarca todo el scroll) se queda arriba toda la pagina. El subtitulo, en
+     cambio, se va con el scroll como cualquier otro contenido. */
+  .saludo {
+    display: contents;
+  }
+
+  .saludo h1 {
+    position: sticky;
+    /* Negativo a proposito: por defecto se pegaria en el borde del PADDING del
+       lienzo y quedaba una banda por la que asomaba el contenido al pasar por
+       debajo. Asi se pega a ras del borde superior. */
+    top: calc(var(--lienzo-pt) * -1);
+    z-index: var(--z-nav);
+    /* Se estira hasta los bordes para tapar los laterales del lienzo: si no,
+       el contenido asoma por los huecos al pasar por debajo. */
+    margin: 0 calc(var(--sp-2) * -1);
+    padding: var(--lienzo-pt) var(--sp-2) var(--sp-1);
+    background: rgba(2, 7, 13, 0.85);
+    backdrop-filter: blur(16px);
+  }
+
+  /* Al colgar del lienzo, el subtitulo hereda su gap (grande, pensado para
+     separar secciones). Se pega de nuevo a su titulo. El selector de hijo
+     directo importa: el mismo .saludo__sub se usa en la home dentro de
+     .ofertas__cab, que NO es display:contents y no debe descuadrarse. */
+  .saludo > .saludo__sub {
+    margin-top: calc(var(--sp-5) * -1 + var(--sp-1));
+  }
+
+  .buscar__cab,
+  .port-cab,
+  .entrev-chat__cab,
+  .portproy__dethead {
+    position: sticky;
+    top: calc(var(--lienzo-pt) * -1);
+    z-index: var(--z-nav);
+    margin: 0 calc(var(--sp-2) * -1);
+    padding: var(--lienzo-pt) var(--sp-2) var(--sp-1);
+    background: rgba(2, 7, 13, 0.85);
+    backdrop-filter: blur(16px);
+  }
+
+  .buscar__cab {
+    align-items: flex-start;
+  }
+
 }
 
 /* --- Portafolio: pista de personalizacion, "por que ti" y esqueletos --- */
@@ -3612,7 +3724,7 @@
   margin: 0 auto;
 }
 
-.entrev-chat--setup { justify-content: safe center; }
+.entrev-chat--setup { justify-content: flex-start; }
 
 /* Pantalla inicial: el formulario y, al lado, lo que ya practicaste.
    El formulario se acota (unos campos de 1200px no se leen bien) y el espacio
@@ -3627,10 +3739,64 @@
   justify-content: center;
   gap: var(--sp-3);
   align-items: center;
+  width: 100%;
+  min-height: calc(var(--alto-app) - var(--lienzo-pt) - var(--lienzo-pb));
+  align-content: start;
 }
 
 /* Dentro del par no se auto-centra: se pega a su columna. */
-.entrev-inicio .entrev-chat--setup { max-width: none; margin: 0; }
+.entrev-inicio .entrev-chat--setup {
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+}
+
+.entrev-inicio__cab {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.entrev-chat__cab.entrev-inicio__cab h1 {
+  font-size: var(--fs-1);
+  line-height: 1.05;
+}
+
+.entrev-inicio__cab .saludo__sub {
+  max-width: 520px;
+}
+
+.entrev-miga-btn,
+.entrev-migas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: var(--r-full);
+  color: var(--glow);
+  background: rgba(79, 163, 255, 0.1);
+  border: 1px solid rgba(79, 163, 255, 0.28);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.entrev-miga-btn:hover,
+.entrev-migas button:hover {
+  background: rgba(79, 163, 255, 0.18);
+  border-color: var(--border-2);
+}
+
+.entrev-migas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+.entrev-migas span {
+  color: var(--text-2);
+}
 
 /* Apilados, no lado a lado: en columnas quedaban dos cajas bajas con un hueco
    grande debajo. Uno encima del otro llenan el alto disponible. */
@@ -3913,6 +4079,12 @@
     max-width: none;
   }
   .entrev-chat__cab h1 { font-size: var(--fs-4); }
+  .entrev-inicio__cab {
+    flex-wrap: wrap;
+  }
+  .entrev-inicio__cab .entrev-miga-btn {
+    margin-left: auto;
+  }
   /* Con 6 rutas + Asistente la barra va justa: se aprieta un poco el texto. */
   .tabbar__link span,
   .tabbar__asis span { font-size: 10px; }

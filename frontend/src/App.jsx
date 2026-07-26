@@ -15,6 +15,8 @@ import Portafolio from './screens/Portafolio';
 import PortafolioIdea from './screens/PortafolioIdea';
 import PortafolioProyecto from './screens/PortafolioProyecto';
 import Entrevista from './screens/Entrevista';
+import Guardadas from './screens/Guardadas';
+import OfertasGuardadas from './screens/OfertasGuardadas';
 
 /** Ruta protegida: sin sesion, al login. */
 function Privada({ children }) {
@@ -53,6 +55,8 @@ function Rutas() {
         <Route path="/portafolio/:id" element={<PortafolioIdea />} />
         <Route path="/portafolio/:id/proyecto" element={<PortafolioProyecto />} />
         <Route path="/entrevista" element={<Entrevista />} />
+        <Route path="/ofertas-guardadas" element={<OfertasGuardadas />} />
+        <Route path="/guardadas" element={<Guardadas />} />
         <Route path="/perfil" element={<Profile />} />
       </Route>
 
