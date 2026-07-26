@@ -3290,6 +3290,10 @@
 
 .buscar__cab h1 { font-size: var(--fs-1); }
 
+.buscar__ver-controles {
+  display: none;
+}
+
 .buscar__barra { max-width: none; margin-right: var(--sp-4); }
 
 .buscar__limpiar {
@@ -3609,6 +3613,25 @@
 
   .buscar__cab {
     align-items: flex-start;
+  }
+
+  .lienzo--scrolled .buscar__cab {
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .lienzo--scrolled .buscar__ver-controles {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: var(--r-full);
+    color: var(--glow);
+    background: rgba(79, 163, 255, 0.14);
+    border: 1px solid rgba(79, 163, 255, 0.3);
+    font-size: 13px;
+    font-weight: 600;
   }
 
   .lienzo--scrolled .saludo h1,
