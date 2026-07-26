@@ -4481,9 +4481,13 @@
   /* Entrevista: el historial no se come la pantalla. */
   .entrev-miga-btn {
     display: inline-flex;
+    align-self: flex-end;
+    margin-top: var(--sp-2);
   }
   .entrev-migas {
     display: flex;
+    margin-top: var(--sp-3);
+    margin-bottom: var(--sp-1);
   }
   .entrev-lat__lista { max-height: 50dvh; }
 
