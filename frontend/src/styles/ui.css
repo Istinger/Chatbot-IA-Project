@@ -3579,10 +3579,12 @@
     display: contents;
   }
 
-  .saludo h1 {
+  .saludo h1,
+  .entrev-lat__titulo {
     position: static;
     margin: 0;
     padding: 0;
+    background-color: transparent;
     transition: background-color 180ms ease, backdrop-filter 180ms ease;
   }
 
@@ -3601,6 +3603,7 @@
     position: static;
     margin: 0;
     padding: 0;
+    background-color: transparent;
     transition: background-color 180ms ease, backdrop-filter 180ms ease;
   }
 
@@ -3612,13 +3615,14 @@
   .lienzo--scrolled .buscar__cab,
   .lienzo--scrolled .port-cab,
   .lienzo--scrolled .entrev-chat__cab,
-  .lienzo--scrolled .portproy__dethead {
+  .lienzo--scrolled .portproy__dethead,
+  .lienzo--scrolled .entrev-lat__titulo {
     position: sticky;
     top: calc(var(--lienzo-pt) * -1);
     z-index: var(--z-nav);
     margin: 0 calc(var(--sp-2) * -1);
     padding: var(--lienzo-pt) var(--sp-2) var(--sp-1);
-    background: rgba(11, 42, 102, 0.82);
+    background-color: rgba(11, 42, 102, 0.82);
     backdrop-filter: blur(14px);
   }
 
