@@ -1634,6 +1634,7 @@
      absolute y no fixed: asi queda DENTRO del marco (fixed se le escapa y taparia
      tambien el filo negro con las esquinas redondeadas). */
   .asis-host {
+    display: none;
     position: absolute;
     inset: 0;
     z-index: var(--z-modal);
@@ -1646,6 +1647,7 @@
   }
 
   .asis-host--abierto {
+    display: block;
     transform: translateX(0);
     pointer-events: auto;
   }
