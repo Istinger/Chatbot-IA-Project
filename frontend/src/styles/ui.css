@@ -3290,6 +3290,10 @@
 
 .buscar__cab h1 { font-size: var(--fs-1); }
 
+.buscar__ver-controles {
+  display: none;
+}
+
 .buscar__barra { max-width: none; margin-right: var(--sp-4); }
 
 .buscar__limpiar {
@@ -3609,6 +3613,25 @@
 
   .buscar__cab {
     align-items: flex-start;
+  }
+
+  .lienzo--scrolled .buscar__cab {
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .lienzo--scrolled .buscar__ver-controles {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: var(--r-full);
+    color: var(--glow);
+    background: rgba(79, 163, 255, 0.14);
+    border: 1px solid rgba(79, 163, 255, 0.3);
+    font-size: 13px;
+    font-weight: 600;
   }
 
   .lienzo--scrolled .saludo h1,
@@ -4091,15 +4114,26 @@
 /* Entrevista en movil: la barra inferior de navegacion no debe tapar el input. */
 @media (max-width: 860px) {
   .entrev-chat {
-    min-height: calc(var(--alto-app) - 200px);
+    min-height: 0;
     max-width: none;
+  }
+  .entrev-inicio,
+  .entrev-inicio .entrev-chat--setup {
+    min-height: 0;
+  }
+  .entrev-inicio .entrev-setup {
+    padding-bottom: calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
   }
   .entrev-chat__cab h1 { font-size: var(--fs-4); }
   .entrev-inicio__cab {
     flex-wrap: wrap;
+    gap: var(--sp-1);
+    padding-bottom: 0;
+    border-bottom: 0;
   }
   .entrev-inicio__cab .entrev-miga-btn {
     margin-left: auto;
+    margin-top: 0;
   }
   /* Con 6 rutas + Asistente la barra va justa: se aprieta un poco el texto. */
   .tabbar__link span,
@@ -4465,6 +4499,10 @@
   /* Cabeceras de seccion: con poco ancho, la pastilla ("Basado en N ofertas")
      estrujaba el titulo. Que baje debajo en vez de competir por el sitio. */
   .seccion__cab { flex-wrap: wrap; }
+  .seccion__cab .seccion__txt {
+    order: 2;
+    flex: 1 0 100%;
+  }
   .seccion__pill { order: 3; }
 
   /* Perfil: el campo de añadir habilidad y su boton, cada uno en su linea si no
@@ -4479,13 +4517,15 @@
 
   /* Crecer: las columnas ya no scrollean por dentro en movil (lo hace la
      pagina), asi que tampoco deben limitar el alto de sus paneles. */
+  .crecer__cursos .seccion__cab {
+    position: static;
+  }
   .crecer__ia { max-height: none; }
 
   /* Entrevista: el historial no se come la pantalla. */
   .entrev-miga-btn {
     display: inline-flex;
     align-self: flex-end;
-    margin-top: var(--sp-2);
   }
   .entrev-migas {
     display: flex;

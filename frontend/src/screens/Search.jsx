@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../lib/api';
 import { useVista } from '../lib/vista';
 import JobCard from '../components/JobCard';
@@ -118,6 +118,7 @@ export default function Search() {
   const [reformulado, setReformulado] = useState(null);
   // Los resultados actuales vienen del Asistente, no de una busqueda tuya.
   const [delAsistente, setDelAsistente] = useState(false);
+  const controlesRef = useRef(null);
   // Modal compartido en el Shell: al abrir una oferta, el Asistente tambien
   // sabe cual estas viendo.
   const { setOfertaActiva, setContextoPantalla, ofertasSugeridas, setOfertasSugeridas } =
@@ -214,11 +215,20 @@ export default function Search() {
       <header className="buscar__cab">
         <div>
           <h1>Buscar ofertas</h1>
-          <p className="saludo__sub">Encuentra oportunidades que impulsen tu carrera.</p>
         </div>
+        <button
+          type="button"
+          className="buscar__ver-controles"
+          onClick={() => controlesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        >
+          <Icon name="buscar" size={16} />
+          Buscar
+        </button>
       </header>
+      <p className="saludo__sub buscar__sub">Encuentra oportunidades que impulsen tu carrera.</p>
 
       <form
+        ref={controlesRef}
         className="buscar__barra"
         onSubmit={(e) => {
           e.preventDefault();
