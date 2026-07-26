@@ -1642,9 +1642,13 @@
     background: rgba(2, 7, 13, 0.98);
     transform: translateX(100%);
     transition: transform var(--t-base) var(--ease-out);
+    pointer-events: none;
   }
 
-  .asis-host--abierto { transform: translateX(0); }
+  .asis-host--abierto {
+    transform: translateX(0);
+    pointer-events: auto;
+  }
 
   .asis-host__cerrar {
     display: grid;
@@ -1701,6 +1705,10 @@
   .tabbar__link.active { color: var(--glow); }
   .tabbar__asis { color: var(--glow); }
   .tabbar__asis span { font-weight: 600; }
+  .tabbar__asis:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
 
   .lienzo {
     margin-left: 0;
