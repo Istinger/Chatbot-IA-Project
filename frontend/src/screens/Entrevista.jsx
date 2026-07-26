@@ -88,6 +88,7 @@ export default function Entrevista() {
   const [entrevistas, setEntrevistas] = useState(() => leerEntrevistas());
   const [plan, setPlan] = useState(null); // consejo de la IA en la pantalla inicial
   const [planCargando, setPlanCargando] = useState(false);
+  const [vistaInicio, setVistaInicio] = useState('entrevista'); // entrevista | historial
 
   const dictadoRef = useRef(null);
   // Al parar el dictado todavia llega un ultimo `onresult`. Si ya se envio (o el
@@ -99,8 +100,6 @@ export default function Entrevista() {
   const silencioRef = useRef(null);
   const braveRef = useRef(false);
   const finRef = useRef(null);
-  const setupRef = useRef(null);
-  const historialBloqueRef = useRef(null);
 
   useEffect(() => {
     if (vozSoportada) esBrave().then((b) => (braveRef.current = b));
@@ -345,10 +344,6 @@ export default function Entrevista() {
     setRespuesta('');
   };
 
-  const moverA = (ref) => {
-    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   // --- SETUP -----------------------------------------------------------------
   if (fase === 'setup') {
     const recurrentes = puntosRecurrentes(entrevistas);
@@ -375,8 +370,8 @@ export default function Entrevista() {
     };
 
     return (
-      <div className="entrev-inicio">
-      <div className="entrev-chat entrev-chat--setup" ref={setupRef}>
+      <div className={`entrev-inicio entrev-inicio--${vistaInicio}`}>
+      <div className="entrev-chat entrev-chat--setup">
         <header className="entrev-chat__cab entrev-inicio__cab">
           <div>
             <h1>Entrevista simulada</h1>
@@ -387,7 +382,7 @@ export default function Entrevista() {
           <button
             type="button"
             className="entrev-miga-btn"
-            onClick={() => moverA(historialBloqueRef)}
+            onClick={() => setVistaInicio('historial')}
           >
             <Icon name="reloj" size={16} />
             Historial y mejoras
@@ -491,9 +486,9 @@ export default function Entrevista() {
       </div>
 
       {/* Panel lateral: lo que ya practicaste y en que fallas mas. */}
-      <aside className="entrev-lat" ref={historialBloqueRef}>
+      <aside className="entrev-lat">
         <nav className="entrev-migas" aria-label="Migas de pan">
-          <button type="button" onClick={() => moverA(setupRef)}>
+          <button type="button" onClick={() => setVistaInicio('entrevista')}>
             Entrevista
           </button>
           <Icon name="derecha" size={14} />

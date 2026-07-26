@@ -2105,9 +2105,8 @@
   margin: calc(var(--sp-3) * -1) calc(var(--sp-3) * -1) var(--sp-1);
   padding: var(--sp-3) var(--sp-3) var(--sp-2);
   border-radius: var(--r-lg) var(--r-lg) var(--r-sm) var(--r-sm);
-  background: linear-gradient(180deg, rgba(10, 22, 38, 0.98), rgba(10, 22, 38, 0.88));
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(18px);
+  background: var(--glass);
+  backdrop-filter: blur(16px);
 }
 
 /* Cabecera de seccion (icono + titulo + subtitulo, y pill opcional a la derecha). */
@@ -2153,6 +2152,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   gap: var(--sp-2);
   align-items: start;
+  margin-top: calc(var(--sp-4) * -1);
 }
 .crecer__col,
 .crecer__der { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
@@ -3619,6 +3619,14 @@
     align-items: flex-start;
   }
 
+  .saludo h1,
+  .buscar__cab,
+  .port-cab,
+  .entrev-chat__cab,
+  .portproy__dethead {
+    background: var(--glass);
+  }
+
 }
 
 /* --- Portafolio: pista de personalizacion, "por que ti" y esqueletos --- */
@@ -3796,6 +3804,11 @@
 }
 .entrev-migas span {
   color: var(--text-2);
+}
+
+.entrev-miga-btn,
+.entrev-migas {
+  display: none;
 }
 
 /* Apilados, no lado a lado: en columnas quedaban dos cajas bajas con un hueco
@@ -4466,6 +4479,22 @@
   .crecer__ia { max-height: none; }
 
   /* Entrevista: el historial no se come la pantalla. */
+  .entrev-miga-btn {
+    display: inline-flex;
+    align-self: flex-end;
+    margin-top: var(--sp-2);
+  }
+  .entrev-migas {
+    display: flex;
+    margin-top: var(--sp-3);
+    margin-bottom: var(--sp-1);
+  }
+  .entrev-inicio--entrevista .entrev-lat {
+    display: none;
+  }
+  .entrev-inicio--historial .entrev-chat--setup {
+    display: none;
+  }
   .entrev-lat__lista { max-height: 50dvh; }
 
   /* Portafolio: las tarjetas guardadas a ancho completo. */
