@@ -2098,6 +2098,18 @@
   margin-top: var(--sp-2);
 }
 
+.crecer__cursos .seccion__cab {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: calc(var(--sp-3) * -1) calc(var(--sp-3) * -1) var(--sp-1);
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  border-radius: var(--r-lg) var(--r-lg) var(--r-sm) var(--r-sm);
+  background: linear-gradient(180deg, rgba(10, 22, 38, 0.98), rgba(10, 22, 38, 0.88));
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(18px);
+}
+
 /* Cabecera de seccion (icono + titulo + subtitulo, y pill opcional a la derecha). */
 .seccion__cab {
   align-self: stretch;
@@ -3262,18 +3274,21 @@
 }
 
 /* Buscar ofertas */
+.buscar-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
 .buscar__cab {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   padding-right: var(--sp-4);
-  margin-bottom: var(--sp-3);
   animation: entrar var(--t-slow) var(--ease-out) both;
 }
 
 .buscar__cab h1 { font-size: var(--fs-1); }
-
-.iconbtn--volver { flex: none; }
 
 .buscar__barra { max-width: none; margin-right: var(--sp-4); }
 
@@ -3586,6 +3601,24 @@
   .saludo > .saludo__sub {
     margin-top: calc(var(--sp-5) * -1 + var(--sp-1));
   }
+
+  .buscar__cab,
+  .port-cab,
+  .entrev-chat__cab,
+  .portproy__dethead {
+    position: sticky;
+    top: calc(var(--lienzo-pt) * -1);
+    z-index: var(--z-nav);
+    margin: 0 calc(var(--sp-2) * -1);
+    padding: var(--lienzo-pt) var(--sp-2) var(--sp-1);
+    background: rgba(2, 7, 13, 0.85);
+    backdrop-filter: blur(16px);
+  }
+
+  .buscar__cab {
+    align-items: flex-start;
+  }
+
 }
 
 /* --- Portafolio: pista de personalizacion, "por que ti" y esqueletos --- */
@@ -3691,7 +3724,7 @@
   margin: 0 auto;
 }
 
-.entrev-chat--setup { justify-content: safe center; }
+.entrev-chat--setup { justify-content: flex-start; }
 
 /* Pantalla inicial: el formulario y, al lado, lo que ya practicaste.
    El formulario se acota (unos campos de 1200px no se leen bien) y el espacio
@@ -3706,10 +3739,64 @@
   justify-content: center;
   gap: var(--sp-3);
   align-items: center;
+  width: 100%;
+  min-height: calc(var(--alto-app) - var(--lienzo-pt) - var(--lienzo-pb));
+  align-content: start;
 }
 
 /* Dentro del par no se auto-centra: se pega a su columna. */
-.entrev-inicio .entrev-chat--setup { max-width: none; margin: 0; }
+.entrev-inicio .entrev-chat--setup {
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+}
+
+.entrev-inicio__cab {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.entrev-chat__cab.entrev-inicio__cab h1 {
+  font-size: var(--fs-1);
+  line-height: 1.05;
+}
+
+.entrev-inicio__cab .saludo__sub {
+  max-width: 520px;
+}
+
+.entrev-miga-btn,
+.entrev-migas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: var(--r-full);
+  color: var(--glow);
+  background: rgba(79, 163, 255, 0.1);
+  border: 1px solid rgba(79, 163, 255, 0.28);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.entrev-miga-btn:hover,
+.entrev-migas button:hover {
+  background: rgba(79, 163, 255, 0.18);
+  border-color: var(--border-2);
+}
+
+.entrev-migas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+.entrev-migas span {
+  color: var(--text-2);
+}
 
 /* Apilados, no lado a lado: en columnas quedaban dos cajas bajas con un hueco
    grande debajo. Uno encima del otro llenan el alto disponible. */
@@ -3992,6 +4079,12 @@
     max-width: none;
   }
   .entrev-chat__cab h1 { font-size: var(--fs-4); }
+  .entrev-inicio__cab {
+    flex-wrap: wrap;
+  }
+  .entrev-inicio__cab .entrev-miga-btn {
+    margin-left: auto;
+  }
   /* Con 6 rutas + Asistente la barra va justa: se aprieta un poco el texto. */
   .tabbar__link span,
   .tabbar__asis span { font-size: 10px; }

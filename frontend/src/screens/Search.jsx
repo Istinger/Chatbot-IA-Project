@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useVista } from '../lib/vista';
 import JobCard from '../components/JobCard';
@@ -109,7 +108,6 @@ function filtrar(ofertas, seleccion) {
  * por similitud, por eso funciona escribiendo la intencion, no palabras clave.
  */
 export default function Search() {
-  const navegar = useNavigate();
   const [texto, setTexto] = useState('');
   const [resultados, setResultados] = useState(null);
   const [buscando, setBuscando] = useState(false);
@@ -212,11 +210,8 @@ export default function Search() {
   };
 
   return (
-    <>
+    <div className="buscar-page">
       <header className="buscar__cab">
-        <button type="button" className="iconbtn iconbtn--volver" onClick={() => navegar('/')} aria-label="Volver">
-          <Icon name="izquierda" size={22} />
-        </button>
         <div>
           <h1>Buscar ofertas</h1>
           <p className="saludo__sub">Encuentra oportunidades que impulsen tu carrera.</p>
@@ -361,6 +356,6 @@ export default function Search() {
           </div>
         </section>
       )}
-    </>
+    </div>
   );
 }

@@ -23,7 +23,7 @@ const RUTAS = [
   { to: '/crecer', icono: 'crecer', texto: 'Crecer' },
   { to: '/portafolio', icono: 'maletin', texto: 'Portafolio' },
   { to: '/entrevista', icono: 'entrevista', texto: 'Entrevista' },
-  { to: '/guardadas', icono: 'marcador', texto: 'Guardados' },
+  { to: '/ofertas-guardadas', icono: 'marcador', texto: 'Ofertas' },
   { to: '/perfil', icono: 'usuario', texto: 'Perfil' },
 ];
 
