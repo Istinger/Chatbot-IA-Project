@@ -4097,9 +4097,13 @@
   .entrev-chat__cab h1 { font-size: var(--fs-4); }
   .entrev-inicio__cab {
     flex-wrap: wrap;
+    gap: var(--sp-1);
+    padding-bottom: 0;
+    border-bottom: 0;
   }
   .entrev-inicio__cab .entrev-miga-btn {
     margin-left: auto;
+    margin-top: 0;
   }
   /* Con 6 rutas + Asistente la barra va justa: se aprieta un poco el texto. */
   .tabbar__link span,
@@ -4492,7 +4496,6 @@
   .entrev-miga-btn {
     display: inline-flex;
     align-self: flex-end;
-    margin-top: var(--sp-2);
   }
   .entrev-migas {
     display: flex;
