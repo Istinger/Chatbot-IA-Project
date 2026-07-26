@@ -2105,9 +2105,8 @@
   margin: calc(var(--sp-3) * -1) calc(var(--sp-3) * -1) var(--sp-1);
   padding: var(--sp-3) var(--sp-3) var(--sp-2);
   border-radius: var(--r-lg) var(--r-lg) var(--r-sm) var(--r-sm);
-  background: linear-gradient(180deg, rgba(10, 22, 38, 0.98), rgba(10, 22, 38, 0.88));
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(18px);
+  background: var(--glass);
+  backdrop-filter: blur(16px);
 }
 
 /* Cabecera de seccion (icono + titulo + subtitulo, y pill opcional a la derecha). */
