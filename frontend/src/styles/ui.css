@@ -4114,8 +4114,15 @@
 /* Entrevista en movil: la barra inferior de navegacion no debe tapar el input. */
 @media (max-width: 860px) {
   .entrev-chat {
-    min-height: calc(var(--alto-app) - 200px);
+    min-height: 0;
     max-width: none;
+  }
+  .entrev-inicio,
+  .entrev-inicio .entrev-chat--setup {
+    min-height: 0;
+  }
+  .entrev-inicio .entrev-setup {
+    padding-bottom: calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
   }
   .entrev-chat__cab h1 { font-size: var(--fs-4); }
   .entrev-inicio__cab {
