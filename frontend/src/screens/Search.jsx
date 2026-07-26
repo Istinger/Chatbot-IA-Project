@@ -214,9 +214,9 @@ export default function Search() {
       <header className="buscar__cab">
         <div>
           <h1>Buscar ofertas</h1>
-          <p className="saludo__sub">Encuentra oportunidades que impulsen tu carrera.</p>
         </div>
       </header>
+      <p className="saludo__sub buscar__sub">Encuentra oportunidades que impulsen tu carrera.</p>
 
       <form
         className="buscar__barra"
