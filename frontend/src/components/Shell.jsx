@@ -65,6 +65,7 @@ function ShellInterno() {
     if (!lienzo) return;
     lienzo.scrollTop = 0;
     setLienzoScrolled(false);
+    setAsisAbierto(false);
   }, [pathname]);
 
   const manejarScrollLienzo = (e) => {
