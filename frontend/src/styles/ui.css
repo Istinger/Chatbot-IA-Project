@@ -3619,6 +3619,14 @@
     align-items: flex-start;
   }
 
+  .saludo h1,
+  .buscar__cab,
+  .port-cab,
+  .entrev-chat__cab,
+  .portproy__dethead {
+    background: var(--glass);
+  }
+
 }
 
 /* --- Portafolio: pista de personalizacion, "por que ti" y esqueletos --- */
