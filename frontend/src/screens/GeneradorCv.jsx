@@ -110,7 +110,7 @@ const coincideCon = (opcion, texto) => (
   opcion.toLocaleLowerCase().includes(texto.trim().toLocaleLowerCase())
 );
 
-function ComboEditable({ label, value, onChange, options, placeholder, required = false, type = 'text', editable = true }) {
+function ComboEditable({ label, value, onChange, options, placeholder, required = false, type = 'text', editable = false }) {
   const id = useId();
   const [abierto, setAbierto] = useState(false);
   const opcionesFiltradas = options.filter((opcion) => (
@@ -551,7 +551,7 @@ export default function GeneradorCv() {
 
           {paso === 1 && (
             <div className="cvgen__form">
-              <ComboEditable label="Nombre completo" value={datos.nombre} onChange={cambiarNombre} options={OPCIONES.nombre} placeholder="Elige o escribe tu nombre" required />
+              <ComboEditable label="Nombre completo" value={datos.nombre} onChange={cambiarNombre} options={OPCIONES.nombre} placeholder="Elige o escribe tu nombre" required editable />
               <label className="cvgen__campo">
                 <span>Correo</span>
                 <input
