@@ -1,4 +1,5 @@
 import Icon from '../components/Icon';
+import { codigoEquipo, nombreEquipo } from '../lib/deviceAccess';
 
 const MENSAJES = {
   not_requested: {
@@ -51,6 +52,7 @@ export function AdminDesktopBlocked() {
 
 export default function AccessRequest({
   estado,
+  dispositivo,
   solicitando,
   error,
   onSolicitar,
@@ -67,6 +69,17 @@ export default function AccessRequest({
         <p className="access-card__eyebrow">Jobia · Casa abierta</p>
         <h1>{contenido.titulo}</h1>
         <p>{contenido.texto}</p>
+
+        {dispositivo && (
+          <section className="access-device" aria-label="Identificacion de esta computadora">
+            <span>Dile este codigo al administrador</span>
+            <strong>{codigoEquipo(dispositivo.id)}</strong>
+            <dl>
+              <div><dt>IP</dt><dd>{dispositivo.ip || 'No disponible'}</dd></div>
+              <div><dt>Equipo</dt><dd>{nombreEquipo(dispositivo.userAgent)}</dd></div>
+            </dl>
+          </section>
+        )}
 
         {estado === 'pending' && (
           <div className="access-wait" role="status">

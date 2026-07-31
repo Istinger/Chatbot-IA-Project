@@ -160,6 +160,7 @@ function ControlEntrada() {
     return (
       <AccessRequest
         estado={acceso?.status || 'not_requested'}
+        dispositivo={acceso?.device}
         solicitando={solicitando}
         error={error}
         onSolicitar={solicitar}

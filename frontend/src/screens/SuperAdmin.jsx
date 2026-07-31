@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import Icon from '../components/Icon';
+import { codigoEquipo, nombreEquipo } from '../lib/deviceAccess';
 
 function fecha(valor) {
   if (!valor) return 'Sin fecha';
@@ -10,44 +11,25 @@ function fecha(valor) {
   }).format(new Date(valor));
 }
 
-function nombreEquipo(userAgent) {
-  const ua = String(userAgent || '');
-  const navegador = ua.includes('Edg/')
-    ? 'Edge'
-    : ua.includes('Firefox/')
-      ? 'Firefox'
-      : ua.includes('Chrome/')
-        ? 'Chrome'
-        : ua.includes('Safari/')
-          ? 'Safari'
-          : 'Navegador';
-  const sistema = ua.includes('Windows')
-    ? 'Windows'
-    : ua.includes('Mac OS')
-      ? 'macOS'
-      : ua.includes('Linux')
-        ? 'Linux'
-        : 'PC';
-  return `${navegador} · ${sistema}`;
-}
-
 function Equipo({ equipo, onRevisar, ocupado }) {
   const pendiente = equipo.status === 'pending';
   const aprobado = equipo.status === 'approved';
+  const codigo = codigoEquipo(equipo.id);
 
   return (
     <article className={`admin-device admin-device--${equipo.status}`}>
       <div className="admin-device__main">
         <span className="admin-device__icon"><Icon name="maletin" size={22} /></span>
         <div>
-          <strong>{equipo.ip}</strong>
-          <span>{nombreEquipo(equipo.userAgent)} · #{equipo.id.slice(0, 6)}</span>
+          <strong>{codigo}</strong>
+          <span>{nombreEquipo(equipo.userAgent)}</span>
         </div>
         <span className="admin-device__status">
           {pendiente ? 'Pendiente' : aprobado ? 'Autorizada' : equipo.status === 'rejected' ? 'Rechazada' : 'Revocada'}
         </span>
       </div>
       <dl className="admin-device__meta">
+        <div><dt>Direccion IP</dt><dd>{equipo.ip || 'No disponible'}</dd></div>
         <div><dt>Solicitud</dt><dd>{fecha(equipo.requestedAt)}</dd></div>
         <div><dt>Revision</dt><dd>{fecha(equipo.reviewedAt)}</dd></div>
       </dl>
@@ -58,7 +40,7 @@ function Equipo({ equipo, onRevisar, ocupado }) {
             className="admin-action admin-action--approve"
             onClick={() => onRevisar(equipo.id, 'approved')}
             disabled={ocupado}
-            aria-label={`Autorizar ${equipo.ip}`}
+            aria-label={`Autorizar ${codigo}`}
           >
             <Icon name="ok" size={18} /> Autorizar
           </button>
@@ -69,7 +51,7 @@ function Equipo({ equipo, onRevisar, ocupado }) {
             className="admin-action"
             onClick={() => onRevisar(equipo.id, 'rejected')}
             disabled={ocupado}
-            aria-label={`Rechazar ${equipo.ip}`}
+            aria-label={`Rechazar ${codigo}`}
           >
             <Icon name="cerrar" size={18} /> Rechazar
           </button>
@@ -80,7 +62,7 @@ function Equipo({ equipo, onRevisar, ocupado }) {
             className="admin-action admin-action--danger"
             onClick={() => onRevisar(equipo.id, 'revoked')}
             disabled={ocupado}
-            aria-label={`Revocar ${equipo.ip}`}
+            aria-label={`Revocar ${codigo}`}
           >
             <Icon name="candado" size={18} /> Revocar
           </button>
