@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import Icon from '../components/Icon';
@@ -17,11 +17,13 @@ import Icon from '../components/Icon';
 export default function Onboarding() {
   const { refrescar } = useAuth();
   const navegar = useNavigate();
+  const location = useLocation();
   const inputArchivo = useRef(null);
+  const cvGenerado = location.state?.cvGenerado;
 
   const [paso, setPaso] = useState(1);
-  const [skills, setSkills] = useState([]);
-  const [seleccionadas, setSeleccionadas] = useState(new Set());
+  const [skills, setSkills] = useState(cvGenerado?.skills ?? []);
+  const [seleccionadas, setSeleccionadas] = useState(new Set(cvGenerado?.skills ?? []));
   const [manual, setManual] = useState('');
   const [arrastrando, setArrastrando] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
@@ -92,11 +94,25 @@ export default function Onboarding() {
 
       {paso === 1 && (
         <section className="onb__panel">
-          <h1>Sube tu CV</h1>
+          <h1>{cvGenerado ? 'Elige tu CV' : 'Sube tu CV'}</h1>
           <p className="onb__sub">
-            Lo leemos, extraemos tus habilidades y buscamos ofertas que encajen. El
-            archivo no se guarda: solo su texto.
+            {cvGenerado
+              ? 'Tu curriculum de CV Express ya esta guardado. Puedes usarlo o elegir otro.'
+              : 'Lo leemos, extraemos tus habilidades y buscamos ofertas que encajen. El archivo no se guarda: solo su texto.'}
           </p>
+
+          {cvGenerado && (
+            <article className="onb__cv-generado">
+              <span><Icon name="documento" size={24} /></span>
+              <div>
+                <strong>{cvGenerado.nombreArchivo}</strong>
+                <p>{cvGenerado.nombre} · {cvGenerado.rol}</p>
+              </div>
+              <button type="button" className="btn btn--primario" onClick={() => setPaso(2)}>
+                Usar este CV
+              </button>
+            </article>
+          )}
 
           <div
             className={`drop ${arrastrando ? 'drop--activo' : ''}`}
@@ -112,7 +128,7 @@ export default function Onboarding() {
             }}
           >
             <Icon name="subir" size={40} />
-            <p>Arrastra tu CV en PDF</p>
+            <p>{cvGenerado ? 'O elige otro CV en PDF' : 'Arrastra tu CV en PDF'}</p>
             <span className="onb__sub">o</span>
 
             <button
@@ -140,9 +156,11 @@ export default function Onboarding() {
             </p>
           )}
 
-          <button type="button" className="btn btn--texto" onClick={() => setPaso(2)}>
-            No tengo el CV a mano
-          </button>
+          {!cvGenerado && (
+            <button type="button" className="btn btn--texto" onClick={() => setPaso(2)}>
+              No tengo el CV a mano
+            </button>
+          )}
         </section>
       )}
 
