@@ -172,6 +172,21 @@ function rankear(tusSkills = [], faltantes = []) {
   return conScore.map((c) => c.idea);
 }
 
+/**
+ * Mantiene la mejor idea y rota las siguientes dentro del top 10. La rotacion
+ * es estable durante el dia: da variedad sin hacer que la pantalla cambie en
+ * cada recarga ni sacrificar afinidad.
+ */
+function diversificar(ranking, semilla, n = 4) {
+  if (ranking.length <= n) return ranking.slice(0, n);
+  const primera = ranking[0];
+  const candidatas = ranking.slice(1, Math.min(10, ranking.length));
+  const numero = parseInt(String(semilla).slice(0, 8), 16) || 0;
+  const inicio = numero % candidatas.length;
+  const rotadas = [...candidatas.slice(inicio), ...candidatas.slice(0, inicio)];
+  return [primera, ...rotadas.slice(0, n - 1)];
+}
+
 /** Las N mas populares (respaldo sin perfil). */
 function masPopulares(n = 4) {
   return [...CATALOGO].sort((a, b) => b.popularidad - a.popularidad).slice(0, n);
@@ -179,4 +194,4 @@ function masPopulares(n = 4) {
 
 const porId = (id) => CATALOGO.find((i) => i.id === id) || null;
 
-module.exports = { CATALOGO, AREAS, rankear, masPopulares, porId };
+module.exports = { CATALOGO, AREAS, rankear, diversificar, masPopulares, porId };

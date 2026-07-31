@@ -7,10 +7,58 @@
  */
 const BASE = '/api';
 const CLAVE_TOKEN = 'jobia_token';
+const CLAVE_DUENO_LOCAL = 'jobia_local_owner';
+const CACHE_PORTAFOLIO = ['jobia_portafolio_ideas', 'jobia_portafolio_ideas_meta'];
+const ESTADO_LOCAL_USUARIO = [
+  'jobia_chat',
+  'jobia_crecer_progreso',
+  'jobia_entrevistas',
+  'jobia_ofertas_guardadas',
+  'jobia_portafolio_guardadas',
+  'jobia_portafolio_notas',
+  'jobia_animaciones',
+];
+
+function usuarioDelToken(token) {
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const parte = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    return JSON.parse(atob(parte)).sub || null;
+  } catch {
+    return null;
+  }
+}
+
+function limpiarEstadoLocalUsuario() {
+  ESTADO_LOCAL_USUARIO.forEach((clave) => localStorage.removeItem(clave));
+  CACHE_PORTAFOLIO.forEach((clave) => sessionStorage.removeItem(clave));
+}
+
+function sincronizarDuenoLocal(token) {
+  const usuario = usuarioDelToken(token);
+  if (!usuario) return;
+  const anterior = localStorage.getItem(CLAVE_DUENO_LOCAL);
+
+  // Sin propietario es almacenamiento de una version anterior: no se puede
+  // atribuir con seguridad a la cuenta actual, especialmente en PCs compartidas.
+  if (!anterior || anterior !== usuario) limpiarEstadoLocalUsuario();
+  localStorage.setItem(CLAVE_DUENO_LOCAL, usuario);
+}
 
 export const getToken = () => localStorage.getItem(CLAVE_TOKEN);
-export const setToken = (t) => localStorage.setItem(CLAVE_TOKEN, t);
-export const clearToken = () => localStorage.removeItem(CLAVE_TOKEN);
+export const setToken = (t) => {
+  sincronizarDuenoLocal(t);
+  if (getToken() !== t) CACHE_PORTAFOLIO.forEach((clave) => sessionStorage.removeItem(clave));
+  localStorage.setItem(CLAVE_TOKEN, t);
+};
+export const clearToken = () => {
+  localStorage.removeItem(CLAVE_TOKEN);
+  CACHE_PORTAFOLIO.forEach((clave) => sessionStorage.removeItem(clave));
+};
+
+// Migra una sola vez el almacenamiento antiguo que no distinguia usuarios.
+const tokenInicial = getToken();
+if (tokenInicial) sincronizarDuenoLocal(tokenInicial);
 
 export class ApiError extends Error {
   constructor(message, status) {

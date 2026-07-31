@@ -44,9 +44,9 @@ router.post('/', optionalAuth, async (req, res) => {
 });
 
 /** GET /api/chat/:sessionId — recuperar una conversacion. */
-router.get('/:sessionId', async (req, res) => {
+router.get('/:sessionId', optionalAuth, async (req, res) => {
   try {
-    const mensajes = await service.obtenerHistorial(req.params.sessionId);
+    const mensajes = await service.obtenerHistorial(req.params.sessionId, req.user?.id ?? null);
     return ok(res, { sessionId: req.params.sessionId, mensajes });
   } catch (err) {
     return fail(res, err.message, 500);
