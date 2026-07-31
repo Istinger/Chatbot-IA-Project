@@ -2917,6 +2917,17 @@
   font-size: 13px;
 }
 .crecer__detcursos { align-self: stretch; border-top: none; margin-top: 0; }
+.crecer__estado {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: var(--sp-1) 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.crecer__estado svg { flex: none; margin-top: 1px; }
+.crecer__estado--error { color: var(--danger); }
 
 /* Perfil: dos columnas. Habilidades (lo que mas ocupa) a la izquierda y el resto
    —Curriculum, Telegram, Sesion— apilado a la derecha. */
