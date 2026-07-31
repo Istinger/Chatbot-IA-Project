@@ -433,7 +433,7 @@ const TEMA_TIPO = {
 };
 
 /** Imagen de la idea: acorde a su area y estable por su id. */
-export const imagenIdea = (idea, w, h) =>
+export const imagenIdea = (idea, w, h, usadas) =>
   imagenTema(
     TEMA_AREA[idea?.area] ||
       TEMA_TIPO[String(idea?.tipo || '').toLowerCase()] ||
@@ -443,7 +443,14 @@ export const imagenIdea = (idea, w, h) =>
     idea?.id,
     w,
     h,
+    usadas,
   );
+
+/** Asigna una portada distinta a cada idea del conjunto visible. */
+export function imagenesIdeasUnicas(ideas, w = 760, h = 720) {
+  const usadas = new Set();
+  return new Map((ideas || []).map((idea) => [idea.id, imagenIdea(idea, w, h, usadas)]));
+}
 
 /* --- Ideas guardadas (persisten en localStorage; se marcan desde el detalle) --- */
 export const CLAVE_GUARDADAS = 'jobia_portafolio_guardadas';

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useVista } from '../lib/vista';
@@ -7,6 +7,7 @@ import {
   guardarIdeasCache,
   ideasGuardadas,
   imagenIdea,
+  imagenesIdeasUnicas,
   leerEstadoIdeasCache,
 } from '../lib/portafolio';
 import Icon from '../components/Icon';
@@ -103,6 +104,7 @@ export default function Portafolio() {
   const cargando = ideas === null;
   const destacada = !cargando && (ideas.find((i) => i.destacada) || ideas[0]);
   const resto = !cargando ? ideas.filter((i) => i !== destacada) : [];
+  const imagenesVisibles = useMemo(() => imagenesIdeasUnicas(ideas), [ideas]);
   const idsVisibles = new Set((ideas || []).map((idea) => idea.id));
   const guardadasNoRepetidas = guardadas.filter((idea) => !idsVisibles.has(idea.id));
 
@@ -152,7 +154,12 @@ export default function Portafolio() {
               className="port-dest__img"
               style={{ backgroundImage: `linear-gradient(150deg, ${destacada.tono[0]}, ${destacada.tono[1]})` }}
             >
-              <img src={imagenIdea(destacada, 760, 720)} alt="" loading="lazy" referrerPolicy="no-referrer" />
+              <img
+                src={imagenesVisibles.get(destacada.id) || imagenIdea(destacada, 760, 720)}
+                alt=""
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
             </div>
             <div className="port-dest__cuerpo">
               <span className="port__badge">Destacado</span>
@@ -190,7 +197,7 @@ export default function Portafolio() {
         {guardadasNoRepetidas.length ? (
           <div className="port-guardadas__grid">
             {guardadasNoRepetidas.map((idea) => (
-              <PortCard key={idea.id} idea={idea} />
+              <PortCard key={idea.id} idea={idea} imagen={imagenesVisibles.get(idea.id)} />
             ))}
           </div>
         ) : (

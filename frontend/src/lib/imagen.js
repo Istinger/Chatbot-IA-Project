@@ -98,10 +98,20 @@ export function cargarFotos(temas) {
 }
 
 /** La foto de Pexels que le toca a esta semilla dentro de su tema, si la hay. */
-function fotoDe(tema, semilla) {
+function fotoDe(tema, semilla, usadas) {
   const fotos = TEMAS_FOTOS[tema];
   if (!fotos?.length) return null;
-  return fotos[lockDe(semilla) % fotos.length];
+
+  const inicio = lockDe(semilla) % fotos.length;
+  for (let salto = 0; salto < fotos.length; salto += 1) {
+    const foto = fotos[(inicio + salto) % fotos.length];
+    if (!foto?.url || usadas?.has(foto.url)) continue;
+    usadas?.add(foto.url);
+    return foto;
+  }
+
+  // Si el conjunto tiene mas elementos que fotos, conserva la seleccion estable.
+  return fotos[inicio];
 }
 
 /**
@@ -110,13 +120,20 @@ function fotoDe(tema, semilla) {
  * Lo usan las ofertas y tambien las ideas de portafolio: un solo sitio decide el
  * proveedor y como se mantiene estable la imagen.
  */
-export function imagenTema(palabrasClave, semilla, ancho = 640, alto = 420) {
+export function imagenTema(palabrasClave, semilla, ancho = 640, alto = 420, usadas) {
   const tema = palabrasClave || GENERICO;
-  const foto = fotoDe(tema, semilla);
+  const foto = fotoDe(tema, semilla, usadas);
   if (foto?.url) return foto.url;
 
   // Respaldo sin clave de Pexels: fotos por palabra clave, sin relacion fina.
-  return `https://loremflickr.com/${ancho}/${alto}/${encodeURIComponent(tema)}?lock=${lockDe(semilla)}`;
+  let lock = lockDe(semilla);
+  let url = `https://loremflickr.com/${ancho}/${alto}/${encodeURIComponent(tema)}?lock=${lock}`;
+  while (usadas?.has(url)) {
+    lock += 1;
+    url = `https://loremflickr.com/${ancho}/${alto}/${encodeURIComponent(tema)}?lock=${lock}`;
+  }
+  usadas?.add(url);
+  return url;
 }
 
 /** A quien hay que acreditar esa foto (la licencia de Pexels lo pide). */
