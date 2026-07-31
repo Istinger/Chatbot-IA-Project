@@ -249,22 +249,22 @@ function flujoDe(accion) {
     };
   }
 
-  if (tipo === 'crecimiento_analizado') {
+  if (tipo === 'crecer_abierta' || tipo === 'crecimiento_analizado') {
     return {
-      pasos: [
-        { titulo: 'Tu perfil', detalle: datos.fortalezas || 'Habilidades que ya tienes', dato: 'Tus fortalezas', icono: 'persona', color: COLORES.verde },
-        { titulo: 'Ofertas del mercado', detalle: `${datos.analizadas || 'Varias'} ofertas publicadas`, dato: 'Lo que estan pidiendo', icono: 'base', color: COLORES.azul },
-        { titulo: 'Comparador de habilidades', detalle: faltantes.slice(0, 2).join(', ') || 'Oportunidades para mejorar', dato: `${faltantes.length} por aprender`, icono: 'comparar', color: COLORES.violeta },
-        { titulo: 'Cursos recomendados', detalle: cursos[0]?.titulo || cursos[0] || 'Recursos para avanzar', dato: `${cursos.length} recursos`, icono: 'curso', color: COLORES.cian },
-      ],
-      relaciones: ['se compara con', 'pasa por', 'encuentra'],
-      transferencias: [
-        datos.fortalezas || 'Tus habilidades',
-        `Requisitos de ${datos.analizadas || 'varias'} ofertas`,
-        faltantes.slice(0, 2).join(' + ') || `${faltantes.length} oportunidades`,
-      ],
-      resultado: 'Ya tienes un siguiente paso claro',
-      indicadores: [['Fortalezas', Number(datos.fortalezas?.length) || 1], ['Por aprender', faltantes.length], ['Cursos', cursos.length]],
+      modo: 'crecer',
+      crecer: {
+        esperando: tipo === 'crecer_abierta',
+        analizadas: Number(datos.analizadas) || 0,
+        tusSkills: lista(datos.tusSkills),
+        fortalezas: lista(datos.fortalezas),
+        faltantes: lista(datos.faltantes),
+        cursos: lista(datos.cursos),
+        progreso: lista(datos.progreso),
+        proyeccion: datos.proyeccion || null,
+        abierta: datos.abierta || null,
+        tienePlan: Boolean(datos.tienePlan),
+        tieneExplicacion: Boolean(datos.tieneExplicacion),
+      },
     };
   }
 
@@ -964,11 +964,261 @@ function dibujarMapaBusqueda(ctx, ancho, alto, flujo, progreso) {
   });
 }
 
+function dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso) {
+  const datos = flujo.crecer;
+  const margen = Math.max(78, ancho * 0.055);
+  const superior = Math.max(225, alto * 0.29);
+  const medio = Math.max(superior + 185, alto * 0.51);
+  const inferior = Math.min(alto - 205, alto * 0.73);
+  const anchoNodo = Math.min(200, ancho * 0.125);
+  const recorrido = progreso * 6;
+  const movimiento = (progreso * 6) % 1;
+
+  const skillTexto = (item) =>
+    typeof item === 'string'
+      ? item
+      : [item?.skill, item?.porcentaje != null ? `${item.porcentaje}%` : null]
+          .filter(Boolean)
+          .join(' ');
+  const skills = datos.tusSkills.map(skillTexto).filter(Boolean);
+  const fortalezas = datos.fortalezas.map(skillTexto).filter(Boolean);
+  const faltantes = datos.faltantes.map(skillTexto).filter(Boolean);
+  const cursos = datos.cursos
+    .flatMap((curso) =>
+      lista(curso?.opciones).map((opcion) =>
+        [opcion?.titulo, opcion?.proveedor].filter(Boolean).join(' · '),
+      ),
+    )
+    .filter(Boolean);
+  const progresoSkills = datos.progreso
+    .map((item) => [item?.skill, item?.estado].filter(Boolean).join(' · '))
+    .filter(Boolean);
+  const demanda = [...datos.faltantes, ...datos.fortalezas]
+    .map(skillTexto)
+    .filter(Boolean);
+  const proyeccion = datos.proyeccion;
+  const detalleProyeccion = proyeccion
+    ? proyeccion.exacto
+      ? `${proyeccion.tope} de ${datos.analizadas} ofertas`
+      : `${proyeccion.minimo}-${proyeccion.tope} de ${datos.analizadas} ofertas`
+    : 'Marca una habilidad para proyectar';
+  const posiciones = {
+    perfil: { x: margen, y: superior },
+    ofertas: { x: margen, y: inferior },
+    analisis: { x: ancho * 0.34, y: medio },
+    fortalezas: { x: ancho * 0.57, y: superior },
+    brechas: { x: ancho * 0.57, y: medio },
+    cursos: { x: ancho * 0.82, y: medio },
+    progreso: { x: ancho * 0.57, y: inferior },
+    proyeccion: { x: ancho * 0.82, y: inferior },
+  };
+
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.font = '700 12px system-ui, sans-serif';
+  ctx.fillStyle = COLORES.cian;
+  ctx.fillText('DATOS QUE SE COMPARAN', posiciones.perfil.x - 40, superior - 112);
+  ctx.fillStyle = COLORES.violeta;
+  ctx.fillText('CALCULO EXACTO · SIN IA', posiciones.analisis.x - 82, medio - 112);
+  ctx.fillStyle = COLORES.verde;
+  ctx.fillText('SIGUIENTE PASO', posiciones.cursos.x - 65, medio - 112);
+  ctx.restore();
+
+  const nodos = [
+    {
+      paso: {
+        titulo: 'Habilidades de tu perfil',
+        detalle: skills.join(' · ') || 'Esperando las habilidades del perfil',
+        dato: `${skills.length} skill${skills.length === 1 ? '' : 's'}`,
+        icono: 'persona',
+        color: COLORES.cian,
+      },
+      posicion: posiciones.perfil,
+      etapa: 0,
+    },
+    {
+      paso: {
+        titulo: 'Ofertas afines',
+        detalle: 'matching-service + PostgreSQL + pgvector',
+        dato: datos.esperando ? 'Consultando ofertas' : `${datos.analizadas} analizadas`,
+        icono: 'fuentes',
+        color: COLORES.azul,
+      },
+      posicion: posiciones.ofertas,
+      etapa: 0,
+    },
+    {
+      paso: {
+        titulo: 'Comparador de conjuntos',
+        detalle: 'Cuenta cada skill una vez por oferta y calcula su porcentaje',
+        dato: 'Set + porcentajes · sin IA',
+        icono: 'comparar',
+        color: COLORES.violeta,
+      },
+      posicion: posiciones.analisis,
+      etapa: 1,
+    },
+    {
+      paso: {
+        titulo: 'Tus fortalezas',
+        detalle: fortalezas.join(' · ') || 'No hay fortalezas comunes todavia',
+        dato: `${fortalezas.length} coincidencias`,
+        icono: 'habilidades',
+        color: COLORES.verde,
+      },
+      posicion: posiciones.fortalezas,
+      etapa: 2,
+    },
+    {
+      paso: {
+        titulo: 'Lo que te falta',
+        detalle: faltantes.join(' · ') || 'No se detectaron brechas',
+        dato: `${faltantes.length} brechas priorizadas`,
+        icono: 'comparar',
+        color: COLORES.amarillo,
+      },
+      posicion: posiciones.brechas,
+      etapa: 2,
+    },
+    {
+      paso: {
+        titulo: 'Cursos recomendados',
+        detalle: cursos.join(' · ') || 'No hacen falta cursos por ahora',
+        dato: `${cursos.length} recursos del catalogo`,
+        icono: 'curso',
+        color: COLORES.verde,
+      },
+      posicion: posiciones.cursos,
+      etapa: 3,
+    },
+    {
+      paso: {
+        titulo: datos.tienePlan ? 'Plan y progreso' : 'Tu progreso',
+        detalle: datos.tienePlan
+          ? 'Plan de 4 semanas con chat opcional y marcas guardadas localmente'
+          : progresoSkills.join(' · ') || 'Aun no has marcado habilidades',
+        dato: datos.tienePlan ? 'IA solo para el plan' : 'Guardado en localStorage',
+        icono: 'guardar',
+        color: COLORES.azul,
+      },
+      posicion: posiciones.progreso,
+      etapa: 3,
+    },
+    {
+      paso: {
+        titulo: 'Proyeccion local',
+        detalle: proyeccion?.skills?.join(' · ') || 'Se calcula con las brechas marcadas',
+        dato: detalleProyeccion,
+        icono: 'resultado',
+        color: COLORES.verde,
+      },
+      posicion: posiciones.proyeccion,
+      etapa: 4,
+    },
+  ];
+
+  const conexiones = [
+    {
+      inicio: { x: posiciones.perfil.x + 55, y: superior },
+      fin: { x: posiciones.analisis.x - 55, y: medio - 18 },
+      control: { x: ancho * 0.21, y: superior },
+      etapa: 0,
+      color: COLORES.cian,
+      etiqueta: 'lee tu perfil',
+      dato: skills.length ? skills : 'skills del perfil',
+    },
+    {
+      inicio: { x: posiciones.ofertas.x + 55, y: inferior },
+      fin: { x: posiciones.analisis.x - 55, y: medio + 18 },
+      control: { x: ancho * 0.21, y: inferior },
+      etapa: 0,
+      color: COLORES.azul,
+      etiqueta: 'cuenta demanda',
+      dato: demanda.length ? demanda : `${datos.analizadas} ofertas`,
+    },
+    {
+      inicio: { x: posiciones.analisis.x + 55, y: medio - 15 },
+      fin: { x: posiciones.fortalezas.x - 55, y: superior },
+      control: { x: ancho * 0.46, y: superior },
+      etapa: 1,
+      color: COLORES.verde,
+      etiqueta: 'interseccion',
+      dato: fortalezas.length ? fortalezas : 'skills que ya tienes',
+    },
+    {
+      inicio: { x: posiciones.analisis.x + 55, y: medio + 8 },
+      fin: { x: posiciones.brechas.x - 55, y: medio },
+      control: { x: ancho * 0.46, y: medio },
+      etapa: 1,
+      color: COLORES.amarillo,
+      etiqueta: 'diferencia',
+      dato: faltantes.length ? faltantes : 'sin brechas',
+    },
+    {
+      inicio: { x: posiciones.brechas.x + 55, y: medio },
+      fin: { x: posiciones.cursos.x - 55, y: medio },
+      control: { x: ancho * 0.695, y: medio },
+      etapa: 2,
+      color: COLORES.verde,
+      etiqueta: 'consulta catalogo',
+      dato: cursos.length ? cursos : 'catalogo estatico',
+    },
+    {
+      inicio: { x: posiciones.brechas.x, y: medio + 55 },
+      fin: { x: posiciones.progreso.x, y: inferior - 55 },
+      control: { x: posiciones.brechas.x - ancho * 0.02, y: (medio + inferior) / 2 },
+      etapa: 2,
+      color: COLORES.azul,
+      etiqueta: 'marca avance',
+      dato: progresoSkills.length ? progresoSkills : 'sin marcas todavia',
+    },
+    {
+      inicio: { x: posiciones.progreso.x + 55, y: inferior },
+      fin: { x: posiciones.proyeccion.x - 55, y: inferior },
+      control: { x: ancho * 0.695, y: inferior },
+      etapa: 3,
+      color: COLORES.verde,
+      etiqueta: 'calcula localmente',
+      dato: detalleProyeccion,
+    },
+  ];
+
+  conexiones.forEach((conexion, indice) => {
+    dibujarConexionCurva(
+      ctx,
+      conexion.inicio,
+      conexion.fin,
+      conexion.control,
+      limitar(recorrido - conexion.etapa - 0.62),
+      conexion.color,
+      conexion.etiqueta,
+      conexion.dato,
+      (movimiento + indice * 0.13) % 1,
+    );
+  });
+
+  nodos.forEach(({ paso, posicion, etapa }) => {
+    dibujarNodo(
+      ctx,
+      paso,
+      etapa,
+      posicion.x,
+      posicion.y,
+      anchoNodo,
+      limitar(recorrido - etapa),
+    );
+  });
+}
+
 function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   dibujarFondo(ctx, ancho, alto);
   const flujo = flujoDe(accion);
   if (flujo.modo === 'busqueda') {
     dibujarMapaBusqueda(ctx, ancho, alto, flujo, progreso);
+    return;
+  }
+  if (flujo.modo === 'crecer') {
+    dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso);
     return;
   }
   if (flujo.modo === 'matching') {
