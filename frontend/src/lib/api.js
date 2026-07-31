@@ -67,6 +67,12 @@ export const api = {
     return request('/profile/cv', { method: 'POST', formData: fd });
   },
 
+  subirCvDemo: (file) => {
+    const fd = new FormData();
+    fd.append('cv', file);
+    return request('/profile/demo-cv', { method: 'POST', formData: fd });
+  },
+
   guardarSkills: (skills) =>
     request('/profile/skills', { method: 'PUT', body: { skills } }),
 

@@ -59,6 +59,13 @@ export function AuthProvider({ children }) {
     return respuesta;
   }, []);
 
+  const registrarDesdeCvDemo = useCallback(async (file) => {
+    const respuesta = await api.subirCvDemo(file);
+    setToken(respuesta.token);
+    await refrescar();
+    return respuesta;
+  }, [refrescar]);
+
   const salir = useCallback(() => {
     clearToken();
     setPerfil(null);
@@ -75,10 +82,11 @@ export function AuthProvider({ children }) {
       entrar,
       registrar,
       registrarDemo,
+      registrarDesdeCvDemo,
       salir,
       refrescar,
     }),
-    [perfil, cargando, entrar, registrar, registrarDemo, salir, refrescar],
+    [perfil, cargando, entrar, registrar, registrarDemo, registrarDesdeCvDemo, salir, refrescar],
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

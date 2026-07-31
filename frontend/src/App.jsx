@@ -55,6 +55,7 @@ function Rutas() {
       {/* El acceso original se conserva para restaurarlo despues de la feria. */}
       <Route path="/acceso" element={<Publica><Login modo="login" /></Publica>} />
       <Route path="/acceso/registro" element={<Publica><Login modo="registro" /></Publica>} />
+      <Route path="/onboarding-demo" element={<Onboarding demo />} />
 
       <Route path="/onboarding" element={<Privada><Onboarding /></Privada>} />
       <Route path="/animacion" element={<Privada><Animacion /></Privada>} />

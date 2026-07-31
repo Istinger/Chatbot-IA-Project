@@ -582,7 +582,7 @@ export default function GeneradorCv() {
         </div>
         <div className="cvgen__cab-acciones">
           {paso === 1 && (
-            <button type="button" className="btn btn--glass cvgen__omitir" onClick={() => navegar('/acceso')}>
+            <button type="button" className="btn btn--glass cvgen__omitir" onClick={() => navegar('/onboarding-demo')}>
               Omitir creacion de CV <Icon name="flecha" size={16} />
             </button>
           )}

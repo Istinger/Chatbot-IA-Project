@@ -1,5 +1,7 @@
+const crypto = require('crypto');
 const { prisma } = require('../../config/db');
 const env = require('../../config/env');
+const authService = require('../auth/auth.service');
 const { detectSkills } = require('../jobs/skills.catalog');
 
 class ProfileError extends Error {
@@ -82,7 +84,7 @@ async function get(userId) {
  * Las skills detectadas se SUGIEREN; el usuario las confirma despues con
  * PUT /profile/skills. Es el paso 2 del onboarding de DESIGN.md.
  */
-async function subirCv(userId, file) {
+async function analizarCv(file) {
   if (!file) throw new ProfileError('Falta el archivo (campo "cv")', 400);
   if (file.mimetype !== 'application/pdf') {
     throw new ProfileError('El CV debe ser un PDF', 400);
@@ -101,7 +103,10 @@ async function subirCv(userId, file) {
   }
 
   const detectadas = detectSkills(texto);
+  return { texto, detectadas };
+}
 
+async function guardarCv(userId, texto, detectadas) {
   const profile = await prisma.profile.update({
     where: { userId },
     data: { cvText: texto, skills: detectadas },
@@ -114,6 +119,37 @@ async function subirCv(userId, file) {
     profileId: profile.id,
     cvLongitud: texto.length,
     skillsDetectadas: detectadas,
+  };
+}
+
+async function subirCv(userId, file) {
+  const { texto, detectadas } = await analizarCv(file);
+  return guardarCv(userId, texto, detectadas);
+}
+
+/**
+ * Entrada publica de la casa abierta. El correo se toma del propio PDF y el
+ * registro demo resuelve duplicados agregando 1, 2, 3... antes de la arroba.
+ */
+async function subirCvDemo(file) {
+  const { texto, detectadas } = await analizarCv(file);
+  const correo = texto.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
+
+  if (!correo) {
+    throw new ProfileError('No encontramos un correo en el CV. Agrega uno al PDF e intenta nuevamente.', 400);
+  }
+
+  const registro = await authService.registerDemo({
+    email: correo,
+    password: `Jobia-${crypto.randomUUID()}!`,
+  });
+  const cv = await guardarCv(registro.user.id, texto, detectadas);
+
+  return {
+    ...cv,
+    token: registro.token,
+    user: registro.user,
+    correoExtraido: correo.toLowerCase(),
   };
 }
 
@@ -139,4 +175,4 @@ async function actualizarSkills(userId, skills) {
   return { profileId: profile.id, skills: profile.skills };
 }
 
-module.exports = { get, subirCv, actualizarSkills, ProfileError };
+module.exports = { get, subirCv, subirCvDemo, actualizarSkills, ProfileError };
