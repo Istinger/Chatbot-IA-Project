@@ -99,21 +99,54 @@ const INICIAL = {
 
 function ComboEditable({ label, value, onChange, options, placeholder, required = false }) {
   const id = useId();
+  const [abierto, setAbierto] = useState(false);
+
   return (
     <label className="cvgen__campo" htmlFor={id}>
       <span>{label}</span>
-      <input
-        id={id}
-        list={`${id}-opciones`}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        required={required}
-        autoComplete="off"
-      />
-      <datalist id={`${id}-opciones`}>
-        {options.map((opcion) => <option key={opcion} value={opcion} />)}
-      </datalist>
+      <div className="cvgen__combobox">
+        <input
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setAbierto(true)}
+          onKeyDown={(e) => e.key === 'Escape' && setAbierto(false)}
+          placeholder={placeholder}
+          required={required}
+          autoComplete="off"
+          role="combobox"
+          aria-expanded={abierto}
+          aria-controls={`${id}-opciones`}
+        />
+        <button
+          type="button"
+          className="cvgen__desplegar"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setAbierto((actual) => !actual)}
+          aria-label={`Ver opciones de ${label}`}
+          aria-expanded={abierto}
+        >
+          <Icon name="derecha" size={17} />
+        </button>
+        {abierto && (
+          <ul id={`${id}-opciones`} className="cvgen__opciones" role="listbox">
+            {options.map((opcion) => (
+              <li key={opcion}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onChange(opcion);
+                    setAbierto(false);
+                  }}
+                >
+                  {opcion}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </label>
   );
 }
@@ -121,6 +154,7 @@ function ComboEditable({ label, value, onChange, options, placeholder, required 
 function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
   const id = useId();
   const [texto, setTexto] = useState('');
+  const [abierto, setAbierto] = useState(false);
 
   const agregar = () => {
     const valor = texto.trim();
@@ -135,23 +169,55 @@ function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
     <div className="cvgen__campo cvgen__campo--ancho">
       <span>{label}</span>
       <div className="cvgen__combo">
-        <input
-          id={id}
-          list={`${id}-opciones`}
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              agregar();
-            }
-          }}
-          placeholder={placeholder}
-          autoComplete="off"
-        />
-        <datalist id={`${id}-opciones`}>
-          {opciones.map((opcion) => <option key={opcion} value={opcion} />)}
-        </datalist>
+        <div className="cvgen__combobox">
+          <input
+            id={id}
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            onFocus={() => setAbierto(true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                agregar();
+              }
+              if (e.key === 'Escape') setAbierto(false);
+            }}
+            placeholder={placeholder}
+            autoComplete="off"
+            role="combobox"
+            aria-expanded={abierto}
+            aria-controls={`${id}-opciones`}
+          />
+          <button
+            type="button"
+            className="cvgen__desplegar"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setAbierto((actual) => !actual)}
+            aria-label={`Ver opciones de ${label}`}
+            aria-expanded={abierto}
+          >
+            <Icon name="derecha" size={17} />
+          </button>
+          {abierto && (
+            <ul id={`${id}-opciones`} className="cvgen__opciones" role="listbox">
+              {opciones.filter((opcion) => !valores.includes(opcion)).map((opcion) => (
+                <li key={opcion}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onChange([...valores, opcion]);
+                      setTexto('');
+                      setAbierto(false);
+                    }}
+                  >
+                    {opcion}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <button type="button" className="iconbtn" onClick={agregar} aria-label={`Anadir ${label}`}>
           <Icon name="mas" size={18} />
         </button>
