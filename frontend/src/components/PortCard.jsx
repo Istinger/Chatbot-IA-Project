@@ -9,14 +9,14 @@ import PortTags from './PortTags';
  * Vive aqui y no dentro de Portafolio porque la usan dos pantallas: el listado
  * de "Portafolio" (columna lateral y apartado de guardadas) y "Guardados".
  */
-export default function PortCard({ idea }) {
+export default function PortCard({ idea, imagen }) {
   return (
     <Link to={`/portafolio/${idea.id}`} className="port-card">
       <div
         className="port-card__img"
         style={{ backgroundImage: `linear-gradient(150deg, ${idea.tono[0]}, ${idea.tono[1]})` }}
       >
-        <img src={imagenIdea(idea, 360, 240)} alt="" loading="lazy" referrerPolicy="no-referrer" />
+        <img src={imagen || imagenIdea(idea, 360, 240)} alt="" loading="lazy" referrerPolicy="no-referrer" />
       </div>
       <div className="port-card__cuerpo">
         <h3>{idea.titulo}</h3>
