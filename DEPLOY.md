@@ -206,6 +206,10 @@ MATCHING_EPSILON=0.15
 
 # Solo para generar texto (CV, pitch). El matching NO lo usa.
 OPENROUTER_API_KEY=
+OPENROUTER_MODELS=google/gemma-4-31b-it,openai/gpt-oss-20b,google/gemma-4-31b-it:free,openai/gpt-oss-20b:free
+
+# Secreto de GET /api/health/llm. Vacío = el endpoint responde 404.
+ADMIN_TOKEN=<algo_largo_y_aleatorio>
 
 # Avisos por Telegram. Sin token, el módulo se desactiva solo.
 TELEGRAM_BOT_TOKEN=
@@ -214,6 +218,26 @@ NOTIF_MAX_POR_TANDA=3
 ```
 
 Los servicios se llaman entre sí **por el nombre del servicio**, no por `localhost`: por eso `DATABASE_URL` usa `@postgres:5432`.
+
+### La clave de OpenRouter: nunca la principal
+
+La cadena de `OPENROUTER_MODELS` arranca por endpoints **de pago** y deja los `:free` de respaldo. El motivo no es la calidad, es la disponibilidad: los gratuitos devuelven 429 de forma intermitente y comparten un tope de 20 peticiones/min con todo el mundo, así que con tres personas probando a la vez la demo se cae. El coste es calderilla — un mensaje de chat son ~2.500 tokens de entrada y ~300 de salida, unos **$0.0004**; una jornada de feria con 100 visitantes ronda los **$0.35**.
+
+Si el saldo lo pone otra persona, que **no** entregue la clave principal de su cuenta:
+
+1. openrouter.ai → **Keys** → *Create Key*.
+2. Ponerle un **Credit limit** (p. ej. `$5`).
+3. Esa es la que va en `OPENROUTER_API_KEY`.
+
+Si un bucle se descontrola, se quema el tope de esa clave y no el saldo entero. Dos apuntes más sobre cuentas ajenas: los modelos `:free` exigen aceptar la política de datos en **Settings → Privacy de esa cuenta** (si no, la API responde 404 y el backend lo traduce a un mensaje explícito), y haber cargado ≥$10 sube el límite de gratuitos de 50 a 1000 peticiones/día.
+
+Para vigilar el gasto durante la feria:
+
+```bash
+curl -H "X-Admin-Token: $ADMIN_TOKEN" https://<host>/api/health/llm
+```
+
+Devuelve peticiones, tokens y **coste real en USD** (lo reporta OpenRouter en cada respuesta, no es una estimación local), con desglose por modelo. El contador vive en memoria del proceso: se reinicia al reiniciar el contenedor. El histórico de verdad está en openrouter.ai/activity.
 
 ### Avisos por Telegram
 

@@ -3,6 +3,8 @@ const env = require('./config/env');
 const { prisma } = require('./config/db');
 const { connection } = require('./config/redis');
 const { ok, fail } = require('./shared/envelope');
+const { requireAdmin } = require('./shared/admin.middleware');
+const llm = require('./config/openrouter');
 
 const app = express();
 app.use(express.json());
@@ -38,6 +40,16 @@ api.get('/health', async (_req, res) => {
 
   return healthy ? ok(res, body) : fail(res, JSON.stringify(body), 502);
 });
+
+/**
+ * Gasto del LLM en lo que lleva vivo el proceso. Solo admin: revela que modelos
+ * se usan y cuanto se esta quemando.
+ *
+ * OJO: el contador vive en memoria y se reinicia con el contenedor. Sirve para
+ * vigilar una jornada de demo, NO como historico de facturacion (ese esta en
+ * openrouter.ai/activity).
+ */
+api.get('/health/llm', requireAdmin, (_req, res) => ok(res, llm.consumo));
 
 api.use('/auth', require('./modules/auth/auth.controller'));
 api.use('/profile', require('./modules/profile/profile.controller'));
