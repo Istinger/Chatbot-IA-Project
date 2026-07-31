@@ -580,7 +580,14 @@ export default function GeneradorCv() {
           <h1>Crea tu curriculum</h1>
           <p>Completa tu perfil y sal con un CV listo para usar.</p>
         </div>
-        <span className="cvgen__progreso">Paso {progreso}</span>
+        <div className="cvgen__cab-acciones">
+          {paso === 1 && (
+            <button type="button" className="btn btn--glass cvgen__omitir" onClick={() => navegar('/acceso')}>
+              Omitir creacion de CV <Icon name="flecha" size={16} />
+            </button>
+          )}
+          <span className="cvgen__progreso">Paso {progreso}</span>
+        </div>
       </header>
 
       <div className="cvgen__layout">
