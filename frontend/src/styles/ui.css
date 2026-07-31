@@ -5616,18 +5616,19 @@
 .admin-mobile-return {
   position: fixed;
   z-index: calc(var(--z-modal) + 2);
-  top: calc(10px + env(safe-area-inset-top, 0px));
+  top: calc(12px + env(safe-area-inset-top, 0px));
   right: 12px;
-  min-height: 38px;
-  padding: 0 13px;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
   border: 1px solid var(--border-2);
-  border-radius: 8px;
+  border-radius: 50%;
   color: var(--glow);
   background: rgba(3, 10, 22, 0.92);
   box-shadow: var(--shadow-card);
   backdrop-filter: blur(14px);
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .admin-bypass {

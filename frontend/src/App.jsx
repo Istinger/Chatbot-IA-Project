@@ -4,6 +4,7 @@ import { api } from './lib/api';
 import { cargarFotos } from './lib/imagen';
 import { AuthProvider, useAuth } from './lib/auth';
 import AmbientBackground from './components/AmbientBackground';
+import Icon from './components/Icon';
 import Shell from './components/Shell';
 import Login from './screens/Login';
 import GeneradorCv from './screens/GeneradorCv';
@@ -110,8 +111,10 @@ function AplicacionAutorizada({ adminMobile = false }) {
           type="button"
           className="admin-mobile-return"
           onClick={() => window.location.assign('/su_admin')}
+          aria-label="Volver al panel administrativo"
+          title="Volver al panel"
         >
-          Volver al panel
+          <Icon name="atras" size={21} />
         </button>
       )}
       <AuthProvider>
