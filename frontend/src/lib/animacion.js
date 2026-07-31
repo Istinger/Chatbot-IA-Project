@@ -25,7 +25,7 @@ export function obtenerAnimaciones() {
   return leer();
 }
 
-export function prepararOfertasAnimacion(ofertas, limite = 6) {
+export function prepararOfertasAnimacion(ofertas, limite = 12) {
   return (Array.isArray(ofertas) ? ofertas : []).slice(0, limite).map((job) => ({
     id: job.id,
     title: job.title,
