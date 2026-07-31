@@ -270,22 +270,19 @@ function flujoDe(accion) {
     };
   }
 
-  if (tipo === 'portafolio_sugerido') {
+  if (tipo === 'portafolio_abierto' || tipo === 'portafolio_sugerido') {
     return {
-      pasos: [
-        { titulo: 'Tus habilidades', detalle: skills.slice(0, 3).join(', ') || 'Lo que sabes hacer', dato: `${skills.length} habilidades`, icono: 'habilidades', color: COLORES.azul },
-        { titulo: 'Jobia', detalle: 'Combina tus fortalezas', dato: 'Perfil recibido', icono: 'app', color: COLORES.violeta },
-        { titulo: 'Ideas de proyecto', detalle: ideas[0]?.titulo || ideas[0] || 'Proyecto sugerido', dato: `${ideas.length} ideas`, icono: 'proyecto', color: COLORES.cian },
-        { titulo: 'Tu portafolio', detalle: 'Proyectos que puedes mostrar', dato: 'Vitrina profesional', icono: 'resultado', color: COLORES.verde },
-      ],
-      relaciones: ['se envian a', 'genera', 'alimenta'],
-      transferencias: [
-        skills.slice(0, 2).join(' + ') || 'Tus habilidades',
-        `${ideas.length} ideas`,
-        ideas[0]?.titulo || ideas[0] || 'Proyecto sugerido',
-      ],
-      resultado: 'Tus habilidades ahora tienen algo visible que mostrar',
-      indicadores: [['Habilidades', skills.length], ['Ideas', ideas.length], ['Proyecto', ideas.length ? 1 : 0]],
+      modo: 'portafolio',
+      portafolio: {
+        esperando: tipo === 'portafolio_abierto',
+        skills: lista(datos.skills),
+        faltantes: lista(datos.faltantes),
+        ideas: lista(datos.ideas),
+        guardadas: lista(datos.guardadas),
+        catalogo: Number(datos.catalogo) || 50,
+        origen: datos.origen || 'cargando',
+        personalizado: Boolean(datos.personalizado),
+      },
     };
   }
 
@@ -1266,6 +1263,282 @@ function dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso) {
   });
 }
 
+function dibujarMapaPortafolio(ctx, ancho, alto, flujo, progreso) {
+  const datos = flujo.portafolio;
+  const margen = Math.max(145, ancho * 0.075);
+  const superior = Math.max(225, alto * 0.29);
+  const medio = Math.max(superior + 190, alto * 0.51);
+  const inferior = Math.min(alto - 170, alto * 0.77);
+  const anchoNodo = Math.min(205, ancho * 0.13);
+  const recorrido = progreso * 5;
+  const movimiento = (progreso * 5) % 1;
+
+  const skills = datos.skills.map((skill) => String(skill)).filter(Boolean);
+  const faltantes = datos.faltantes
+    .map((item) =>
+      typeof item === 'string'
+        ? item
+        : [item?.skill, item?.porcentaje != null ? `${item.porcentaje}%` : null]
+            .filter(Boolean)
+            .join(' '),
+    )
+    .filter(Boolean);
+  const ideas = datos.ideas.map((idea) => idea?.titulo || idea).filter(Boolean);
+  const ideasEnViaje = datos.ideas
+    .map((idea) =>
+      [
+        idea?.destacada ? 'Destacada' : null,
+        idea?.titulo || idea,
+        idea?.tipo,
+      ].filter(Boolean).join(' · '),
+    )
+    .filter(Boolean);
+  const guardadas = datos.guardadas.map((idea) => idea?.titulo || idea).filter(Boolean);
+  const posiciones = {
+    perfil: { x: margen, y: superior },
+    brechas: { x: margen, y: inferior },
+    catalogo: { x: ancho * 0.3, y: medio },
+    ranking: { x: ancho * 0.49, y: medio },
+    texto: { x: ancho * 0.68, y: medio },
+    tarjetas: { x: ancho * 0.86, y: superior },
+    guardadas: { x: ancho * 0.86, y: inferior },
+  };
+
+  const personalizacion = {
+    cargando: {
+      titulo: 'Preparando textos',
+      detalle: 'Comprobando cache y disponibilidad',
+      dato: 'Procesando',
+      icono: 'app',
+      color: COLORES.violeta,
+    },
+    redis: {
+      titulo: 'Redis reutiliza el resultado',
+      detalle: 'La misma combinacion de perfil, brechas e ideas ya estaba cacheada',
+      dato: 'Cache hit · sin nueva IA',
+      icono: 'base',
+      color: COLORES.cian,
+    },
+    openrouter: {
+      titulo: 'OpenRouter adapta el texto',
+      detalle: 'Reescribe resumen y detalle; no elige los proyectos',
+      dato: '1 llamada · 4 textos',
+      icono: 'app',
+      color: COLORES.violeta,
+    },
+    ranking_sin_ia: {
+      titulo: 'Texto base del catalogo',
+      detalle: 'La cuota no esta disponible, pero las ideas elegidas se conservan',
+      dato: 'Respaldo sin IA',
+      icono: 'documento',
+      color: COLORES.azul,
+    },
+    respaldo: {
+      titulo: 'Texto base del catalogo',
+      detalle: 'OpenRouter no respondio y Jobia usa el contenido curado',
+      dato: 'Respaldo automatico',
+      icono: 'documento',
+      color: COLORES.azul,
+    },
+    catalogo_popular: {
+      titulo: 'Ideas mas populares',
+      detalle: 'Sin habilidades se evita la IA y se mantiene una seleccion util',
+      dato: 'Popularidad · sin IA',
+      icono: 'ordenar',
+      color: COLORES.azul,
+    },
+    cliente_sin_api: {
+      titulo: 'Respaldo del navegador',
+      detalle: 'La API no respondio y se muestran las ideas incluidas en el frontend',
+      dato: 'La pantalla no se rompe',
+      icono: 'app',
+      color: COLORES.amarillo,
+    },
+  }[datos.origen] || {
+    titulo: 'Texto base del catalogo',
+    detalle: 'Las ideas permanecen disponibles aunque no se personalicen',
+    dato: 'Respaldo disponible',
+    icono: 'documento',
+    color: COLORES.azul,
+  };
+
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.font = '700 12px system-ui, sans-serif';
+  ctx.fillStyle = COLORES.cian;
+  ctx.fillText('PERFIL Y MERCADO', posiciones.perfil.x - 44, superior - 112);
+  ctx.fillStyle = COLORES.amarillo;
+  ctx.fillText('SELECCION EXACTA · SIN IA', posiciones.ranking.x - 92, medio - 112);
+  ctx.fillStyle = COLORES.violeta;
+  ctx.fillText('TEXTO Y RESPALDO', posiciones.texto.x - 70, medio - 112);
+  ctx.fillStyle = COLORES.verde;
+  ctx.fillText('RESULTADO EN PANTALLA', posiciones.tarjetas.x - 82, superior - 112);
+  ctx.restore();
+
+  const nodos = [
+    {
+      paso: {
+        titulo: 'Habilidades de tu perfil',
+        detalle: skills.join(' · ') || 'Aun no hay habilidades para comparar',
+        dato: `${skills.length} skills`,
+        icono: 'persona',
+        color: COLORES.cian,
+      },
+      posicion: posiciones.perfil,
+      etapa: 0,
+    },
+    {
+      paso: {
+        titulo: 'Brechas del mercado',
+        detalle: faltantes.join(' · ') || 'El ranking puede funcionar solo con tus skills',
+        dato: `${faltantes.length} brechas`,
+        icono: 'comparar',
+        color: COLORES.amarillo,
+      },
+      posicion: posiciones.brechas,
+      etapa: 0,
+    },
+    {
+      paso: {
+        titulo: 'Catalogo curado',
+        detalle: 'Proyectos completos para web, datos, UX, mobile, DevOps y mas',
+        dato: `${datos.catalogo} ideas estaticas`,
+        icono: 'proyecto',
+        color: COLORES.azul,
+      },
+      posicion: posiciones.catalogo,
+      etapa: 0,
+    },
+    {
+      paso: {
+        titulo: 'Ranking de afinidad',
+        detalle: 'Skills propias × 1 + demanda de brechas × 2 + popularidad para desempatar',
+        dato: 'Elige 4 · cero IA',
+        icono: 'ordenar',
+        color: COLORES.amarillo,
+      },
+      posicion: posiciones.ranking,
+      etapa: 1,
+    },
+    {
+      paso: {
+        titulo: personalizacion.titulo,
+        detalle: personalizacion.detalle,
+        dato: personalizacion.dato,
+        icono: personalizacion.icono,
+        color: personalizacion.color,
+      },
+      posicion: posiciones.texto,
+      etapa: 2,
+    },
+    {
+      paso: {
+        titulo: 'Ideas para portafolio',
+        detalle: ideas.join(' · ') || 'Esperando las cuatro ideas',
+        dato: `${ideas.length} tarjetas · 1 destacada`,
+        icono: 'resultado',
+        color: COLORES.verde,
+      },
+      posicion: posiciones.tarjetas,
+      etapa: 3,
+    },
+    {
+      paso: {
+        titulo: 'Ideas guardadas',
+        detalle: guardadas.join(' · ') || 'Todavia no has guardado una idea',
+        dato: `${guardadas.length} en localStorage`,
+        icono: 'guardar',
+        color: COLORES.cian,
+      },
+      posicion: posiciones.guardadas,
+      etapa: 4,
+    },
+  ];
+
+  const conexiones = [
+    {
+      inicio: { x: posiciones.perfil.x + 55, y: superior },
+      fin: { x: posiciones.ranking.x - 55, y: medio - 24 },
+      control: { x: ancho * 0.31, y: superior },
+      etapa: 0,
+      color: COLORES.cian,
+      etiqueta: 'mide afinidad',
+      dato: skills.length ? skills : 'sin skills',
+    },
+    {
+      inicio: { x: posiciones.brechas.x + 55, y: inferior },
+      fin: { x: posiciones.ranking.x - 55, y: medio + 24 },
+      control: { x: ancho * 0.31, y: inferior },
+      etapa: 0,
+      color: COLORES.amarillo,
+      etiqueta: 'prioriza aprendizaje',
+      dato: faltantes.length ? faltantes : 'sin brechas',
+    },
+    {
+      inicio: { x: posiciones.catalogo.x + 55, y: medio },
+      fin: { x: posiciones.ranking.x - 55, y: medio },
+      control: { x: ancho * 0.395, y: medio },
+      etapa: 0,
+      color: COLORES.azul,
+      etiqueta: 'puntua 50 ideas',
+      dato: `${datos.catalogo} proyectos candidatos`,
+    },
+    {
+      inicio: { x: posiciones.ranking.x + 55, y: medio },
+      fin: { x: posiciones.texto.x - 55, y: medio },
+      control: { x: ancho * 0.585, y: medio },
+      etapa: 1,
+      color: COLORES.violeta,
+      etiqueta: 'elige las mejores',
+      dato: ideasEnViaje.length ? ideasEnViaje : '4 ideas seleccionadas',
+    },
+    {
+      inicio: { x: posiciones.texto.x + 55, y: medio - 18 },
+      fin: { x: posiciones.tarjetas.x - 55, y: superior + 18 },
+      control: { x: ancho * 0.79, y: superior + 35 },
+      etapa: 2,
+      color: COLORES.verde,
+      etiqueta: datos.personalizado ? 'entrega textos adaptados' : 'entrega textos base',
+      dato: ideasEnViaje.length ? ideasEnViaje : 'ideas listas',
+    },
+    {
+      inicio: { x: posiciones.tarjetas.x + 58, y: superior + 35 },
+      fin: { x: posiciones.guardadas.x + 58, y: inferior - 35 },
+      control: { x: posiciones.tarjetas.x + ancho * 0.065, y: (superior + inferior) / 2 },
+      etapa: 3,
+      color: COLORES.cian,
+      etiqueta: 'si pulsas Guardar',
+      dato: guardadas.length ? guardadas : 'seleccion del usuario',
+    },
+  ];
+
+  conexiones.forEach((conexion, indice) => {
+    dibujarConexionCurva(
+      ctx,
+      conexion.inicio,
+      conexion.fin,
+      conexion.control,
+      limitar(recorrido - conexion.etapa - 0.62),
+      conexion.color,
+      conexion.etiqueta,
+      conexion.dato,
+      (movimiento + indice * 0.15) % 1,
+    );
+  });
+
+  nodos.forEach(({ paso, posicion, etapa }) => {
+    dibujarNodo(
+      ctx,
+      paso,
+      etapa,
+      posicion.x,
+      posicion.y,
+      anchoNodo,
+      limitar(recorrido - etapa),
+    );
+  });
+}
+
 function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   dibujarFondo(ctx, ancho, alto);
   const flujo = flujoDe(accion);
@@ -1275,6 +1548,10 @@ function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   }
   if (flujo.modo === 'crecer') {
     dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso);
+    return;
+  }
+  if (flujo.modo === 'portafolio') {
+    dibujarMapaPortafolio(ctx, ancho, alto, flujo, progreso);
     return;
   }
   if (flujo.modo === 'matching') {

@@ -22,9 +22,8 @@ function Esqueleto() {
 }
 
 /**
- * "Ideas para portafolio": la IA sugiere 4 proyectos (1 destacado) adaptados al
- * perfil del aplicante (skills + brecha). Las pide al backend, que las cachea; si
- * no hay perfil o el LLM falla, el backend responde con el catalogo (no rompe).
+ * "Ideas para portafolio": un ranking elige 4 proyectos (1 destacado) usando
+ * skills + brecha. La IA solo adapta los textos; si falla, se usa el catalogo.
  */
 export default function Portafolio() {
   const [ideas, setIdeas] = useState(null); // null = cargando
@@ -35,6 +34,7 @@ export default function Portafolio() {
 
   useEffect(() => {
     let vivo = true;
+    registrarAnimacion('portafolio_abierto', {});
     api
       .portafolioIdeas()
       .then((r) => {
@@ -43,7 +43,23 @@ export default function Portafolio() {
         setPersonalizado(Boolean(r.personalizado));
         guardarIdeasCache(r.ideas); // el detalle/asistente leen de aqui
         registrarAnimacion('portafolio_sugerido', {
-          ideas: r.ideas.slice(0, 3).map((idea) => ({ titulo: idea.titulo, tipo: idea.tipo })),
+          ideas: r.ideas.map((idea) => ({
+            id: idea.id,
+            titulo: idea.titulo,
+            tipo: idea.tipo,
+            skills: idea.skills,
+            destacada: Boolean(idea.destacada),
+            porQueTi: idea.porQueTi || null,
+          })),
+          skills: r.proceso?.skills || [],
+          faltantes: r.proceso?.faltantes || [],
+          catalogo: r.proceso?.catalogo || 50,
+          origen: r.proceso?.origen || (r.personalizado ? 'openrouter' : 'respaldo'),
+          personalizado: Boolean(r.personalizado),
+          guardadas: ideasGuardadas().map((idea) => ({
+            id: idea.id,
+            titulo: idea.titulo,
+          })),
         });
       })
       .catch((err) => {
@@ -51,6 +67,21 @@ export default function Portafolio() {
         // Ultimo respaldo del cliente: si la API ni responde, las estaticas.
         setError(err.message);
         setIdeas(IDEAS);
+        registrarAnimacion('portafolio_sugerido', {
+          ideas: IDEAS.map((idea) => ({
+            id: idea.id,
+            titulo: idea.titulo,
+            tipo: idea.tipo,
+            destacada: Boolean(idea.destacada),
+          })),
+          catalogo: IDEAS.length,
+          origen: 'cliente_sin_api',
+          personalizado: false,
+          guardadas: ideasGuardadas().map((idea) => ({
+            id: idea.id,
+            titulo: idea.titulo,
+          })),
+        });
       });
     return () => {
       vivo = false;
@@ -67,7 +98,7 @@ export default function Portafolio() {
     if (!ideas?.length) return undefined;
     setContextoPantalla(
       `El usuario esta en "Ideas para portafolio"${
-        personalizado ? ' (elegidas por la IA para su perfil)' : ''
+        personalizado ? ' (elegidas por afinidad y con texto adaptado a su perfil)' : ''
       }. Las ideas que ve son: ${ideas.map((i) => `${i.titulo} (${i.tipo})`).join('; ')}.`,
     );
     return () => setContextoPantalla(null);
@@ -81,7 +112,7 @@ export default function Portafolio() {
           {cargando
             ? 'Buscando proyectos que encajen contigo…'
             : personalizado
-            ? 'Proyectos elegidos por la IA para tu perfil y lo que te falta'
+            ? 'Proyectos elegidos por afinidad y explicados para tu perfil'
             : `${ideas.length} proyectos sugeridos para practicar y destacar`}
         </p>
         {personalizado && (
