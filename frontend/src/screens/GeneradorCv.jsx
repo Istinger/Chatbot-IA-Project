@@ -106,11 +106,15 @@ const INICIAL = {
   proyecto: 'Aplicacion web responsiva',
 };
 
+const coincideCon = (opcion, texto) => (
+  opcion.toLocaleLowerCase().includes(texto.trim().toLocaleLowerCase())
+);
+
 function ComboEditable({ label, value, onChange, options, placeholder, required = false, type = 'text' }) {
   const id = useId();
   const [abierto, setAbierto] = useState(false);
   const opcionesFiltradas = options.filter((opcion) => (
-    opcion.toLowerCase().includes(value.trim().toLowerCase())
+    coincideCon(opcion, value)
   ));
   const muestraOpciones = abierto && opcionesFiltradas.length > 0;
 
@@ -122,7 +126,11 @@ function ComboEditable({ label, value, onChange, options, placeholder, required 
           id={id}
           type={type}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            const texto = e.target.value;
+            onChange(texto);
+            setAbierto(options.some((opcion) => coincideCon(opcion, texto)));
+          }}
           onFocus={() => setAbierto(true)}
           onKeyDown={(e) => {
             if (e.key === 'Escape' || e.key === 'Enter') setAbierto(false);
@@ -172,7 +180,7 @@ function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
   const [texto, setTexto] = useState('');
   const [abierto, setAbierto] = useState(false);
   const opcionesFiltradas = opciones.filter((opcion) => (
-    !valores.includes(opcion) && opcion.toLowerCase().includes(texto.trim().toLowerCase())
+    !valores.includes(opcion) && coincideCon(opcion, texto)
   ));
   const muestraOpciones = abierto && opcionesFiltradas.length > 0;
 
@@ -194,7 +202,11 @@ function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
           <input
             id={id}
             value={texto}
-            onChange={(e) => setTexto(e.target.value)}
+            onChange={(e) => {
+              const siguiente = e.target.value;
+              setTexto(siguiente);
+              setAbierto(opciones.some((opcion) => !valores.includes(opcion) && coincideCon(opcion, siguiente)));
+            }}
             onFocus={() => setAbierto(true)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -266,7 +278,7 @@ function ResumenEditable({ value, onChange, opciones }) {
   const id = useId();
   const [abierto, setAbierto] = useState(false);
   const opcionesFiltradas = opciones.filter((opcion) => (
-    opcion.toLowerCase().includes(value.trim().toLowerCase())
+    coincideCon(opcion, value)
   ));
   const muestraOpciones = abierto && opcionesFiltradas.length > 0;
 
@@ -278,7 +290,11 @@ function ResumenEditable({ value, onChange, opciones }) {
           id={id}
           rows="4"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            const texto = e.target.value;
+            onChange(texto);
+            setAbierto(opciones.some((opcion) => coincideCon(opcion, texto)));
+          }}
           onFocus={() => setAbierto(true)}
           onKeyDown={(e) => e.key === 'Escape' && setAbierto(false)}
           placeholder={opciones[0]}
