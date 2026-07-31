@@ -4,6 +4,7 @@ import Icon from '../components/Icon';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { crearCvPdf, descargarPdf } from '../lib/cvPdf';
+import { registrarAnimacion } from '../lib/animacion';
 
 const OPCIONES = {
   ciudad: ['Quito, Ecuador', 'Guayaquil, Ecuador', 'Cuenca, Ecuador', 'Remoto'],
@@ -288,6 +289,13 @@ export default function GeneradorCv() {
 
       await api.subirCv(pdf.file);
       await api.guardarSkills(skills);
+      registrarAnimacion('cv_generado', {
+        nombre: datos.nombre,
+        rol: datos.rol,
+        skills,
+        archivo: pdf.archivo,
+        ofertas: 'Perfil listo para recibir ofertas',
+      });
       await refrescar();
       navegar('/onboarding', {
         replace: true,

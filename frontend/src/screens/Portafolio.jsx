@@ -6,6 +6,7 @@ import { IDEAS, guardarIdeasCache, ideasGuardadas, imagenIdea } from '../lib/por
 import Icon from '../components/Icon';
 import PortTags from '../components/PortTags';
 import PortCard from '../components/PortCard';
+import { registrarAnimacion } from '../lib/animacion';
 
 function Esqueleto() {
   return (
@@ -41,6 +42,9 @@ export default function Portafolio() {
         setIdeas(r.ideas);
         setPersonalizado(Boolean(r.personalizado));
         guardarIdeasCache(r.ideas); // el detalle/asistente leen de aqui
+        registrarAnimacion('portafolio_sugerido', {
+          ideas: r.ideas.slice(0, 3).map((idea) => ({ titulo: idea.titulo, tipo: idea.tipo })),
+        });
       })
       .catch((err) => {
         if (!vivo) return;

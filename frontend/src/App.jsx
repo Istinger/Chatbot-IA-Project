@@ -7,6 +7,7 @@ import AmbientBackground from './components/AmbientBackground';
 import Shell from './components/Shell';
 import Login from './screens/Login';
 import GeneradorCv from './screens/GeneradorCv';
+import Animacion from './screens/Animacion';
 import Onboarding from './screens/Onboarding';
 import Home from './screens/Home';
 import Search from './screens/Search';
@@ -56,6 +57,7 @@ function Rutas() {
       <Route path="/acceso/registro" element={<Publica><Login modo="registro" /></Publica>} />
 
       <Route path="/onboarding" element={<Privada><Onboarding /></Privada>} />
+      <Route path="/animacion" element={<Privada><Animacion /></Privada>} />
 
       {/* El Asistente ya no es una ruta: vive SIEMPRE en el Shell (derecha en
           escritorio). /asistente se redirige a la home por compatibilidad. */}

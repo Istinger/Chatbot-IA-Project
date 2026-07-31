@@ -71,6 +71,11 @@ function ShellInterno() {
     setLienzoScrolled(e.currentTarget.scrollTop > 8);
   };
 
+  const abrirAnimacion = () => {
+    const ventana = window.open('/animacion', 'jobia-animacion');
+    ventana?.focus();
+  };
+
   return (
     <div className={`shell ${full ? 'shell--full' : ''}`}>
       {/* Rail de navegacion (escritorio, izquierda) */}
@@ -93,6 +98,10 @@ function ShellInterno() {
             </li>
           ))}
         </ul>
+        <button type="button" className="rail__link rail__animacion" onClick={abrirAnimacion}>
+          <Icon name="animacion" />
+          <span>Animacion</span>
+        </button>
         <button type="button" className="rail__link rail__salir" onClick={salir}>
           <Icon name="salir" />
           <span>Salir</span>

@@ -5,6 +5,7 @@ import { alternarProgreso, leerProgreso, proyeccion } from '../lib/crecer';
 import Icon from '../components/Icon';
 import RichText from '../components/RichText';
 import SkillIcon from '../components/SkillIcon';
+import { registrarAnimacion } from '../lib/animacion';
 
 /**
  * Brecha de habilidades (skill gap).
@@ -48,7 +49,15 @@ export default function Certs() {
   useEffect(() => {
     api
       .certificados()
-      .then(setDatos)
+      .then((r) => {
+        setDatos(r);
+        registrarAnimacion('crecimiento_analizado', {
+          analizadas: r.analizadas,
+          faltantes: r.faltantes?.slice(0, 3).map((item) => item.skill),
+          fortalezas: r.fortalezas?.slice(0, 3).map((item) => item.skill).join(', '),
+          cursos: r.cursos?.slice(0, 3).map((item) => item.opciones?.[0]?.titulo || item.skill),
+        });
+      })
       .catch((e) => setError(e.message));
   }, []);
 

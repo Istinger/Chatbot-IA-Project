@@ -5,6 +5,7 @@ import { useVista } from '../lib/vista';
 import JobCard from '../components/JobCard';
 import Icon from '../components/Icon';
 import Refrescar from '../components/Refrescar';
+import { registrarAnimacion } from '../lib/animacion';
 
 export default function Home() {
   const [recomendadas, setRecomendadas] = useState(null);
@@ -64,7 +65,16 @@ export default function Home() {
 
     api
       .recomendadas(12)
-      .then((r) => vivo && setRecomendadas(r.jobs))
+      .then((r) => {
+        if (!vivo) return;
+        setRecomendadas(r.jobs);
+        if (r.jobs?.length) {
+          registrarAnimacion('ofertas_encontradas', {
+            perfil: 'Tu perfil profesional',
+            ofertas: r.jobs.slice(0, 3).map((job) => ({ title: job.title, company: job.company })),
+          });
+        }
+      })
       .catch((err) => {
         if (!vivo) return;
         // 409 = el perfil aun no tiene embedding. No es un error: es un usuario
