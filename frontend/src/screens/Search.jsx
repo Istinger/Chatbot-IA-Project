@@ -141,6 +141,39 @@ export default function Search() {
 
   // Lo que se pinta: los resultados pasados por los filtros activos.
   const visibles = useMemo(() => filtrar(resultados || [], filtros), [resultados, filtros]);
+  const filtrosAnimacion = useMemo(
+    () => FILTROS
+      .filter((filtro) => filtros[filtro.id] !== 'todas')
+      .map((filtro) => ({
+        nombre: filtro.etiqueta,
+        valor: filtro.opciones.find((opcion) => opcion.v === filtros[filtro.id])?.txt,
+      })),
+    [filtros],
+  );
+
+  // La pestaña independiente siempre debe representar lo que esta visible en
+  // Buscar. El pequeño retraso agrupa las pulsaciones mientras se escribe.
+  useEffect(() => {
+    const temporizador = window.setTimeout(() => {
+      const consultaOriginal = reformulado?.original || texto;
+      const consultaUsada = reformulado?.consulta || texto;
+      registrarAnimacion(
+        resultados === null ? 'busqueda_abierta' : 'busqueda_realizada',
+        {
+          consultaOriginal: consultaOriginal || (delAsistente ? 'Solicitud del Asistente' : ''),
+          consulta: consultaUsada || (delAsistente ? 'Ofertas sugeridas por el Asistente' : ''),
+          reformulada: Boolean(reformulado),
+          filtros: filtrosAnimacion,
+          total: resultados?.length || 0,
+          visibles: visibles.length,
+          ofertas: prepararOfertasAnimacion(visibles),
+          origen: delAsistente ? 'asistente' : 'usuario',
+        },
+      );
+    }, 220);
+
+    return () => window.clearTimeout(temporizador);
+  }, [delAsistente, filtrosAnimacion, reformulado, resultados, texto, visibles]);
 
   // El Asistente sabe que estas buscando y que estas viendo, para poder responder
   // "buscame algo asi pero remoto" sin que se lo repitas. Se limpia al salir.
@@ -203,12 +236,6 @@ export default function Search() {
     try {
       const r = await api.buscar(aBuscar, 18);
       setResultados(r.jobs);
-      registrarAnimacion('busqueda_realizada', {
-        consulta: aBuscar,
-        consultaOriginal: q,
-        total: r.jobs.length,
-        ofertas: prepararOfertasAnimacion(r.jobs),
-      });
     } catch (err) {
       setError(err.message);
       setResultados([]);
