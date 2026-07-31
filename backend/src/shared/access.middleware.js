@@ -5,10 +5,12 @@ const {
   hashToken,
   tokenDispositivo,
 } = require('../modules/access/access.device');
+const { resolverAdmin } = require('../modules/access/access.service');
 
 async function requireDeviceAccess(req, res, next) {
   try {
     if (esMovil(req)) {
+      if (resolverAdmin(req)) return next();
       return fail(res, 'Jobia solo esta disponible en computadoras autorizadas', 403);
     }
 
