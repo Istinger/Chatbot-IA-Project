@@ -226,6 +226,8 @@ function flujoDe(accion) {
         entrada: esBusqueda ? datos.consulta || 'Tu busqueda' : datos.perfil || 'Tu perfil profesional',
         total: Math.max(ofertas.length, Number(datos.total) || 0),
         mejor: ofertas[0],
+        ofertas,
+        skills: esBusqueda ? [] : lista(datos.skills),
       },
     };
   }
@@ -461,7 +463,9 @@ function dibujarConexionCurva(ctx, inicio, fin, control, avance, color, etiqueta
   if (progreso > 0) {
     const posicion = progreso < 1 ? progreso : movimiento;
     const paquete = puntoCurva(inicio, control, fin, posicion);
-    const contenido = textoCorto(dato, 28);
+    const opciones = Array.isArray(dato) ? dato.filter(Boolean) : [dato];
+    const opcion = opciones[Math.floor(movimiento * Math.max(1, opciones.length)) % Math.max(1, opciones.length)];
+    const contenido = textoCorto(opcion, 34);
     const anchoDato = Math.max(78, ctx.measureText(contenido).width + 24);
     redondear(ctx, paquete.x - anchoDato / 2, paquete.y + 12, anchoDato, 27, 13);
     ctx.fillStyle = 'rgba(8, 24, 49, 0.98)';
@@ -536,6 +540,26 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
   const xResultado = ancho - margenX;
   const total = flujo.matching.total;
   const mejor = flujo.matching.mejor;
+  const ofertas = flujo.matching.ofertas;
+  const fuentes = [...new Set(ofertas.map((oferta) => oferta.source).filter(Boolean))];
+  const habilidades = flujo.matching.skills;
+  const ofertasEnViaje = ofertas.map((oferta) =>
+    [oferta.title, oferta.company, oferta.location || oferta.country].filter(Boolean).join(' · '),
+  );
+  const catalogoEnViaje = ofertas.map((oferta) =>
+    [
+      oferta.source,
+      oferta.skills?.slice(0, 2).join(' + '),
+      oferta.salaryUsdMax ? `$${Math.round(oferta.salaryUsdMax / 1000)}k USD` : null,
+    ].filter(Boolean).join(' · '),
+  );
+  const resultadosEnViaje = ofertas.map((oferta) =>
+    [
+      oferta.score != null ? `${Math.round(oferta.score * 100)}%` : null,
+      oferta.title,
+      oferta.company,
+    ].filter(Boolean).join(' · '),
+  );
   const puntaje = mejor?.score ? `${Math.round(mejor.score * 100)}% afinidad` : `${total} ofertas ordenadas`;
   const recorrido = progreso * 4;
   const movimiento = (progreso * 6) % 1;
@@ -556,8 +580,8 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
     {
       paso: {
         titulo: 'Fuentes de empleo',
-        detalle: 'Adzuna · Jooble · Remote OK · Careerjet · Arbeitnow',
-        dato: '5 fuentes conectadas',
+        detalle: fuentes.join(' · ') || 'Adzuna · Jooble · Remote OK · Careerjet · Arbeitnow',
+        dato: `${fuentes.length || 5} fuentes presentes`,
         icono: 'fuentes',
         color: COLORES.azul,
       },
@@ -568,8 +592,8 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
     {
       paso: {
         titulo: 'Vector de tu perfil',
-        detalle: 'Convierte el significado en 384 valores',
-        dato: '[0.12 · 0.73 · ...]',
+        detalle: habilidades.join(' · ') || flujo.matching.entrada,
+        dato: '384 valores calculados',
         icono: 'convertir',
         color: COLORES.cian,
       },
@@ -580,7 +604,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
     {
       paso: {
         titulo: 'Catálogo preparado',
-        detalle: 'Normaliza, detecta skills y evita duplicados',
+        detalle: ofertas.slice(0, 2).map((oferta) => oferta.title).filter(Boolean).join(' · ') || 'Normaliza, detecta skills y evita duplicados',
         dato: `${total || 'Varias'} ofertas`,
         icono: 'oferta',
         color: COLORES.azul,
@@ -604,7 +628,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
     {
       paso: {
         titulo: 'Resultados para ti',
-        detalle: mejor?.title || mejor || 'Las oportunidades más cercanas',
+        detalle: [mejor?.title, mejor?.location || mejor?.country].filter(Boolean).join(' · ') || mejor || 'Las oportunidades más cercanas',
         dato: mejor?.company || puntaje,
         icono: 'resultado',
         color: COLORES.verde,
@@ -623,7 +647,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
       etapa: 0,
       color: COLORES.cian,
       etiqueta: 'convierte',
-      dato: flujo.matching.entrada,
+      dato: habilidades.length ? habilidades : flujo.matching.entrada,
     },
     {
       inicio: { x: xEntrada + 55, y: inferior },
@@ -632,7 +656,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
       etapa: 0,
       color: COLORES.azul,
       etiqueta: 'reúne y limpia',
-      dato: 'título + empresa + salario + skills',
+      dato: ofertasEnViaje.length ? ofertasEnViaje : 'título + empresa + salario + skills',
     },
     {
       inicio: { x: xConversor + 55, y: superior },
@@ -641,7 +665,10 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
       etapa: 1,
       color: COLORES.cian,
       etiqueta: 'envía',
-      dato: 'vector del perfil · 384 valores',
+      dato: [
+        ...habilidades.map((skill) => `${skill} → valor numérico`),
+        'vector del perfil · 384 valores',
+      ],
     },
     {
       inicio: { x: xConversor + 55, y: inferior },
@@ -650,7 +677,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
       etapa: 1,
       color: COLORES.azul,
       etiqueta: 'consulta',
-      dato: `${total || 'varios'} vectores de ofertas`,
+      dato: catalogoEnViaje.length ? catalogoEnViaje : `${total || 'varios'} vectores de ofertas`,
     },
     {
       inicio: { x: xComparador + 58, y: centroY },
@@ -659,7 +686,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
       etapa: 2,
       color: COLORES.verde,
       etiqueta: 'ordena por afinidad',
-      dato: puntaje,
+      dato: resultadosEnViaje.length ? resultadosEnViaje : puntaje,
     },
   ];
 
