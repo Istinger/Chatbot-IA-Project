@@ -97,7 +97,7 @@ const INICIAL = {
   telefono: '',
   ciudad: '',
   rol: '',
-  nivel: 'Junior',
+  nivel: '',
   perfil: '',
   estudios: 'Universidad en curso',
   carrera: '',
@@ -145,6 +145,20 @@ function ComboEditable({ label, value, onChange, options, placeholder, required 
           aria-expanded={muestraOpciones}
           aria-controls={`${id}-opciones`}
         />
+        {value && (
+          <button
+            type="button"
+            className="cvgen__limpiar"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              onChange('');
+              setAbierto(false);
+            }}
+            aria-label={`Borrar ${label}`}
+          >
+            <Icon name="cerrar" size={15} />
+          </button>
+        )}
         <button
           type="button"
           className="cvgen__desplegar"
@@ -224,6 +238,20 @@ function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
             aria-expanded={muestraOpciones}
             aria-controls={`${id}-opciones`}
           />
+          {texto && (
+            <button
+              type="button"
+              className="cvgen__limpiar"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                setTexto('');
+                setAbierto(false);
+              }}
+              aria-label={`Borrar texto de ${label}`}
+            >
+              <Icon name="cerrar" size={15} />
+            </button>
+          )}
           <button
             type="button"
             className="cvgen__desplegar"
@@ -305,6 +333,20 @@ function ResumenEditable({ value, onChange, opciones }) {
           aria-expanded={muestraOpciones}
           aria-controls={`${id}-opciones`}
         />
+        {value && (
+          <button
+            type="button"
+            className="cvgen__limpiar"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              onChange('');
+              setAbierto(false);
+            }}
+            aria-label="Borrar resumen profesional"
+          >
+            <Icon name="cerrar" size={15} />
+          </button>
+        )}
         <button
           type="button"
           className="cvgen__desplegar"
@@ -457,8 +499,8 @@ export default function GeneradorCv() {
 
   const siguiente = () => {
     setError('');
-    if (paso === 1 && (!datos.nombre.trim() || !datos.email.includes('@') || !datos.rol.trim())) {
-      setError('Completa nombre, correo y perfil profesional.');
+    if (paso === 1 && (!datos.nombre.trim() || !datos.email.includes('@') || !datos.rol.trim() || !datos.nivel.trim())) {
+      setError('Completa nombre, correo, perfil profesional y nivel.');
       return;
     }
     if (paso === 2 && (!datos.carrera.trim() || skills.length === 0 || idiomas.length === 0)) {
@@ -554,15 +596,22 @@ export default function GeneradorCv() {
               <ComboEditable label="Nombre completo" value={datos.nombre} onChange={cambiarNombre} options={OPCIONES.nombre} placeholder="Elige o escribe tu nombre" required editable />
               <label className="cvgen__campo">
                 <span>Correo</span>
-                <input
-                  className={correoVinculado ? 'cvgen__correo-vinculado' : ''}
-                  type="email"
-                  value={datos.email}
-                  onChange={(e) => cambiar('email', e.target.value)}
-                  placeholder="Escribe tu correo"
-                  readOnly={Boolean(correoVinculado)}
-                  required
-                />
+                <div className="cvgen__texto-control">
+                  <input
+                    className={correoVinculado ? 'cvgen__correo-vinculado' : ''}
+                    type="email"
+                    value={datos.email}
+                    onChange={(e) => cambiar('email', e.target.value)}
+                    placeholder="Escribe tu correo"
+                    readOnly={Boolean(correoVinculado)}
+                    required
+                  />
+                  {datos.email && !correoVinculado && (
+                    <button type="button" className="cvgen__limpiar" onClick={() => cambiar('email', '')} aria-label="Borrar correo">
+                      <Icon name="cerrar" size={15} />
+                    </button>
+                  )}
+                </div>
               </label>
               <ComboEditable label="Telefono" value={datos.telefono} onChange={(v) => cambiar('telefono', v)} options={OPCIONES.telefono} placeholder="Elige o escribe tu telefono" type="tel" />
               <ComboEditable label="Ciudad o modalidad" value={datos.ciudad} onChange={(v) => cambiar('ciudad', v)} options={OPCIONES.ciudad} placeholder="Elige o escribe" />

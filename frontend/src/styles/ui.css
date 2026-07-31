@@ -624,20 +624,20 @@
 .cvgen__combobox {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 44px;
+  grid-template-columns: minmax(0, 1fr) 40px 44px;
 }
 
 .cvgen__combobox input {
   grid-row: 1;
   grid-column: 1 / -1;
-  padding-right: 48px;
+  padding-right: 88px;
 }
 
 .cvgen__combobox input[readonly] { cursor: pointer; }
 
 .cvgen__desplegar {
   grid-row: 1;
-  grid-column: 2;
+  grid-column: 3;
   display: grid;
   place-items: center;
   width: 44px;
@@ -646,6 +646,31 @@
   border-radius: 0 var(--r-sm) var(--r-sm) 0;
   color: var(--text-2);
   transition: color var(--t-fast), background var(--t-fast);
+}
+
+.cvgen__limpiar {
+  grid-row: 1;
+  grid-column: 2;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 44px;
+  color: var(--text-3);
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.cvgen__limpiar:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cvgen__texto-control { position: relative; }
+.cvgen__texto-control input { padding-right: 44px; }
+.cvgen__texto-control .cvgen__limpiar {
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .cvgen__desplegar:hover,
@@ -660,7 +685,14 @@
 
 .cvgen__combobox--texto textarea {
   display: block;
-  padding-right: 56px;
+  padding-right: 96px;
+}
+
+.cvgen__combobox--texto .cvgen__limpiar {
+  position: absolute;
+  top: 1px;
+  right: 45px;
+  height: 42px;
 }
 
 .cvgen__combobox--texto .cvgen__desplegar {
