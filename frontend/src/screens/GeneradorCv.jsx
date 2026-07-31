@@ -521,6 +521,20 @@ export default function GeneradorCv() {
     setPaso((actual) => Math.min(actual + 1, 3));
   };
 
+  const omitirCreacion = async () => {
+    setError('');
+    setProcesando(true);
+    try {
+      const claveTemporal = `Jobia-${crypto.randomUUID()}!`;
+      await registrarDemo('visitante@jobia.local', claveTemporal);
+      await refrescar();
+      navegar('/onboarding', { replace: true });
+    } catch (err) {
+      setError(err.message || 'No se pudo abrir la carga de CV. Intenta nuevamente.');
+      setProcesando(false);
+    }
+  };
+
   const descargarYContinuar = async () => {
     setError('');
     setProcesando(true);
@@ -582,8 +596,8 @@ export default function GeneradorCv() {
         </div>
         <div className="cvgen__cab-acciones">
           {paso === 1 && (
-            <button type="button" className="btn btn--glass cvgen__omitir" onClick={() => navegar('/acceso')}>
-              Omitir creacion de CV <Icon name="flecha" size={16} />
+            <button type="button" className="btn btn--glass cvgen__omitir" onClick={omitirCreacion} disabled={procesando}>
+              {procesando ? 'Abriendo carga...' : 'Omitir creacion de CV'} <Icon name="flecha" size={16} />
             </button>
           )}
           <span className="cvgen__progreso">Paso {progreso}</span>
