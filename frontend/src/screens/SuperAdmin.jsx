@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import Icon from '../components/Icon';
 
-const ADMIN_EMAIL = 'revi@gmail.com';
-
 function fecha(valor) {
   if (!valor) return 'Sin fecha';
   return new Intl.DateTimeFormat('es-EC', {
@@ -93,7 +91,7 @@ function Equipo({ equipo, onRevisar, ocupado }) {
 }
 
 function LoginAdmin({ onLogin }) {
-  const [email, setEmail] = useState(ADMIN_EMAIL);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState(null);
