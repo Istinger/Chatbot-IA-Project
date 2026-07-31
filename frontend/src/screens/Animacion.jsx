@@ -503,7 +503,7 @@ function dibujarConexionCurva(ctx, inicio, fin, control, avance, color, etiqueta
 function dibujarNodo(ctx, paso, indice, x, y, ancho, avance) {
   const completado = avance >= 1;
   const activo = avance > 0 && avance < 1;
-  const intensidad = completado ? 1 : activo ? 0.94 : 0.42;
+  const intensidad = completado ? 1 : activo ? 0.94 : 0.6;
   const tamanoIcono = 82;
 
   ctx.save();
@@ -968,10 +968,10 @@ function dibujarMapaBusqueda(ctx, ancho, alto, flujo, progreso) {
 
 function dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso) {
   const datos = flujo.crecer;
-  const margen = Math.max(78, ancho * 0.055);
+  const margen = Math.max(145, ancho * 0.075);
   const superior = Math.max(225, alto * 0.29);
   const medio = Math.max(superior + 185, alto * 0.51);
-  const inferior = Math.min(alto - 205, alto * 0.73);
+  const inferior = Math.min(alto - 170, alto * 0.77);
   const anchoNodo = Math.min(200, ancho * 0.125);
   const recorrido = progreso * 6;
   const movimiento = (progreso * 6) % 1;
@@ -1007,13 +1007,13 @@ function dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso) {
   const posiciones = {
     perfil: { x: margen, y: superior },
     ofertas: { x: margen, y: inferior },
-    analisis: { x: ancho * 0.34, y: medio },
-    fortalezas: { x: ancho * 0.57, y: superior },
-    asistente: { x: ancho * 0.82, y: superior },
-    brechas: { x: ancho * 0.57, y: medio },
-    cursos: { x: ancho * 0.82, y: medio },
-    progreso: { x: ancho * 0.57, y: inferior },
-    proyeccion: { x: ancho * 0.82, y: inferior },
+    analisis: { x: ancho * 0.35, y: medio },
+    fortalezas: { x: ancho * 0.59, y: superior },
+    asistente: { x: ancho * 0.84, y: superior },
+    brechas: { x: ancho * 0.59, y: medio },
+    cursos: { x: ancho * 0.84, y: medio + 34 },
+    progreso: { x: ancho * 0.59, y: inferior },
+    proyeccion: { x: ancho * 0.84, y: inferior },
   };
 
   ctx.save();
@@ -1024,7 +1024,7 @@ function dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso) {
   ctx.fillStyle = COLORES.violeta;
   ctx.fillText('CALCULO EXACTO · SIN IA', posiciones.analisis.x - 82, medio - 112);
   ctx.fillStyle = COLORES.verde;
-  ctx.fillText('SIGUIENTE PASO', posiciones.cursos.x - 65, medio - 112);
+  ctx.fillText('SIGUIENTE PASO', posiciones.cursos.x - 65, posiciones.cursos.y - 105);
   ctx.fillStyle = COLORES.violeta;
   ctx.fillText('AYUDA OPCIONAL CON IA', posiciones.asistente.x - 76, superior - 112);
   ctx.restore();
@@ -1190,24 +1190,24 @@ function dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso) {
     },
     {
       inicio: { x: posiciones.analisis.x + 55, y: medio + 8 },
-      fin: { x: posiciones.brechas.x - 55, y: medio },
-      control: { x: ancho * 0.46, y: medio },
+      fin: { x: posiciones.brechas.x - 55, y: posiciones.brechas.y },
+      control: { x: ancho * 0.47, y: posiciones.brechas.y },
       etapa: 1,
       color: COLORES.amarillo,
       etiqueta: 'diferencia',
       dato: faltantes.length ? faltantes : 'sin brechas',
     },
     {
-      inicio: { x: posiciones.brechas.x + 55, y: medio },
-      fin: { x: posiciones.cursos.x - 55, y: medio },
-      control: { x: ancho * 0.695, y: medio },
+      inicio: { x: posiciones.brechas.x + 55, y: posiciones.brechas.y },
+      fin: { x: posiciones.cursos.x - 55, y: posiciones.cursos.y },
+      control: { x: ancho * 0.715, y: posiciones.cursos.y },
       etapa: 2,
       color: COLORES.verde,
       etiqueta: 'consulta catalogo',
       dato: cursos.length ? cursos : 'catalogo estatico',
     },
     {
-      inicio: { x: posiciones.brechas.x + 40, y: medio - 38 },
+      inicio: { x: posiciones.brechas.x + 40, y: posiciones.brechas.y - 38 },
       fin: { x: posiciones.asistente.x - 55, y: superior + 18 },
       control: { x: ancho * 0.7, y: superior + 42 },
       etapa: 2,
@@ -1220,9 +1220,9 @@ function dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso) {
       ],
     },
     {
-      inicio: { x: posiciones.brechas.x, y: medio + 55 },
-      fin: { x: posiciones.progreso.x, y: inferior - 55 },
-      control: { x: posiciones.brechas.x - ancho * 0.02, y: (medio + inferior) / 2 },
+      inicio: { x: posiciones.brechas.x + 58, y: posiciones.brechas.y + 35 },
+      fin: { x: posiciones.progreso.x + 58, y: inferior - 35 },
+      control: { x: posiciones.brechas.x + ancho * 0.075, y: (posiciones.brechas.y + inferior) / 2 },
       etapa: 2,
       color: COLORES.azul,
       etiqueta: 'marca avance',
