@@ -184,6 +184,13 @@ REDIS_URL=redis://redis:6379
 MATCHING_URL=http://matching:8000
 JWT_SECRET=<algo_largo_y_aleatorio>
 
+# Control de acceso de la casa abierta
+DEMO_ADMIN_EMAIL=revi@gmail.com
+DEMO_ADMIN_PASSWORD_HASH=<hash_bcrypt>
+DEMO_ADMIN_JWT_SECRET=<otro_secreto_largo_y_aleatorio>
+DEMO_ADMIN_EXPIRA=8h
+DEMO_DEVICE_COOKIE_DAYS=7
+
 # Fuentes de ofertas
 ADZUNA_APP_ID=xxxx
 ADZUNA_APP_KEY=xxxx
@@ -216,6 +223,30 @@ TELEGRAM_BOT_TOKEN=
 NOTIF_MIN_SCORE=0.62
 NOTIF_MAX_POR_TANDA=3
 ```
+
+### Control de acceso de la casa abierta
+
+Antes del generador de CV, cada computadora recibe una cookie aleatoria
+`HttpOnly` y solicita autorizacion. La IP solo se muestra como referencia: la
+cookie distingue equipos que comparten el mismo router. El panel
+`https://jobia.duckdns.org/su_admin` solo acepta navegadores de telefono.
+
+La contrasena administrativa no se guarda en Git. Genera su hash bcrypt dentro
+del contenedor de API y copia solamente el resultado a
+`DEMO_ADMIN_PASSWORD_HASH`:
+
+```bash
+read -s DEMO_PASSWORD
+export DEMO_PASSWORD
+docker compose run --rm api node -e \
+  "require('bcryptjs').hash(process.env.DEMO_PASSWORD, 12).then(console.log)"
+unset DEMO_PASSWORD
+```
+
+En el panel se puede aprobar, rechazar o revocar cada PC. El checkbox
+**Permitir acceso sin solicitud** es el modo de emergencia: cualquier
+computadora entra directamente al generador, pero los telefonos siguen
+bloqueados fuera de `/su_admin`.
 
 Los servicios se llaman entre sí **por el nombre del servicio**, no por `localhost`: por eso `DATABASE_URL` usa `@postgres:5432`.
 

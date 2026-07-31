@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { api } from './lib/api';
 import { cargarFotos } from './lib/imagen';
 import { AuthProvider, useAuth } from './lib/auth';
@@ -19,6 +19,8 @@ import PortafolioProyecto from './screens/PortafolioProyecto';
 import Entrevista from './screens/Entrevista';
 import Guardadas from './screens/Guardadas';
 import OfertasGuardadas from './screens/OfertasGuardadas';
+import AccessRequest, { AdminDesktopBlocked, MobileBlocked } from './screens/AccessRequest';
+import SuperAdmin from './screens/SuperAdmin';
 
 // Interruptor temporal para la casa abierta. En false, /login y /registro
 // vuelven a mostrar exactamente las pantallas originales.
@@ -98,20 +100,84 @@ function useFotos() {
   }, []);
 }
 
-export default function App() {
+function AplicacionAutorizada() {
   useFotos();
 
   return (
+    <AuthProvider>
+      <Rutas />
+    </AuthProvider>
+  );
+}
+
+function ControlEntrada() {
+  const ubicacion = useLocation();
+  const [acceso, setAcceso] = useState(null);
+  const [error, setError] = useState(null);
+  const [solicitando, setSolicitando] = useState(false);
+
+  const cargar = useCallback(async () => {
+    try {
+      setAcceso(await api.estadoAcceso());
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    cargar();
+    const intervalo = setInterval(() => {
+      if (document.visibilityState === 'visible') cargar();
+    }, 4000);
+    return () => clearInterval(intervalo);
+  }, [cargar]);
+
+  const solicitar = async () => {
+    setSolicitando(true);
+    setError(null);
+    try {
+      const respuesta = await api.solicitarAcceso();
+      setAcceso((actual) => ({ ...actual, ...respuesta }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSolicitando(false);
+    }
+  };
+
+  if (!acceso && !error) return <div className="cargando">Comprobando computadora...</div>;
+
+  if (ubicacion.pathname === '/su_admin') {
+    if (acceso && !acceso.mobile) return <AdminDesktopBlocked />;
+    return <SuperAdmin />;
+  }
+
+  if (acceso?.mobile) return <MobileBlocked />;
+
+  if (acceso?.status !== 'approved') {
+    if (ubicacion.pathname !== '/') return <Navigate to="/" replace />;
+    return (
+      <AccessRequest
+        estado={acceso?.status || 'not_requested'}
+        solicitando={solicitando}
+        error={error}
+        onSolicitar={solicitar}
+        onReintentar={cargar}
+      />
+    );
+  }
+
+  return <AplicacionAutorizada />;
+}
+
+export default function App() {
+  return (
     <BrowserRouter>
-      <AuthProvider>
-        {/* Marco de la app: en escritorio es un rectangulo 16:9 redondeado y
-            centrado, con negro alrededor. El fondo animado va DENTRO, asi queda
-            recortado por las esquinas. En movil ocupa la pantalla entera. */}
-        <div className="marco">
-          <AmbientBackground />
-          <Rutas />
-        </div>
-      </AuthProvider>
+      <div className="marco">
+        <AmbientBackground />
+        <ControlEntrada />
+      </div>
     </BrowserRouter>
   );
 }

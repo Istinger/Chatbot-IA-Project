@@ -111,3 +111,27 @@ model QuestionBank {
   options  Json?
   answer   String?
 }
+
+/// Computadora que solicito entrar a la demostracion de la casa abierta.
+/// La IP es informativa: la identidad real es el hash de una cookie aleatoria,
+/// asi varias PCs bajo el mismo router se aprueban por separado.
+model DeviceAccess {
+  id          String    @id @default(uuid())
+  tokenHash   String    @unique
+  ip          String
+  userAgent   String?
+  status      String    @default("pending")
+  requestedAt DateTime  @default(now())
+  reviewedAt  DateTime?
+  lastSeenAt  DateTime  @default(now())
+
+  @@index([status, requestedAt])
+}
+
+/// Interruptor de emergencia de la casa abierta. Solo existe la fila "main".
+/// No autoriza telefonos: unicamente permite saltar solicitudes en PCs.
+model DemoAccessSettings {
+  id        String   @id @default("main")
+  allowAll  Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
