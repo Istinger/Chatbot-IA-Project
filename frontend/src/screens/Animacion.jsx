@@ -204,31 +204,47 @@ function flujoDe(accion) {
     };
   }
 
-  if (tipo === 'ofertas_encontradas' || tipo === 'busqueda_realizada') {
-    const esBusqueda = tipo === 'busqueda_realizada';
+  if (tipo === 'busqueda_abierta' || tipo === 'busqueda_realizada') {
+    return {
+      modo: 'busqueda',
+      busqueda: {
+        esperando: tipo === 'busqueda_abierta',
+        original: datos.consultaOriginal || datos.consulta || '',
+        usada: datos.consulta || datos.consultaOriginal || '',
+        reformulada: Boolean(datos.reformulada),
+        filtros: lista(datos.filtros),
+        total: Number(datos.total) || 0,
+        visibles: Number(datos.visibles) || 0,
+        ofertas,
+        origen: datos.origen || 'usuario',
+      },
+    };
+  }
+
+  if (tipo === 'ofertas_encontradas') {
     return {
       modo: 'matching',
       pasos: [
-        { titulo: esBusqueda ? 'Tu busqueda' : 'Tu perfil', detalle: esBusqueda ? datos.consulta || 'Lo que quieres encontrar' : datos.perfil || 'Habilidades y preferencias', dato: esBusqueda ? 'Consulta' : 'Perfil profesional', icono: esBusqueda ? 'buscar' : 'persona', color: COLORES.cian },
+        { titulo: 'Tu perfil', detalle: datos.perfil || 'Habilidades y preferencias', dato: 'Perfil profesional', icono: 'persona', color: COLORES.cian },
         { titulo: 'Jobia', detalle: 'Recibe lo que estas buscando', dato: 'Solicitud recibida', icono: 'app', color: COLORES.azul },
         { titulo: 'Ofertas disponibles', detalle: `${ofertas.length || datos.total || 0} oportunidades para revisar`, dato: 'Catalogo de empleos', icono: 'base', color: COLORES.violeta },
         { titulo: 'Resultados para ti', detalle: ofertas[0]?.title || ofertas[0] || 'Ofertas ordenadas por afinidad', dato: ofertas[0]?.company || 'Mejor coincidencia', icono: 'resultado', color: COLORES.verde },
       ],
       relaciones: ['envia', 'consulta', 'devuelve'],
       transferencias: [
-        esBusqueda ? datos.consulta || 'Tu busqueda' : datos.perfil || 'Tu perfil',
-        esBusqueda ? datos.consulta || 'Palabras de busqueda' : 'Habilidades + preferencias',
+        datos.perfil || 'Tu perfil',
+        'Habilidades + preferencias',
         `${ofertas.length || datos.total || 0} ofertas encontradas`,
       ],
-      resultado: esBusqueda ? 'Tu busqueda ya tiene resultados' : 'Estas son las oportunidades mas cercanas a ti',
+      resultado: 'Estas son las oportunidades mas cercanas a ti',
       indicadores: [['Consulta', 1], ['Revisadas', Math.max(ofertas.length, Number(datos.total) || 0)], ['Destacadas', Math.min(3, ofertas.length)]],
       matching: {
-        esBusqueda,
-        entrada: esBusqueda ? datos.consulta || 'Tu busqueda' : datos.perfil || 'Tu perfil profesional',
+        esBusqueda: false,
+        entrada: datos.perfil || 'Tu perfil profesional',
         total: Math.max(ofertas.length, Number(datos.total) || 0),
         mejor: ofertas[0],
         ofertas,
-        skills: esBusqueda ? [] : lista(datos.skills),
+        skills: lista(datos.skills),
       },
     };
   }
@@ -741,9 +757,220 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
   });
 }
 
+function dibujarMapaBusqueda(ctx, ancho, alto, flujo, progreso) {
+  const datos = flujo.busqueda;
+  const margen = Math.max(78, ancho * 0.06);
+  const superior = Math.max(225, alto * 0.3);
+  const inferior = Math.min(alto - 215, alto * 0.68);
+  const anchoNodo = Math.min(205, ancho * 0.135);
+  const recorrido = progreso * 7;
+  const movimiento = (progreso * 7) % 1;
+  const ofertas = datos.ofertas;
+  const filtros = datos.filtros;
+  const original = datos.original || 'Esperando una consulta';
+  const usada = datos.usada || original;
+  const resumenFiltros = filtros.length
+    ? filtros.map((filtro) => `${filtro.nombre}: ${filtro.valor}`).join(' · ')
+    : 'Sin filtros activos';
+  const ofertasEnViaje = ofertas.map((oferta) =>
+    [
+      oferta.score != null ? `${Math.round(oferta.score * 100)}%` : null,
+      oferta.title,
+      oferta.company,
+    ].filter(Boolean).join(' · '),
+  );
+  const posiciones = {
+    consulta: { x: margen, y: superior },
+    reformula: { x: ancho * 0.245, y: superior },
+    vector: { x: ancho * 0.43, y: superior },
+    pgvector: { x: ancho * 0.62, y: superior },
+    seleccion: { x: ancho * 0.62, y: inferior },
+    filtros: { x: ancho * 0.79, y: inferior },
+    resultados: { x: ancho - margen, y: inferior },
+  };
+
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.font = '700 12px system-ui, sans-serif';
+  ctx.fillStyle = COLORES.cian;
+  ctx.fillText('ENTRADA Y CONVERSION', posiciones.consulta.x - 42, superior - 112);
+  ctx.fillStyle = COLORES.violeta;
+  ctx.fillText('BUSQUEDA SEMANTICA EN EL SERVIDOR', posiciones.pgvector.x - 92, superior - 112);
+  ctx.fillStyle = COLORES.verde;
+  ctx.fillText('RESULTADO EN EL FRONTEND', posiciones.filtros.x - 72, inferior - 112);
+  ctx.restore();
+
+  const nodos = [
+    {
+      paso: {
+        titulo: datos.origen === 'asistente' ? 'Solicitud del Asistente' : 'Tu consulta',
+        detalle: original,
+        dato: datos.esperando ? 'Esperando texto' : 'Texto recibido',
+        icono: 'buscar',
+        color: COLORES.cian,
+      },
+      posicion: posiciones.consulta,
+      etapa: 0,
+    },
+    {
+      paso: {
+        titulo: datos.reformulada ? 'Reformulacion con IA' : 'Consulta afirmativa',
+        detalle: datos.reformulada ? `${original} → ${usada}` : 'No necesita reformulacion',
+        dato: datos.reformulada ? 'OpenRouter' : 'Sin llamada al LLM',
+        icono: 'comparar',
+        color: datos.reformulada ? COLORES.violeta : COLORES.azul,
+      },
+      posicion: posiciones.reformula,
+      etapa: 1,
+    },
+    {
+      paso: {
+        titulo: 'FastEmbed + ONNX',
+        detalle: usada,
+        dato: 'Vector de 384 dimensiones',
+        icono: 'convertir',
+        color: COLORES.azul,
+      },
+      posicion: posiciones.vector,
+      etapa: 2,
+    },
+    {
+      paso: {
+        titulo: 'PostgreSQL + pgvector',
+        detalle: 'Compara la consulta con los embeddings de ofertas',
+        dato: 'Distancia coseno <=>',
+        icono: 'base',
+        color: COLORES.violeta,
+      },
+      posicion: posiciones.pgvector,
+      etapa: 3,
+    },
+    {
+      paso: {
+        titulo: 'Seleccion del backend',
+        detalle: `${datos.total} candidatas superan el proceso`,
+        dato: 'Umbral + epsilon-greedy',
+        icono: 'ordenar',
+        color: COLORES.amarillo,
+      },
+      posicion: posiciones.seleccion,
+      etapa: 4,
+    },
+    {
+      paso: {
+        titulo: 'Filtros del navegador',
+        detalle: resumenFiltros,
+        dato: `${datos.visibles} de ${datos.total} visibles`,
+        icono: 'comparar',
+        color: COLORES.azul,
+      },
+      posicion: posiciones.filtros,
+      etapa: 5,
+    },
+    {
+      paso: {
+        titulo: 'Tarjetas en pantalla',
+        detalle: ofertas[0]?.title || (datos.esperando ? 'Aun no hay una busqueda' : 'No hay resultados visibles'),
+        dato: `${datos.visibles} resultado${datos.visibles === 1 ? '' : 's'}`,
+        icono: 'resultado',
+        color: COLORES.verde,
+      },
+      posicion: posiciones.resultados,
+      etapa: 6,
+    },
+  ];
+
+  const conexiones = [
+    {
+      inicio: { x: posiciones.consulta.x + 55, y: superior },
+      fin: { x: posiciones.reformula.x - 55, y: superior },
+      control: { x: (posiciones.consulta.x + posiciones.reformula.x) / 2, y: superior },
+      etapa: 0,
+      color: COLORES.cian,
+      etiqueta: 'lee',
+      dato: original,
+    },
+    {
+      inicio: { x: posiciones.reformula.x + 55, y: superior },
+      fin: { x: posiciones.vector.x - 55, y: superior },
+      control: { x: (posiciones.reformula.x + posiciones.vector.x) / 2, y: superior },
+      etapa: 1,
+      color: datos.reformulada ? COLORES.violeta : COLORES.azul,
+      etiqueta: datos.reformulada ? 'reescribe' : 'continua igual',
+      dato: usada,
+    },
+    {
+      inicio: { x: posiciones.vector.x + 55, y: superior },
+      fin: { x: posiciones.pgvector.x - 55, y: superior },
+      control: { x: (posiciones.vector.x + posiciones.pgvector.x) / 2, y: superior },
+      etapa: 2,
+      color: COLORES.azul,
+      etiqueta: 'vectoriza',
+      dato: 'embedding de consulta · 384D',
+    },
+    {
+      inicio: { x: posiciones.pgvector.x, y: superior + 55 },
+      fin: { x: posiciones.seleccion.x, y: inferior - 55 },
+      control: { x: posiciones.pgvector.x + ancho * 0.045, y: (superior + inferior) / 2 },
+      etapa: 3,
+      color: COLORES.violeta,
+      etiqueta: 'devuelve candidatas',
+      dato: ofertasEnViaje.length ? ofertasEnViaje : `${datos.total} candidatas`,
+    },
+    {
+      inicio: { x: posiciones.seleccion.x + 55, y: inferior },
+      fin: { x: posiciones.filtros.x - 55, y: inferior },
+      control: { x: (posiciones.seleccion.x + posiciones.filtros.x) / 2, y: inferior },
+      etapa: 4,
+      color: COLORES.amarillo,
+      etiqueta: 'entrega resultados',
+      dato: ofertasEnViaje.length ? ofertasEnViaje : `${datos.total} ofertas`,
+    },
+    {
+      inicio: { x: posiciones.filtros.x + 55, y: inferior },
+      fin: { x: posiciones.resultados.x - 55, y: inferior },
+      control: { x: (posiciones.filtros.x + posiciones.resultados.x) / 2, y: inferior },
+      etapa: 5,
+      color: COLORES.verde,
+      etiqueta: 'muestra',
+      dato: filtros.length ? filtros.map((filtro) => filtro.valor) : 'sin filtros',
+    },
+  ];
+
+  conexiones.forEach((conexion, indice) => {
+    dibujarConexionCurva(
+      ctx,
+      conexion.inicio,
+      conexion.fin,
+      conexion.control,
+      limitar(recorrido - conexion.etapa - 0.62),
+      conexion.color,
+      conexion.etiqueta,
+      conexion.dato,
+      (movimiento + indice * 0.16) % 1,
+    );
+  });
+
+  nodos.forEach(({ paso, posicion, etapa }) => {
+    dibujarNodo(
+      ctx,
+      paso,
+      etapa,
+      posicion.x,
+      posicion.y,
+      anchoNodo,
+      limitar(recorrido - etapa),
+    );
+  });
+}
+
 function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   dibujarFondo(ctx, ancho, alto);
   const flujo = flujoDe(accion);
+  if (flujo.modo === 'busqueda') {
+    dibujarMapaBusqueda(ctx, ancho, alto, flujo, progreso);
+    return;
+  }
   if (flujo.modo === 'matching') {
     dibujarMapaMatching(ctx, ancho, alto, flujo, progreso);
     return;

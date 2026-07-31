@@ -5,6 +5,7 @@ const LIMITE = 6;
 export const METAS_ANIMACION = {
   cv_generado: { titulo: 'Que ocurre cuando cargas tu CV', subtitulo: 'Sigue el recorrido desde el documento hasta las oportunidades' },
   ofertas_encontradas: { titulo: 'Como encontramos ofertas para ti', subtitulo: 'Tu perfil pasa por cuatro etapas faciles de seguir' },
+  busqueda_abierta: { titulo: 'Como funciona Buscar ofertas', subtitulo: 'Del texto escrito a las tarjetas que aparecen en pantalla' },
   busqueda_realizada: { titulo: 'Como una busqueda llega a resultados', subtitulo: 'Mira que ocurre desde que escribes hasta que aparecen ofertas' },
   crecimiento_analizado: { titulo: 'Como construimos tu siguiente paso', subtitulo: 'Fortalezas, oportunidades de mejora y recursos en un solo recorrido' },
   portafolio_sugerido: { titulo: 'Como nacen tus ideas de portafolio', subtitulo: 'Tus habilidades se convierten en proyectos que puedes mostrar' },
