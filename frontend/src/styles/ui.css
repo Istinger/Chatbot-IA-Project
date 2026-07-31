@@ -614,6 +614,69 @@
   box-shadow: 0 0 0 3px rgba(79, 163, 255, 0.12);
 }
 
+.cvgen__combobox {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+}
+
+.cvgen__combobox input {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  padding-right: 48px;
+}
+
+.cvgen__desplegar {
+  grid-row: 1;
+  grid-column: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-left: 1px solid var(--border);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  color: var(--text-2);
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.cvgen__desplegar:hover,
+.cvgen__combobox:focus-within .cvgen__desplegar {
+  color: var(--glow);
+  background: rgba(79, 163, 255, 0.08);
+}
+
+.cvgen__desplegar svg { transform: rotate(90deg); }
+
+.cvgen__opciones {
+  position: absolute;
+  z-index: 12;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  max-height: 196px;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  background: #09152b;
+  box-shadow: var(--shadow-2);
+  list-style: none;
+}
+
+.cvgen__opciones button {
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 9px;
+  border-radius: 5px;
+  color: var(--text-2);
+  text-align: left;
+}
+
+.cvgen__opciones button:hover {
+  background: rgba(79, 163, 255, 0.13);
+  color: var(--text);
+}
+
 .cvgen__campo--ancho {
   grid-column: 1 / -1;
 }
