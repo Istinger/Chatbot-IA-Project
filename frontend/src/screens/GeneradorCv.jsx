@@ -106,9 +106,17 @@ const INICIAL = {
   proyecto: 'Aplicacion web responsiva',
 };
 
+const coincideCon = (opcion, texto) => (
+  opcion.toLocaleLowerCase().includes(texto.trim().toLocaleLowerCase())
+);
+
 function ComboEditable({ label, value, onChange, options, placeholder, required = false, type = 'text' }) {
   const id = useId();
   const [abierto, setAbierto] = useState(false);
+  const opcionesFiltradas = options.filter((opcion) => (
+    coincideCon(opcion, value)
+  ));
+  const muestraOpciones = abierto && opcionesFiltradas.length > 0;
 
   return (
     <label className="cvgen__campo" htmlFor={id}>
@@ -118,14 +126,20 @@ function ComboEditable({ label, value, onChange, options, placeholder, required 
           id={id}
           type={type}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            const texto = e.target.value;
+            onChange(texto);
+            setAbierto(options.some((opcion) => coincideCon(opcion, texto)));
+          }}
           onFocus={() => setAbierto(true)}
-          onKeyDown={(e) => e.key === 'Escape' && setAbierto(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' || e.key === 'Enter') setAbierto(false);
+          }}
           placeholder={placeholder}
           required={required}
           autoComplete="off"
           role="combobox"
-          aria-expanded={abierto}
+          aria-expanded={muestraOpciones}
           aria-controls={`${id}-opciones`}
         />
         <button
@@ -134,13 +148,13 @@ function ComboEditable({ label, value, onChange, options, placeholder, required 
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setAbierto((actual) => !actual)}
           aria-label={`Ver opciones de ${label}`}
-          aria-expanded={abierto}
+          aria-expanded={muestraOpciones}
         >
           <Icon name="derecha" size={17} />
         </button>
-        {abierto && (
+        {muestraOpciones && (
           <ul id={`${id}-opciones`} className="cvgen__opciones" role="listbox">
-            {options.map((opcion) => (
+            {opcionesFiltradas.map((opcion) => (
               <li key={opcion}>
                 <button
                   type="button"
@@ -165,6 +179,10 @@ function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
   const id = useId();
   const [texto, setTexto] = useState('');
   const [abierto, setAbierto] = useState(false);
+  const opcionesFiltradas = opciones.filter((opcion) => (
+    !valores.includes(opcion) && coincideCon(opcion, texto)
+  ));
+  const muestraOpciones = abierto && opcionesFiltradas.length > 0;
 
   const agregar = () => {
     const valor = texto.trim();
@@ -173,6 +191,7 @@ function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
       onChange([...valores, valor]);
     }
     setTexto('');
+    setAbierto(false);
   };
 
   return (
@@ -183,7 +202,11 @@ function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
           <input
             id={id}
             value={texto}
-            onChange={(e) => setTexto(e.target.value)}
+            onChange={(e) => {
+              const siguiente = e.target.value;
+              setTexto(siguiente);
+              setAbierto(opciones.some((opcion) => !valores.includes(opcion) && coincideCon(opcion, siguiente)));
+            }}
             onFocus={() => setAbierto(true)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -195,7 +218,7 @@ function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
             placeholder={placeholder}
             autoComplete="off"
             role="combobox"
-            aria-expanded={abierto}
+            aria-expanded={muestraOpciones}
             aria-controls={`${id}-opciones`}
           />
           <button
@@ -204,13 +227,13 @@ function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => setAbierto((actual) => !actual)}
             aria-label={`Ver opciones de ${label}`}
-            aria-expanded={abierto}
+            aria-expanded={muestraOpciones}
           >
             <Icon name="derecha" size={17} />
           </button>
-          {abierto && (
+          {muestraOpciones && (
             <ul id={`${id}-opciones`} className="cvgen__opciones" role="listbox">
-              {opciones.filter((opcion) => !valores.includes(opcion)).map((opcion) => (
+              {opcionesFiltradas.map((opcion) => (
                 <li key={opcion}>
                   <button
                     type="button"
@@ -254,6 +277,10 @@ function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
 function ResumenEditable({ value, onChange, opciones }) {
   const id = useId();
   const [abierto, setAbierto] = useState(false);
+  const opcionesFiltradas = opciones.filter((opcion) => (
+    coincideCon(opcion, value)
+  ));
+  const muestraOpciones = abierto && opcionesFiltradas.length > 0;
 
   return (
     <label className="cvgen__campo cvgen__campo--ancho" htmlFor={id}>
@@ -263,12 +290,16 @@ function ResumenEditable({ value, onChange, opciones }) {
           id={id}
           rows="4"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            const texto = e.target.value;
+            onChange(texto);
+            setAbierto(opciones.some((opcion) => coincideCon(opcion, texto)));
+          }}
           onFocus={() => setAbierto(true)}
           onKeyDown={(e) => e.key === 'Escape' && setAbierto(false)}
           placeholder={opciones[0]}
           role="combobox"
-          aria-expanded={abierto}
+          aria-expanded={muestraOpciones}
           aria-controls={`${id}-opciones`}
         />
         <button
@@ -277,13 +308,13 @@ function ResumenEditable({ value, onChange, opciones }) {
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setAbierto((actual) => !actual)}
           aria-label="Ver opciones de resumen profesional"
-          aria-expanded={abierto}
+          aria-expanded={muestraOpciones}
         >
           <Icon name="derecha" size={17} />
         </button>
-        {abierto && (
+        {muestraOpciones && (
           <ul id={`${id}-opciones`} className="cvgen__opciones" role="listbox">
-            {opciones.map((opcion) => (
+            {opcionesFiltradas.map((opcion) => (
               <li key={opcion}>
                 <button
                   type="button"
