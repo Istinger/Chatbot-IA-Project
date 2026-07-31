@@ -5,7 +5,7 @@ const { connection } = require('../../config/redis');
 const { consumir } = require('../../shared/ratelimit');
 const { hash } = require('../../shared/cache');
 const certs = require('../certs/certs.service');
-const { rankear, masPopulares, porId, AREAS } = require('./portafolio.catalog');
+const { CATALOGO, rankear, masPopulares, porId, AREAS } = require('./portafolio.catalog');
 
 /**
  * Ideas de portafolio PERSONALIZADAS.
@@ -159,10 +159,24 @@ function fundir(idea, p) {
 /** GET /portafolio/ideas — 4 ideas (1 destacada), personalizadas si se puede. */
 async function ideas(userId) {
   const { profile, faltantes } = await contexto(userId);
+  const responder = (lista, personalizado, origen) => ({
+    ideas: lista,
+    personalizado,
+    proceso: {
+      origen,
+      catalogo: CATALOGO.length,
+      skills: profile.skills,
+      faltantes,
+    },
+  });
 
   // Sin skills: respaldo directo, sin gastar cuota ni tokens.
   if (!profile.skills.length) {
-    return { ideas: marcarDestacada(masPopulares(CUANTAS).map((i) => conVisual(i))), personalizado: false };
+    return responder(
+      marcarDestacada(masPopulares(CUANTAS).map((i) => conVisual(i))),
+      false,
+      'catalogo_popular',
+    );
   }
 
   const elegidas = rankear(profile.skills, faltantes).slice(0, CUANTAS);
@@ -172,7 +186,7 @@ async function ideas(userId) {
   const guardado = await connection.get(clave);
   if (guardado) {
     try {
-      return { ideas: JSON.parse(guardado), personalizado: true };
+      return responder(JSON.parse(guardado), true, 'redis');
     } catch {
       /* cache corrupta: se regenera abajo */
     }
@@ -181,7 +195,11 @@ async function ideas(userId) {
   // Respaldo si se agoto la cuota diaria: ranking sin personalizar (no rompe).
   const cuota = await consumir(userId, env.openrouter.limiteDiario);
   if (!cuota.permitido) {
-    return { ideas: marcarDestacada(elegidas.map((i) => conVisual(i))), personalizado: false };
+    return responder(
+      marcarDestacada(elegidas.map((i) => conVisual(i))),
+      false,
+      'ranking_sin_ia',
+    );
   }
 
   let mapa = null;
@@ -199,7 +217,7 @@ async function ideas(userId) {
     await connection.set(clave, JSON.stringify(salida), 'EX', 60 * 60 * 24 * 7);
   }
 
-  return { ideas: salida, personalizado: Boolean(mapa) };
+  return responder(salida, Boolean(mapa), mapa ? 'openrouter' : 'respaldo');
 }
 
 /** La primera (mejor rankeada) es la destacada. */
