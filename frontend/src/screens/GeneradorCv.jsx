@@ -251,6 +251,59 @@ function SelectorMultiple({ label, opciones, valores, onChange, placeholder }) {
   );
 }
 
+function ResumenEditable({ value, onChange, opciones }) {
+  const id = useId();
+  const [abierto, setAbierto] = useState(false);
+
+  return (
+    <label className="cvgen__campo cvgen__campo--ancho" htmlFor={id}>
+      <span>Resumen profesional</span>
+      <div className="cvgen__combobox cvgen__combobox--texto">
+        <textarea
+          id={id}
+          rows="4"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setAbierto(true)}
+          onKeyDown={(e) => e.key === 'Escape' && setAbierto(false)}
+          placeholder={opciones[0]}
+          role="combobox"
+          aria-expanded={abierto}
+          aria-controls={`${id}-opciones`}
+        />
+        <button
+          type="button"
+          className="cvgen__desplegar"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setAbierto((actual) => !actual)}
+          aria-label="Ver opciones de resumen profesional"
+          aria-expanded={abierto}
+        >
+          <Icon name="derecha" size={17} />
+        </button>
+        {abierto && (
+          <ul id={`${id}-opciones`} className="cvgen__opciones" role="listbox">
+            {opciones.map((opcion) => (
+              <li key={opcion}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onChange(opcion);
+                    setAbierto(false);
+                  }}
+                >
+                  {opcion}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </label>
+  );
+}
+
 function VistaPrevia({ datos, skills, idiomas }) {
   const iniciales = datos.nombre
     .split(/\s+/)
@@ -333,6 +386,11 @@ export default function GeneradorCv() {
     const indice = OPCIONES.nombre.findIndex((opcion) => opcion.toLowerCase() === nombre);
     return indice >= 0 ? correosDemo[indice] : '';
   }, [datos.nombre, correosDemo]);
+  const opcionesResumen = useMemo(() => [
+    resumenSugerido(datos, skills),
+    `${datos.rol || 'Profesional'} ${datos.nivel.toLowerCase()} con interes en resolver necesidades reales, aprender de forma continua y aportar al trabajo colaborativo.`,
+    `Perfil orientado a ${datos.rol || 'nuevos retos profesionales'}, con experiencia en ${datos.experiencia.toLowerCase()} y disposicion para seguir desarrollando habilidades tecnicas.`,
+  ], [datos, skills]);
 
   const cambiarNombre = (nombre) => {
     const indice = OPCIONES.nombre.findIndex((opcion) => opcion.toLowerCase() === nombre.trim().toLowerCase());
@@ -488,15 +546,7 @@ export default function GeneradorCv() {
               <ComboEditable label="Proyecto destacado" value={datos.proyecto} onChange={(v) => cambiar('proyecto', v)} options={OPCIONES.proyecto} placeholder="Elige o escribe" />
               <SelectorMultiple label="Habilidades" opciones={OPCIONES.skill} valores={skills} onChange={setSkills} placeholder="Elige o escribe una habilidad" />
               <SelectorMultiple label="Idiomas" opciones={OPCIONES.idioma} valores={idiomas} onChange={setIdiomas} placeholder="Elige o escribe idioma y nivel" />
-              <label className="cvgen__campo cvgen__campo--ancho">
-                <span>Resumen profesional</span>
-                <textarea
-                  rows="4"
-                  value={datos.perfil}
-                  onChange={(e) => cambiar('perfil', e.target.value)}
-                  placeholder={resumenSugerido(datos, skills)}
-                />
-              </label>
+              <ResumenEditable value={datos.perfil} onChange={(v) => cambiar('perfil', v)} opciones={opcionesResumen} />
             </div>
           )}
 
