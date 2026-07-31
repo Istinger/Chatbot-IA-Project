@@ -325,6 +325,29 @@ function flujoDe(accion) {
     };
   }
 
+  if (
+    tipo === 'perfil_abierto'
+    || tipo === 'perfil_cv'
+    || tipo === 'perfil_skills'
+    || tipo === 'perfil_telegram'
+    || tipo === 'perfil_asistente'
+  ) {
+    return {
+      modo: 'perfil',
+      perfil: {
+        escena: {
+          perfil_cv: 'cv',
+          perfil_skills: 'skills',
+          perfil_telegram: 'telegram',
+          perfil_asistente: 'asistente',
+        }[tipo] || 'resumen',
+        perfil: datos.perfil || {},
+        accion: datos.accion || {},
+        telegram: datos.telegram || null,
+      },
+    };
+  }
+
   if (tipo === 'oferta_guardada') {
     const oferta = datos.oferta || {};
     return {
@@ -2144,6 +2167,201 @@ function dibujarMapaEntrevista(ctx, ancho, alto, flujo, progreso) {
   });
 }
 
+function dibujarMapaPerfil(ctx, ancho, alto, flujo, progreso) {
+  const datos = flujo.perfil;
+  const perfil = datos.perfil;
+  const accion = datos.accion;
+  const telegram = datos.telegram;
+  const skills = lista(perfil.skills);
+  const margen = Math.max(145, ancho * 0.075);
+  const superior = Math.max(225, alto * 0.29);
+  const medio = Math.max(superior + 190, alto * 0.51);
+  const inferior = Math.min(alto - 170, alto * 0.77);
+  const anchoNodo = Math.min(205, ancho * 0.13);
+  const posiciones = {
+    a: { x: margen, y: medio },
+    b: { x: ancho * 0.3, y: superior },
+    c: { x: ancho * 0.3, y: inferior },
+    d: { x: ancho * 0.51, y: medio },
+    e: { x: ancho * 0.71, y: superior },
+    f: { x: ancho * 0.71, y: inferior },
+    g: { x: ancho * 0.87, y: medio },
+  };
+  let nodos = [];
+  let conexiones = [];
+  let titulos = [];
+  const archivo = accion.archivo || 'CV en PDF';
+  const resultadoSkills = lista(accion.resultado).length ? lista(accion.resultado) : skills;
+  const skillsTexto = skills.slice(0, 4).join(' · ') || 'Sin habilidades todavia';
+  const estadoAccion = accion.estado === 'error'
+    ? `Error: ${accion.error || 'no se completo'}`
+    : accion.estado === 'procesando'
+      ? 'Procesando ahora'
+      : 'Actualizado';
+
+  const crearNodo = (posicion, etapa, titulo, detalle, dato, icono, color) => ({
+    posicion,
+    etapa,
+    paso: { titulo, detalle, dato, icono, color },
+  });
+  const conectar = (inicio, fin, control, etapa, color, etiqueta, dato) => ({
+    inicio, fin, control, etapa, color, etiqueta, dato,
+  });
+
+  if (datos.escena === 'cv') {
+    titulos = [
+      { texto: 'ARCHIVO QUE ELIGES', x: posiciones.a.x - 60, y: medio - 112, color: COLORES.cian },
+      { texto: 'LECTURA Y DETECCION · SIN IA', x: posiciones.b.x - 100, y: superior - 112, color: COLORES.azul },
+      { texto: 'PERFIL LISTO PARA COMPARAR', x: posiciones.e.x - 100, y: superior - 112, color: COLORES.verde },
+    ];
+    nodos = [
+      crearNodo(posiciones.a, 0, 'Tu CV en el navegador', archivo, `${Math.max(1, Math.round((accion.tamano || 0) / 1024))} KB · PDF`, 'documento', COLORES.cian),
+      crearNodo(posiciones.b, 1, 'Multer en memoria', 'Valida PDF y limita el archivo a 5 MB', 'No escribe el archivo en disco', 'app', COLORES.azul),
+      crearNodo(posiciones.c, 2, 'Extractor de texto', 'El servicio Python usa pypdf y exige al menos 100 caracteres', `${perfil.cvLongitud || 0} caracteres`, 'leer', COLORES.azul),
+      crearNodo(posiciones.d, 3, 'Detector de habilidades', 'Busca tecnologias conocidas en el texto extraido', lista(accion.detectadas).slice(0, 3).join(' · ') || skillsTexto, 'habilidades', COLORES.violeta),
+      crearNodo(posiciones.e, 4, 'PostgreSQL', 'Prisma reemplaza el texto del CV y la lista de habilidades', `${skills.length} habilidades guardadas`, 'base', COLORES.violeta),
+      crearNodo(posiciones.f, 5, 'FastEmbed + ONNX', 'Recalcula el vector numerico del perfil para futuras comparaciones', 'Embedding actualizado', 'convertir', COLORES.azul),
+      crearNodo(posiciones.g, 6, 'Perfil actualizado', skillsTexto, estadoAccion, 'resultado', accion.estado === 'error' ? COLORES.amarillo : COLORES.verde),
+    ];
+    conexiones = [
+      conectar({ x: posiciones.a.x + 55, y: medio - 15 }, { x: posiciones.b.x - 55, y: superior + 15 }, { x: ancho * 0.21, y: superior + 25 }, 0, COLORES.cian, 'POST /profile/cv', archivo),
+      conectar({ x: posiciones.b.x, y: superior + 55 }, { x: posiciones.c.x, y: inferior - 55 }, { x: ancho * 0.25, y: medio }, 1, COLORES.azul, 'envia bytes', 'buffer del PDF'),
+      conectar({ x: posiciones.c.x + 55, y: inferior - 15 }, { x: posiciones.d.x - 55, y: medio + 15 }, { x: ancho * 0.41, y: inferior - 25 }, 2, COLORES.azul, 'devuelve texto', `${perfil.cvLongitud || 0} caracteres`),
+      conectar({ x: posiciones.d.x + 55, y: medio - 15 }, { x: posiciones.e.x - 55, y: superior + 15 }, { x: ancho * 0.61, y: superior + 25 }, 3, COLORES.violeta, 'actualiza perfil', [skillsTexto, 'texto extraido']),
+      conectar({ x: posiciones.e.x, y: superior + 55 }, { x: posiciones.f.x, y: inferior - 55 }, { x: ancho * 0.76, y: medio }, 4, COLORES.azul, 'revectoriza', skillsTexto),
+      conectar({ x: posiciones.f.x + 55, y: inferior - 15 }, { x: posiciones.g.x - 55, y: medio + 15 }, { x: ancho * 0.81, y: inferior - 25 }, 5, COLORES.verde, 'refresca pantalla', estadoAccion),
+    ];
+  } else if (datos.escena === 'skills') {
+    const operacion = accion.operacion === 'quitar' ? 'Quitar habilidad' : 'Agregar habilidad';
+    titulos = [
+      { texto: 'CAMBIO QUE HACES', x: posiciones.a.x - 55, y: medio - 112, color: COLORES.cian },
+      { texto: 'NORMALIZACION EXACTA · SIN IA', x: posiciones.d.x - 105, y: medio - 112, color: COLORES.violeta },
+      { texto: 'RECOMENDACIONES ACTUALIZADAS', x: posiciones.g.x - 110, y: medio - 112, color: COLORES.verde },
+    ];
+    nodos = [
+      crearNodo(posiciones.a, 0, operacion, accion.skill || 'Habilidad seleccionada', accion.estado === 'procesando' ? 'Guardando ahora' : 'Cambio recibido', 'habilidades', COLORES.cian),
+      crearNodo(posiciones.b, 1, 'Lista del navegador', skillsTexto, `${skills.length} actuales`, 'app', COLORES.azul),
+      crearNodo(posiciones.c, 1, 'Reglas de limpieza', 'Quita espacios, pasa a minusculas y elimina repetidas', 'trim + lowercase + Set', 'comparar', COLORES.azul),
+      crearNodo(posiciones.d, 2, 'API de perfil', 'Valida que quede al menos una habilidad', resultadoSkills.slice(0, 4).join(' · ') || 'Lista vacia', 'app', COLORES.violeta),
+      crearNodo(posiciones.e, 3, 'PostgreSQL', 'Prisma guarda la lista limpia en tu perfil', `${resultadoSkills.length} habilidades`, 'base', COLORES.violeta),
+      crearNodo(posiciones.f, 4, 'FastEmbed + ONNX', 'Combina el texto del CV y las habilidades actualizadas', 'Nuevo vector del perfil', 'convertir', COLORES.azul),
+      crearNodo(posiciones.g, 5, 'Perfil y afinidad', 'La pantalla se refresca y las comparaciones usan el nuevo vector', estadoAccion, 'resultado', COLORES.verde),
+    ];
+    conexiones = [
+      conectar({ x: posiciones.a.x + 55, y: medio }, { x: posiciones.b.x - 55, y: superior + 10 }, { x: ancho * 0.21, y: superior + 20 }, 0, COLORES.cian, 'edita', accion.skill || 'habilidad'),
+      conectar({ x: posiciones.a.x + 55, y: medio + 20 }, { x: posiciones.c.x - 55, y: inferior - 10 }, { x: ancho * 0.21, y: inferior - 20 }, 0, COLORES.azul, 'comprueba', accion.skill || 'texto escrito'),
+      conectar({ x: posiciones.b.x + 55, y: superior + 15 }, { x: posiciones.d.x - 55, y: medio - 15 }, { x: ancho * 0.41, y: superior + 25 }, 1, COLORES.azul, 'PUT /profile/skills', resultadoSkills),
+      conectar({ x: posiciones.c.x + 55, y: inferior - 15 }, { x: posiciones.d.x - 55, y: medio + 15 }, { x: ancho * 0.41, y: inferior - 25 }, 1, COLORES.azul, 'normaliza', resultadoSkills),
+      conectar({ x: posiciones.d.x + 55, y: medio - 15 }, { x: posiciones.e.x - 55, y: superior + 15 }, { x: ancho * 0.61, y: superior + 25 }, 2, COLORES.violeta, 'guarda', resultadoSkills),
+      conectar({ x: posiciones.e.x, y: superior + 55 }, { x: posiciones.f.x, y: inferior - 55 }, { x: ancho * 0.76, y: medio }, 3, COLORES.azul, 'recalcula embedding', resultadoSkills),
+      conectar({ x: posiciones.f.x + 55, y: inferior - 15 }, { x: posiciones.g.x - 55, y: medio + 15 }, { x: ancho * 0.81, y: inferior - 25 }, 4, COLORES.verde, 'aplica al perfil', estadoAccion),
+    ];
+  } else if (datos.escena === 'telegram') {
+    const tgEstado = telegram?.estado || {};
+    const evento = accion.evento === 'umbral' ? 'Cambiar umbral' : accion.evento === 'desvincular' ? 'Desvincular' : 'Vincular Telegram';
+    titulos = [
+      { texto: 'ACCION EN TU PERFIL', x: posiciones.a.x - 60, y: medio - 112, color: COLORES.cian },
+      { texto: 'VINCULO TEMPORAL Y SEGURO', x: posiciones.d.x - 95, y: medio - 112, color: COLORES.violeta },
+      { texto: 'AVISOS CUANDO HAY COINCIDENCIA', x: posiciones.g.x - 115, y: medio - 112, color: COLORES.verde },
+    ];
+    nodos = [
+      crearNodo(posiciones.a, 0, evento, perfil.email || 'Tu cuenta de Jobia', tgEstado.vinculado ? 'Ya vinculado' : 'Solicita vinculo', 'persona', COLORES.cian),
+      crearNodo(posiciones.b, 1, 'API de notificaciones', 'Genera un codigo de un solo uso', telegram?.vinculacion?.bot ? `@${telegram.vinculacion.bot}` : 'Codigo temporal', 'app', COLORES.azul),
+      crearNodo(posiciones.c, 2, 'Redis', 'Guarda el codigo durante 15 minutos', 'TTL 15 min', 'base', COLORES.violeta),
+      crearNodo(posiciones.d, 3, 'Telegram', 'El enlace t.me envia /start y el chat ID al worker', telegram?.esperando ? 'Esperando confirmacion' : 'Bot conectado', 'app', COLORES.azul),
+      crearNodo(posiciones.e, 4, 'Worker de Telegram', 'Consume el codigo una sola vez y lo elimina de Redis', 'chat ID confirmado', 'comparar', COLORES.violeta),
+      crearNodo(posiciones.f, 5, 'Preferencias de avisos', 'Prisma conserva chat ID y umbral; evita ofertas repetidas', `Umbral ${Math.round((tgEstado.umbral || 0.62) * 100)}%`, 'base', COLORES.azul),
+      crearNodo(posiciones.g, 6, 'Aviso de nueva oferta', `Se han enviado ${tgEstado.avisosEnviados || 0} avisos`, tgEstado.vinculado ? 'Telegram activo' : 'Aun sin vincular', 'resultado', COLORES.verde),
+    ];
+    conexiones = [
+      conectar({ x: posiciones.a.x + 55, y: medio - 15 }, { x: posiciones.b.x - 55, y: superior + 15 }, { x: ancho * 0.21, y: superior + 25 }, 0, COLORES.cian, 'solicita codigo', perfil.email || 'usuario autenticado'),
+      conectar({ x: posiciones.b.x, y: superior + 55 }, { x: posiciones.c.x, y: inferior - 55 }, { x: ancho * 0.25, y: medio }, 1, COLORES.violeta, 'guarda temporalmente', 'codigo de un solo uso'),
+      conectar({ x: posiciones.c.x + 55, y: inferior - 15 }, { x: posiciones.d.x - 55, y: medio + 15 }, { x: ancho * 0.41, y: inferior - 25 }, 2, COLORES.azul, 'abre t.me', '/start + codigo'),
+      conectar({ x: posiciones.d.x + 55, y: medio - 15 }, { x: posiciones.e.x - 55, y: superior + 15 }, { x: ancho * 0.61, y: superior + 25 }, 3, COLORES.violeta, 'confirma', 'chat ID de Telegram'),
+      conectar({ x: posiciones.e.x, y: superior + 55 }, { x: posiciones.f.x, y: inferior - 55 }, { x: ancho * 0.76, y: medio }, 4, COLORES.azul, 'guarda preferencia', `umbral ${Math.round((tgEstado.umbral || 0.62) * 100)}%`),
+      conectar({ x: posiciones.f.x + 55, y: inferior - 15 }, { x: posiciones.g.x - 55, y: medio + 15 }, { x: ancho * 0.81, y: inferior - 25 }, 5, COLORES.verde, 'envia si coincide', 'oferta nueva · sin repetir'),
+    ];
+  } else if (datos.escena === 'asistente') {
+    titulos = [
+      { texto: 'CONTEXTO VISIBLE EN PERFIL', x: posiciones.a.x - 75, y: medio - 112, color: COLORES.cian },
+      { texto: 'UNA CONSULTA CUANDO LA PIDES', x: posiciones.d.x - 105, y: medio - 112, color: COLORES.violeta },
+      { texto: 'ORIENTACION EN EL PANEL', x: posiciones.g.x - 85, y: medio - 112, color: COLORES.verde },
+    ];
+    nodos = [
+      crearNodo(posiciones.a, 0, 'Accion del usuario', accion.consulta || 'Analizar perfil', 'Solo ocurre al pulsar el boton', 'persona', COLORES.cian),
+      crearNodo(posiciones.b, 1, 'Habilidades actuales', skillsTexto, `${skills.length} habilidades`, 'habilidades', COLORES.azul),
+      crearNodo(posiciones.c, 1, 'Estado del CV', perfil.tieneCv ? `${perfil.cvLongitud || 0} caracteres disponibles` : 'Todavia no hay CV', perfil.tieneCv ? 'CV presente' : 'Sin CV', 'documento', COLORES.azul),
+      crearNodo(posiciones.d, 2, 'Contexto de la pantalla', 'React arma un mensaje autocontenido con los datos visibles', accion.consulta || 'Consulta preparada', 'app', COLORES.violeta),
+      crearNodo(posiciones.e, 3, 'API de chat', 'Valida la sesion y envia la consulta al proveedor configurado', 'POST /chat', 'app', COLORES.azul),
+      crearNodo(posiciones.f, 4, 'OpenRouter', 'El modelo prepara consejos; no modifica tu perfil', 'Respuesta en texto', 'convertir', COLORES.violeta),
+      crearNodo(posiciones.g, 5, 'Asistente IA', 'Muestra la orientacion en el panel lateral', 'Perfil sin cambios automaticos', 'resultado', COLORES.verde),
+    ];
+    conexiones = [
+      conectar({ x: posiciones.a.x + 55, y: medio - 15 }, { x: posiciones.b.x - 55, y: superior + 15 }, { x: ancho * 0.21, y: superior + 25 }, 0, COLORES.cian, 'lee habilidades', skills),
+      conectar({ x: posiciones.a.x + 55, y: medio + 15 }, { x: posiciones.c.x - 55, y: inferior - 15 }, { x: ancho * 0.21, y: inferior - 25 }, 0, COLORES.azul, 'lee estado', perfil.tieneCv ? `${perfil.cvLongitud || 0} caracteres` : 'sin CV'),
+      conectar({ x: posiciones.b.x + 55, y: superior + 15 }, { x: posiciones.d.x - 55, y: medio - 15 }, { x: ancho * 0.41, y: superior + 25 }, 1, COLORES.violeta, 'une contexto', skillsTexto),
+      conectar({ x: posiciones.c.x + 55, y: inferior - 15 }, { x: posiciones.d.x - 55, y: medio + 15 }, { x: ancho * 0.41, y: inferior - 25 }, 1, COLORES.violeta, 'añade CV', perfil.tieneCv ? 'CV disponible' : 'sin CV'),
+      conectar({ x: posiciones.d.x + 55, y: medio - 15 }, { x: posiciones.e.x - 55, y: superior + 15 }, { x: ancho * 0.61, y: superior + 25 }, 2, COLORES.azul, 'envia consulta', accion.consulta || 'analizar perfil'),
+      conectar({ x: posiciones.e.x, y: superior + 55 }, { x: posiciones.f.x, y: inferior - 55 }, { x: ancho * 0.76, y: medio }, 3, COLORES.violeta, 'solicita orientacion', 'prompt + contexto'),
+      conectar({ x: posiciones.f.x + 55, y: inferior - 15 }, { x: posiciones.g.x - 55, y: medio + 15 }, { x: ancho * 0.81, y: inferior - 25 }, 4, COLORES.verde, 'devuelve respuesta', 'consejos personalizados'),
+    ];
+  } else {
+    const tgEstado = telegram?.estado || {};
+    titulos = [
+      { texto: 'SESION AUTENTICADA', x: posiciones.a.x - 60, y: medio - 112, color: COLORES.cian },
+      { texto: 'DATOS QUE VE ESTA PANTALLA', x: posiciones.d.x - 100, y: medio - 112, color: COLORES.violeta },
+      { texto: 'SERVICIOS CONECTADOS', x: posiciones.g.x - 80, y: medio - 112, color: COLORES.verde },
+    ];
+    nodos = [
+      crearNodo(posiciones.a, 0, 'Tu sesion', perfil.email || 'Usuario autenticado', 'JWT activo', 'persona', COLORES.cian),
+      crearNodo(posiciones.b, 1, 'API de perfil', 'GET /profile recupera solo los datos necesarios', perfil.id ? `perfil ${textoCorto(perfil.id, 12)}` : 'perfil actual', 'app', COLORES.azul),
+      crearNodo(posiciones.c, 2, 'PostgreSQL + Prisma', 'Guarda correo, texto del CV, habilidades y Telegram', `${skills.length} habilidades`, 'base', COLORES.violeta),
+      crearNodo(posiciones.d, 3, 'Profile en React', 'AuthContext refresca y reparte el perfil a la interfaz', perfil.updatedAt ? 'Datos sincronizados' : 'Vista cargada', 'app', COLORES.azul),
+      crearNodo(posiciones.e, 4, 'Curriculum', perfil.tieneCv ? `${perfil.cvLongitud || 0} caracteres extraidos` : 'Aun no hay un CV cargado', perfil.tieneCv ? 'CV disponible' : 'Sin CV', 'documento', COLORES.cian),
+      crearNodo(posiciones.f, 4, 'Habilidades', skillsTexto, `${skills.length} detectadas o elegidas`, 'habilidades', COLORES.azul),
+      crearNodo(posiciones.g, 5, 'Afinidad y avisos', 'El vector se usa al comparar; Telegram respeta tu umbral', tgEstado.vinculado ? `Telegram · ${Math.round((tgEstado.umbral || 0.62) * 100)}%` : 'Telegram sin vincular', 'resultado', COLORES.verde),
+    ];
+    conexiones = [
+      conectar({ x: posiciones.a.x + 55, y: medio - 15 }, { x: posiciones.b.x - 55, y: superior + 15 }, { x: ancho * 0.21, y: superior + 25 }, 0, COLORES.cian, 'autoriza', perfil.email || 'token JWT'),
+      conectar({ x: posiciones.b.x, y: superior + 55 }, { x: posiciones.c.x, y: inferior - 55 }, { x: ancho * 0.25, y: medio }, 1, COLORES.violeta, 'consulta Prisma', 'id + correo + CV + skills'),
+      conectar({ x: posiciones.c.x + 55, y: inferior - 15 }, { x: posiciones.d.x - 55, y: medio + 15 }, { x: ancho * 0.41, y: inferior - 25 }, 2, COLORES.azul, 'devuelve perfil', [perfil.email, skillsTexto]),
+      conectar({ x: posiciones.d.x + 55, y: medio - 15 }, { x: posiciones.e.x - 55, y: superior + 15 }, { x: ancho * 0.61, y: superior + 25 }, 3, COLORES.cian, 'muestra CV', perfil.tieneCv ? `${perfil.cvLongitud || 0} caracteres` : 'sin CV'),
+      conectar({ x: posiciones.d.x + 55, y: medio + 15 }, { x: posiciones.f.x - 55, y: inferior - 15 }, { x: ancho * 0.61, y: inferior - 25 }, 3, COLORES.azul, 'muestra skills', skills),
+      conectar({ x: posiciones.e.x + 45, y: superior + 35 }, { x: posiciones.g.x - 55, y: medio - 20 }, { x: ancho * 0.81, y: superior + 45 }, 4, COLORES.verde, 'alimenta perfil', 'texto del CV'),
+      conectar({ x: posiciones.f.x + 45, y: inferior - 35 }, { x: posiciones.g.x - 55, y: medio + 20 }, { x: ancho * 0.81, y: inferior - 45 }, 4, COLORES.verde, 'alimenta perfil', skillsTexto),
+    ];
+  }
+
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.font = '700 12px system-ui, sans-serif';
+  titulos.forEach((titulo) => {
+    ctx.fillStyle = titulo.color;
+    ctx.fillText(titulo.texto, titulo.x, titulo.y);
+  });
+  ctx.restore();
+
+  const etapas = Math.max(...nodos.map((nodo) => nodo.etapa)) + 1;
+  const recorrido = progreso * etapas;
+  const movimiento = (progreso * etapas) % 1;
+  conexiones.forEach((conexion, indice) => {
+    dibujarConexionCurva(
+      ctx,
+      conexion.inicio,
+      conexion.fin,
+      conexion.control,
+      limitar(recorrido - conexion.etapa - 0.62),
+      conexion.color,
+      conexion.etiqueta,
+      conexion.dato,
+      (movimiento + indice * 0.13) % 1,
+    );
+  });
+  nodos.forEach(({ paso, posicion, etapa }) => {
+    dibujarNodo(ctx, paso, etapa, posicion.x, posicion.y, anchoNodo, limitar(recorrido - etapa));
+  });
+}
+
 function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   dibujarFondo(ctx, ancho, alto);
   const flujo = flujoDe(accion);
@@ -2161,6 +2379,10 @@ function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   }
   if (flujo.modo === 'entrevista') {
     dibujarMapaEntrevista(ctx, ancho, alto, flujo, progreso);
+    return;
+  }
+  if (flujo.modo === 'perfil') {
+    dibujarMapaPerfil(ctx, ancho, alto, flujo, progreso);
     return;
   }
   if (flujo.modo === 'matching') {

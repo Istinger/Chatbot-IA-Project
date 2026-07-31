@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api';
+import { registrarAnimacion } from '../lib/animacion';
 import { useAuth } from '../lib/auth';
 import { useVista } from '../lib/vista';
 import Icon from '../components/Icon';
@@ -14,8 +15,48 @@ export default function Profile() {
   const [estado, setEstado] = useState(null); // { tipo: 'ok'|'error', texto }
   const [ocupado, setOcupado] = useState(false);
   const [nuevaSkill, setNuevaSkill] = useState('');
+  const [accionMapa, setAccionMapa] = useState({ tipo: 'resumen', estado: 'listo' });
+  const [telegramMapa, setTelegramMapa] = useState(null);
 
   const skills = perfil?.skills ?? [];
+
+  const manejarTelegram = useCallback((info) => {
+    setTelegramMapa(info);
+    if (info?.evento) {
+      setAccionMapa({
+        tipo: 'telegram',
+        estado: info.esperando ? 'esperando' : info.error ? 'error' : 'listo',
+        evento: info.evento,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const temporizador = setTimeout(() => {
+      const tipos = {
+        cv: 'perfil_cv',
+        skills: 'perfil_skills',
+        telegram: 'perfil_telegram',
+        asistente: 'perfil_asistente',
+        resumen: 'perfil_abierto',
+      };
+      registrarAnimacion(tipos[accionMapa.tipo] || 'perfil_abierto', {
+        perfil: perfil
+          ? {
+            id: perfil.id,
+            email: perfil.email,
+            skills: perfil.skills,
+            tieneCv: perfil.tieneCv,
+            cvLongitud: perfil.cvLongitud,
+            updatedAt: perfil.updatedAt,
+          }
+          : null,
+        accion: accionMapa,
+        telegram: telegramMapa,
+      });
+    }, 180);
+    return () => clearTimeout(temporizador);
+  }, [accionMapa, perfil, telegramMapa]);
 
   // El chat conoce tu perfil mientras estas aqui (skills + estado del CV), asi
   // tambien responde bien a lo que escribas a mano. Se limpia al salir.
@@ -39,14 +80,28 @@ export default function Profile() {
     if (!file) return;
     setEstado(null);
     setOcupado(true);
+    setAccionMapa({
+      tipo: 'cv',
+      estado: 'procesando',
+      archivo: file.name,
+      tamano: file.size,
+    });
     try {
       const r = await api.subirCv(file);
       await refrescar();
+      setAccionMapa({
+        tipo: 'cv',
+        estado: 'listo',
+        archivo: file.name,
+        tamano: file.size,
+        detectadas: r.skillsDetectadas,
+      });
       setEstado({
         tipo: 'ok',
         texto: `CV actualizado. Detectamos ${r.skillsDetectadas.length} habilidades.`,
       });
     } catch (err) {
+      setAccionMapa({ tipo: 'cv', estado: 'error', archivo: file.name, error: err.message });
       setEstado({ tipo: 'error', texto: err.message });
     } finally {
       setOcupado(false);
@@ -60,10 +115,13 @@ export default function Profile() {
       return;
     }
     setOcupado(true);
+    setAccionMapa({ tipo: 'skills', estado: 'procesando', operacion: 'quitar', skill, resultado: quedan });
     try {
       await api.guardarSkills(quedan);
       await refrescar();
+      setAccionMapa({ tipo: 'skills', estado: 'listo', operacion: 'quitar', skill, resultado: quedan });
     } catch (err) {
+      setAccionMapa({ tipo: 'skills', estado: 'error', operacion: 'quitar', skill, error: err.message });
       setEstado({ tipo: 'error', texto: err.message });
     } finally {
       setOcupado(false);
@@ -81,11 +139,14 @@ export default function Profile() {
     }
     setEstado(null);
     setOcupado(true);
+    setAccionMapa({ tipo: 'skills', estado: 'procesando', operacion: 'agregar', skill: s, resultado: [...skills, s] });
     try {
       await api.guardarSkills([...skills, s]);
       await refrescar();
       setNuevaSkill('');
+      setAccionMapa({ tipo: 'skills', estado: 'listo', operacion: 'agregar', skill: s, resultado: [...skills, s] });
     } catch (err) {
+      setAccionMapa({ tipo: 'skills', estado: 'error', operacion: 'agregar', skill: s, error: err.message });
       setEstado({ tipo: 'error', texto: err.message });
     } finally {
       setOcupado(false);
@@ -94,18 +155,24 @@ export default function Profile() {
 
   // Consultas al asistente (mensajes autocontenidos con tus datos). La respuesta
   // sale en el panel del chat.
-  const analizarPerfil = () =>
+  const analizarPerfil = () => {
+    setAccionMapa({ tipo: 'asistente', estado: 'enviado', consulta: 'analizar perfil' });
     pedirIA(
       `Analiza mi perfil profesional para el mercado tech (Ecuador y remoto). Mis habilidades: ${skillsTexto}. ${cvTexto}. Dime mis fortalezas, mis puntos debiles y 2-3 cosas concretas que deberia mejorar.`,
     );
-  const sugerirSkills = () =>
+  };
+  const sugerirSkills = () => {
+    setAccionMapa({ tipo: 'asistente', estado: 'enviado', consulta: 'sugerir habilidades' });
     pedirIA(
       `Segun mi perfil (habilidades: ${skillsTexto}) y la demanda actual del sector tech, que habilidades me convendria aprender o añadir? Priorizalas y explica brevemente por que cada una.`,
     );
-  const consejosCv = () =>
+  };
+  const consejosCv = () => {
+    setAccionMapa({ tipo: 'asistente', estado: 'enviado', consulta: 'consejos para el CV' });
     pedirIA(
       `${cvTexto}. Mis habilidades: ${skillsTexto}. Dame consejos concretos para mejorar mi CV: que destacar, que reforzar y errores comunes a evitar.`,
     );
+  };
 
   return (
     <>
@@ -223,7 +290,7 @@ export default function Profile() {
         )}
       </section>
 
-      <AvisosTelegram />
+      <AvisosTelegram onEstadoAnimacion={manejarTelegram} />
 
       <section className="panel">
         <header className="seccion__cab">

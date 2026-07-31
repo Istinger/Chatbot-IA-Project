@@ -15,6 +15,11 @@ export const METAS_ANIMACION = {
   entrevista_practica: { titulo: 'Que ocurre durante tu entrevista', subtitulo: 'Preguntas, respuestas y ayudas opcionales conectadas en vivo' },
   entrevista_feedback: { titulo: 'Como se construyen tus recomendaciones', subtitulo: 'El transcript se convierte en fortalezas y mejoras accionables' },
   entrevista_historial: { titulo: 'Como aprende tu historial de entrevistas', subtitulo: 'Tus practicas guardadas revelan los puntos que mas se repiten' },
+  perfil_abierto: { titulo: 'Que sabe Jobia de tu perfil', subtitulo: 'CV, habilidades, sesion y avisos conectados con tus recomendaciones' },
+  perfil_cv: { titulo: 'Que ocurre cuando subes tu CV', subtitulo: 'El PDF se convierte en texto, habilidades y un perfil comparable' },
+  perfil_skills: { titulo: 'Que ocurre cuando cambias tus habilidades', subtitulo: 'La lista se limpia, guarda y vuelve a convertir en un vector' },
+  perfil_telegram: { titulo: 'Como se vinculan tus avisos por Telegram', subtitulo: 'Un codigo temporal conecta tu cuenta sin pedirte el chat ID' },
+  perfil_asistente: { titulo: 'Como el asistente analiza tu perfil', subtitulo: 'Tus datos visibles viajan como contexto para darte orientacion' },
   oferta_guardada: { titulo: 'Que ocurre al guardar una oferta', subtitulo: 'La oportunidad viaja hasta tu lista personal' },
   inicio: { titulo: 'Mira como trabaja Jobia', subtitulo: 'Cada accion se explica con un mapa claro y datos reales' },
 };
