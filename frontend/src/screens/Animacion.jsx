@@ -223,6 +223,7 @@ function flujoDe(accion) {
       resultado: esBusqueda ? 'Tu busqueda ya tiene resultados' : 'Estas son las oportunidades mas cercanas a ti',
       indicadores: [['Consulta', 1], ['Revisadas', Math.max(ofertas.length, Number(datos.total) || 0)], ['Destacadas', Math.min(3, ofertas.length)]],
       matching: {
+        esBusqueda,
         entrada: esBusqueda ? datos.consulta || 'Tu busqueda' : datos.perfil || 'Tu perfil profesional',
         total: Math.max(ofertas.length, Number(datos.total) || 0),
         mejor: ofertas[0],
@@ -545,6 +546,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
   const ofertas = flujo.matching.ofertas;
   const fuentes = [...new Set(ofertas.map((oferta) => oferta.source).filter(Boolean))];
   const habilidades = flujo.matching.skills;
+  const esBusqueda = flujo.matching.esBusqueda;
   const ofertasEnViaje = ofertas.map((oferta) =>
     [oferta.title, oferta.company, oferta.location || oferta.country].filter(Boolean).join(' · '),
   );
@@ -570,12 +572,22 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
   ctx.textAlign = 'left';
   ctx.font = '700 12px system-ui, sans-serif';
   ctx.fillStyle = COLORES.cian;
-  ctx.fillText('CUANDO EL USUARIO ENTRA', xEntrada - 42, superior - 112);
+  ctx.fillText(
+    esBusqueda ? 'AL REALIZAR UNA BUSQUEDA' : 'AL BUSCAR RECOMENDACIONES',
+    xEntrada - 42,
+    superior - 112,
+  );
   ctx.fillStyle = COLORES.azul;
   ctx.fillText('PROCESO AUTOMATICO PREVIO', xEntrada - 42, inferior - 112);
   ctx.font = '11px system-ui, sans-serif';
   ctx.fillStyle = COLORES.suave;
-  ctx.fillText('Se ejecuta con el perfil que esta viendo la aplicacion', xEntrada - 42, superior - 94);
+  ctx.fillText(
+    esBusqueda
+      ? 'FastEmbed y ONNX convierten la consulta actual en un vector'
+      : 'La API utiliza el vector guardado cuando cambia el CV o las skills',
+    xEntrada - 42,
+    superior - 94,
+  );
   ctx.fillText('Las ofertas se actualizan periodicamente antes de la busqueda', xEntrada - 42, inferior - 94);
   ctx.restore();
 
@@ -606,9 +618,11 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
     },
     {
       paso: {
-        titulo: 'Vector de tu perfil',
-        detalle: habilidades.join(' · ') || flujo.matching.entrada,
-        dato: '384 valores calculados',
+        titulo: esBusqueda ? 'Vector de tu busqueda' : 'Vector de tu perfil',
+        detalle: esBusqueda
+          ? 'FastEmbed + ONNX procesa la consulta'
+          : 'FastEmbed + ONNX · embedding guardado',
+        dato: 'Vector de 384 dimensiones',
         icono: 'convertir',
         color: COLORES.cian,
       },
@@ -619,7 +633,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
     {
       paso: {
         titulo: 'Catálogo preparado',
-        detalle: 'Normaliza, elimina duplicados y detecta skills',
+        detalle: 'Normaliza, deduplica por externalId y detecta skills',
         dato: `${total || 'Varias'} ofertas`,
         icono: 'oferta',
         color: COLORES.azul,
@@ -631,7 +645,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
     {
       paso: {
         titulo: 'PostgreSQL + pgvector',
-        detalle: 'Similitud coseno entre el perfil y las ofertas',
+        detalle: 'pgvector es la extensión que calcula similitud coseno',
         dato: 'Operador <=>',
         icono: 'base',
         color: COLORES.violeta,
@@ -661,7 +675,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
       control: { x: (xEntrada + xConversor) / 2, y: superior },
       etapa: 0,
       color: COLORES.cian,
-      etiqueta: 'convierte',
+      etiqueta: esBusqueda ? 'convierte consulta' : 'lee embedding',
       dato: habilidades.length ? habilidades : flujo.matching.entrada,
     },
     {
@@ -679,10 +693,10 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
       control: { x: ancho * 0.45, y: superior },
       etapa: 1,
       color: COLORES.cian,
-      etiqueta: 'embedding del perfil',
+      etiqueta: esBusqueda ? 'embedding de consulta' : 'embedding del perfil',
       dato: [
         ...habilidades.map((skill) => `${skill} → valor numérico`),
-        'vector del perfil · 384 valores',
+        esBusqueda ? 'vector de consulta · 384 valores' : 'vector del perfil · 384 valores',
       ],
     },
     {
@@ -703,7 +717,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
       control: { x: (xComparador + xResultado) / 2, y: centroY },
       etapa: 2,
       color: COLORES.verde,
-      etiqueta: 'umbral + afinidad',
+      etiqueta: 'umbral + epsilon-greedy',
       dato: resultadosEnViaje.length ? resultadosEnViaje : puntaje,
     },
   ];
