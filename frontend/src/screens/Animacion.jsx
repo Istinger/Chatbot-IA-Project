@@ -826,7 +826,7 @@ function dibujarMapaBusqueda(ctx, ancho, alto, flujo, progreso) {
     {
       paso: {
         titulo: 'FastEmbed + ONNX',
-        detalle: usada,
+        detalle: 'matching-service · FastAPI',
         dato: 'Vector de 384 dimensiones',
         icono: 'convertir',
         color: COLORES.azul,
@@ -848,8 +848,8 @@ function dibujarMapaBusqueda(ctx, ancho, alto, flujo, progreso) {
     {
       paso: {
         titulo: 'Seleccion del backend',
-        detalle: `${datos.total} candidatas superan el proceso`,
-        dato: 'Umbral + epsilon-greedy',
+        detalle: `${datos.total} resultados por la API · epsilon-greedy`,
+        dato: 'MIN_TOP · MIN_ITEM',
         icono: 'ordenar',
         color: COLORES.amarillo,
       },
