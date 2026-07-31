@@ -11,6 +11,10 @@ export const METAS_ANIMACION = {
   crecimiento_analizado: { titulo: 'Como construimos tu siguiente paso', subtitulo: 'Fortalezas, oportunidades de mejora y recursos en un solo recorrido' },
   portafolio_abierto: { titulo: 'Como Jobia prepara ideas para tu portafolio', subtitulo: 'Perfil, mercado y proyectos conectados en un recorrido visible' },
   portafolio_sugerido: { titulo: 'Como nacen tus ideas de portafolio', subtitulo: 'Tus habilidades se convierten en proyectos que puedes mostrar' },
+  entrevista_configurada: { titulo: 'Como se prepara tu entrevista simulada', subtitulo: 'Tu configuracion activa un banco de preguntas sin gastar IA' },
+  entrevista_practica: { titulo: 'Que ocurre durante tu entrevista', subtitulo: 'Preguntas, respuestas y ayudas opcionales conectadas en vivo' },
+  entrevista_feedback: { titulo: 'Como se construyen tus recomendaciones', subtitulo: 'El transcript se convierte en fortalezas y mejoras accionables' },
+  entrevista_historial: { titulo: 'Como aprende tu historial de entrevistas', subtitulo: 'Tus practicas guardadas revelan los puntos que mas se repiten' },
   oferta_guardada: { titulo: 'Que ocurre al guardar una oferta', subtitulo: 'La oportunidad viaja hasta tu lista personal' },
   inicio: { titulo: 'Mira como trabaja Jobia', subtitulo: 'Cada accion se explica con un mapa claro y datos reales' },
 };

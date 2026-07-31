@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useVista } from '../lib/vista';
@@ -15,6 +15,7 @@ import {
 import Icon from '../components/Icon';
 import RichText from '../components/RichText';
 import VideoLlamada from '../components/VideoLlamada';
+import { registrarAnimacion } from '../lib/animacion';
 
 import {
   CONSEJOS_BASE,
@@ -89,6 +90,8 @@ export default function Entrevista() {
   const [plan, setPlan] = useState(null); // consejo de la IA en la pantalla inicial
   const [planCargando, setPlanCargando] = useState(false);
   const [vistaInicio, setVistaInicio] = useState('entrevista'); // entrevista | historial
+  const [sesionMeta, setSesionMeta] = useState(null);
+  const [ultimaRepregunta, setUltimaRepregunta] = useState(null);
 
   const dictadoRef = useRef(null);
   // Al parar el dictado todavia llega un ultimo `onresult`. Si ya se envio (o el
@@ -118,6 +121,73 @@ export default function Entrevista() {
   }, [hilo, pensando, feedback]);
 
   const actual = cola[0] || null;
+  const recurrentesAnimacion = useMemo(
+    () => puntosRecurrentes(entrevistas),
+    [entrevistas],
+  );
+
+  useEffect(() => {
+    const temporizador = window.setTimeout(() => {
+      const tipo =
+        fase === 'setup'
+          ? vistaInicio === 'historial'
+            ? 'entrevista_historial'
+            : 'entrevista_configurada'
+          : feedback || terminada
+            ? 'entrevista_feedback'
+            : 'entrevista_practica';
+
+      registrarAnimacion(tipo, {
+        fase,
+        vistaInicio,
+        cfg,
+        area: sesionMeta?.area || null,
+        sessionId,
+        totalPreguntas: baseTotal,
+        pendientes: cola.length,
+        respondidas: historial.length,
+        preguntaActual: actual?.texto || null,
+        esRepregunta: Boolean(actual?.rep),
+        respuestaActual: respuesta.trim(),
+        pensando,
+        escuchando,
+        ultimaRepregunta,
+        transcript: historial.slice(-4),
+        feedback,
+        entrevistas: entrevistas.slice(0, 6).map((item) => ({
+          puesto: item.puesto,
+          nivel: item.nivel,
+          modalidad: item.modalidad,
+          guardada: Boolean(item.guardada),
+          mejorar: item.feedback?.mejorar || [],
+        })),
+        recurrentes: recurrentesAnimacion,
+        planEstado: planCargando ? 'generando' : plan ? 'listo' : 'disponible',
+      });
+    }, 180);
+
+    return () => window.clearTimeout(temporizador);
+  }, [
+    actual,
+    baseTotal,
+    cfg,
+    cola.length,
+    entrevistas,
+    escuchando,
+    fase,
+    feedback,
+    historial,
+    pensando,
+    plan,
+    planCargando,
+    recurrentesAnimacion,
+    respuesta,
+    sesionMeta,
+    sessionId,
+    terminada,
+    ultimaRepregunta,
+    vistaInicio,
+  ]);
 
   /**
    * Empuja la pregunta al hilo y la lee en voz alta si esta activado.
@@ -148,6 +218,8 @@ export default function Entrevista() {
     try {
       const r = await api.interviewStart(cfg);
       setSessionId(r.sessionId);
+      setSesionMeta({ area: r.area, tipo: r.tipo, nivel: r.nivel });
+      setUltimaRepregunta(null);
       const preguntas = (r.preguntas || []).map((texto) => ({ texto, rep: false }));
       setCola(preguntas);
       setBaseTotal(preguntas.length);
@@ -225,8 +297,14 @@ export default function Entrevista() {
     if (!actual.rep && texto.length >= 40) {
       try {
         const f = await api.interviewFollowup({ sessionId, pregunta: actual.texto, respuesta: texto });
-        if (f?.texto) resto = [{ texto: f.texto, rep: true }, ...resto];
+        if (f?.texto) {
+          setUltimaRepregunta({ estado: 'generada', texto: f.texto });
+          resto = [{ texto: f.texto, rep: true }, ...resto];
+        } else {
+          setUltimaRepregunta({ estado: f?.motivo || 'omitida', texto: null });
+        }
       } catch {
+        setUltimaRepregunta({ estado: 'error', texto: null });
         /* la repregunta es opcional */
       }
     }
@@ -342,6 +420,8 @@ export default function Entrevista() {
     setCola([]);
     setError(null);
     setRespuesta('');
+    setSesionMeta(null);
+    setUltimaRepregunta(null);
   };
 
   // --- SETUP -----------------------------------------------------------------
