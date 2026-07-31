@@ -69,4 +69,31 @@ function esConsultaDeEmpleo(mensaje) {
   return pega(INTENCION) || pega(ROLES);
 }
 
-module.exports = { esConsultaDeEmpleo, INTENCION, ROLES };
+const ACCIONES_DE_OFERTAS = [
+  'busco trabajo', 'buscar trabajo', 'busca trabajo', 'buscame trabajo',
+  'encuentra trabajo', 'encuentrame trabajo', 'ver ofertas', 'muestra ofertas',
+  'dame ofertas', 'postular', 'postulacion', 'aplicar a', 'dame opciones',
+  'recomiendame trabajo',
+];
+
+const OTRO_CONTEXTO = [
+  'entrevista', 'simulacion', 'simular', 'simula', 'pregunta', 'preguntas',
+  'certificacion', 'certificaciones', 'curso', 'cursos', 'ruta de aprendizaje',
+  'curriculum', 'cv', 'perfil', 'portafolio', 'proyecto', 'mejorar', 'practicar',
+];
+
+/**
+ * Decide si las ofertas recuperadas deben convertirse en un boton visible.
+ * Recuperarlas y mostrarlas son decisiones distintas: una entrevista puede usar
+ * vacantes como contexto sin interrumpir la conversacion con "Ver 5 ofertas".
+ */
+function debeMostrarOfertas(mensaje) {
+  const texto = normalizar(mensaje);
+  const contiene = (lista) => lista.some((frase) => texto.includes(normalizar(frase)));
+
+  if (contiene(ACCIONES_DE_OFERTAS)) return true;
+  if (contiene(OTRO_CONTEXTO)) return false;
+  return esConsultaDeEmpleo(mensaje);
+}
+
+module.exports = { esConsultaDeEmpleo, debeMostrarOfertas, INTENCION, ROLES };

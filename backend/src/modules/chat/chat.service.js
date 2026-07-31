@@ -12,7 +12,7 @@ const {
   bloqueOfertaActual,
   bloquePantalla,
 } = require('./chat.prompt');
-const { esConsultaDeEmpleo } = require('./chat.intencion');
+const { esConsultaDeEmpleo, debeMostrarOfertas } = require('./chat.intencion');
 
 /** Turnos de conversacion que viajan en el prompt. Ver `historial()`. */
 const TURNOS = 6;
@@ -235,7 +235,7 @@ async function responder({ mensaje, sessionId, user, perfil, jobViendo, contexto
     respuesta,
     // Se devuelven las ofertas reales para que la UI pinte tarjetas de verdad,
     // con su enlace: el usuario no depende de que el modelo las transcriba bien.
-    jobs,
+    jobs: debeMostrarOfertas(texto) ? jobs : [],
     cuota: { usadas: cuota.usadas, limite: cuota.limite },
     cacheado: servidoDeCache,
   };

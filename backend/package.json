@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/app.js",
     "worker": "node src/worker.js",
-    "test": "node --test src/modules/access/access.device.test.js",
+    "test": "node --test src/modules/access/access.device.test.js src/modules/chat/chat.intencion.test.js",
     "prisma:generate": "prisma generate",
     "prisma:deploy": "prisma migrate deploy",
     "seed": "node prisma/seed.js"

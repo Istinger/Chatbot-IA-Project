@@ -29,6 +29,12 @@ function usuarioDelToken(token) {
   }
 }
 
+/** Nombre de almacenamiento aislado para la cuenta autenticada actual. */
+export function claveLocalUsuario(base) {
+  const usuario = usuarioDelToken(getToken());
+  return `${base}:${usuario || 'anonimo'}`;
+}
+
 function limpiarEstadoLocalUsuario() {
   ESTADO_LOCAL_USUARIO.forEach((clave) => localStorage.removeItem(clave));
   CACHE_PORTAFOLIO.forEach((clave) => sessionStorage.removeItem(clave));
