@@ -38,11 +38,13 @@ const OPCIONES = {
   ],
   carrera: [
     'Ingenieria en Software',
+    'Ingenieria en Sistemas',
     'Tecnologias de la Informacion',
     'Ciencias de la Computacion',
-    'Diseno Digital',
-    'Administracion de Empresas',
+    'Desarrollo de Software',
     'Analisis de Datos',
+    'Ciberseguridad',
+    'Redes y Telecomunicaciones',
   ],
   experiencia: [
     'Sin experiencia laboral',

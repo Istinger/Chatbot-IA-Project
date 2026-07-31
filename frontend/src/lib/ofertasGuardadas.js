@@ -1,10 +1,11 @@
+import { claveLocalUsuario } from './api';
+
 /**
  * Ofertas que el usuario marca para tenerlas a mano.
  *
- * En localStorage: el modelo `Application` existe en la base pero no hay ningun
- * endpoint que lo use, y para no perder una oferta mientras se navega basta con
- * el propio equipo. Mismo patron que las ideas del portafolio y el historial de
- * entrevistas.
+ * En localStorage, aisladas por id de usuario: el modelo `Application` existe en
+ * la base pero no hay ningun endpoint que lo use. Separar la clave evita que una
+ * cuenta nueva herede los marcadores dejados en una computadora compartida.
  *
  * Se guarda una COPIA de la oferta, no solo su id: el backend no expone
  * `GET /jobs/:id`, asi que con el id suelto no habria forma de volver a pintarla
@@ -12,11 +13,12 @@
  * viejos; por eso se guarda tambien `guardadaEn` y el detalle avisa.
  */
 const CLAVE = 'jobia_ofertas_guardadas';
+const clave = () => claveLocalUsuario(CLAVE);
 
 /** Lo que hay en disco, ya normalizado a objetos. */
 function leer() {
   try {
-    const lista = JSON.parse(localStorage.getItem(CLAVE) || '[]');
+    const lista = JSON.parse(localStorage.getItem(clave()) || '[]');
     if (!Array.isArray(lista)) return [];
     // Formato viejo: un array de ids sueltos. Se conservan para que el marcador
     // de la tarjeta siga encendido, aunque sin datos no se puedan listar.
@@ -54,6 +56,6 @@ export function alternarGuardada(oferta) {
   if (i >= 0) lista.splice(i, 1);
   else lista.push({ ...(typeof oferta === 'object' ? oferta : {}), id, guardadaEn: Date.now() });
 
-  localStorage.setItem(CLAVE, JSON.stringify(lista));
+  localStorage.setItem(clave(), JSON.stringify(lista));
   return new Set(lista.map((o) => o.id));
 }
