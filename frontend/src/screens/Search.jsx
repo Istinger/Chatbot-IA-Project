@@ -3,7 +3,7 @@ import { api } from '../lib/api';
 import { useVista } from '../lib/vista';
 import JobCard from '../components/JobCard';
 import Icon from '../components/Icon';
-import { registrarAnimacion } from '../lib/animacion';
+import { prepararOfertasAnimacion, registrarAnimacion } from '../lib/animacion';
 
 /**
  * Ejemplos afirmativos a proposito.
@@ -205,7 +205,9 @@ export default function Search() {
       setResultados(r.jobs);
       registrarAnimacion('busqueda_realizada', {
         consulta: aBuscar,
-        ofertas: r.jobs.slice(0, 3).map((job) => ({ title: job.title, company: job.company })),
+        consultaOriginal: q,
+        total: r.jobs.length,
+        ofertas: prepararOfertasAnimacion(r.jobs),
       });
     } catch (err) {
       setError(err.message);

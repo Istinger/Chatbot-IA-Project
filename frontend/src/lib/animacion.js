@@ -25,6 +25,24 @@ export function obtenerAnimaciones() {
   return leer();
 }
 
+export function prepararOfertasAnimacion(ofertas, limite = 6) {
+  return (Array.isArray(ofertas) ? ofertas : []).slice(0, limite).map((job) => ({
+    id: job.id,
+    title: job.title,
+    company: job.company,
+    location: job.location,
+    country: job.country,
+    source: job.source,
+    skills: Array.isArray(job.skills) ? job.skills.slice(0, 4) : [],
+    score: job.score,
+    salaryUsdMin: job.salaryUsdMin,
+    salaryUsdMax: job.salaryUsdMax,
+    salaryPredicted: job.salaryPredicted,
+    explored: job.explored,
+    isForeign: job.isForeign,
+  }));
+}
+
 export function registrarAnimacion(tipo, datos = {}) {
   if (typeof window === 'undefined') return null;
   const accion = {

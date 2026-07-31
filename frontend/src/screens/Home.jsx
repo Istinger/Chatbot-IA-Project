@@ -5,9 +5,11 @@ import { useVista } from '../lib/vista';
 import JobCard from '../components/JobCard';
 import Icon from '../components/Icon';
 import Refrescar from '../components/Refrescar';
-import { registrarAnimacion } from '../lib/animacion';
+import { prepararOfertasAnimacion, registrarAnimacion } from '../lib/animacion';
+import { useAuth } from '../lib/auth';
 
 export default function Home() {
+  const { perfil } = useAuth();
   const [recomendadas, setRecomendadas] = useState(null);
   const [exterior, setExterior] = useState(null);
   const [locales, setLocales] = useState(null);
@@ -70,8 +72,10 @@ export default function Home() {
         setRecomendadas(r.jobs);
         if (r.jobs?.length) {
           registrarAnimacion('ofertas_encontradas', {
-            perfil: 'Tu perfil profesional',
-            ofertas: r.jobs.slice(0, 3).map((job) => ({ title: job.title, company: job.company })),
+            perfil: perfil?.skills?.slice(0, 5).join(' · ') || 'Tu perfil profesional',
+            skills: perfil?.skills?.slice(0, 5) || [],
+            total: r.jobs.length,
+            ofertas: prepararOfertasAnimacion(r.jobs),
           });
         }
       })
@@ -89,7 +93,7 @@ export default function Home() {
     return () => {
       vivo = false;
     };
-  }, [version]);
+  }, [version, perfil]);
 
   const cargando = recomendadas === null;
   const destacada = recomendadas?.[0];
