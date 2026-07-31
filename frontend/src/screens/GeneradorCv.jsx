@@ -7,6 +7,9 @@ import { crearCvPdf, descargarPdf } from '../lib/cvPdf';
 import { registrarAnimacion } from '../lib/animacion';
 
 const OPCIONES = {
+  nombre: ['Ana Torres', 'Carlos Mena', 'Sofia Vega', 'Diego Castro'],
+  correo: ['ana@correo.com', 'carlos@email.com', 'sofia@ejemplo.com', 'diego@correo.com'],
+  telefono: ['+593 99 000 0000', '+593 98 123 4567', '+593 96 555 4321'],
   ciudad: ['Quito, Ecuador', 'Guayaquil, Ecuador', 'Cuenca, Ecuador', 'Remoto'],
   rol: [
     'Desarrollador frontend',
@@ -97,7 +100,7 @@ const INICIAL = {
   proyecto: 'Aplicacion web responsiva',
 };
 
-function ComboEditable({ label, value, onChange, options, placeholder, required = false }) {
+function ComboEditable({ label, value, onChange, options, placeholder, required = false, type = 'text' }) {
   const id = useId();
   const [abierto, setAbierto] = useState(false);
 
@@ -107,6 +110,7 @@ function ComboEditable({ label, value, onChange, options, placeholder, required 
       <div className="cvgen__combobox">
         <input
           id={id}
+          type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setAbierto(true)}
@@ -409,18 +413,9 @@ export default function GeneradorCv() {
 
           {paso === 1 && (
             <div className="cvgen__form">
-              <label className="cvgen__campo">
-                <span>Nombre completo</span>
-                <input value={datos.nombre} onChange={(e) => cambiar('nombre', e.target.value)} placeholder="Ana Torres" />
-              </label>
-              <label className="cvgen__campo">
-                <span>Correo</span>
-                <input type="email" value={datos.email} onChange={(e) => cambiar('email', e.target.value)} placeholder="ana@correo.com" />
-              </label>
-              <label className="cvgen__campo">
-                <span>Telefono</span>
-                <input type="tel" value={datos.telefono} onChange={(e) => cambiar('telefono', e.target.value)} placeholder="+593 99 000 0000" />
-              </label>
+              <ComboEditable label="Nombre completo" value={datos.nombre} onChange={(v) => cambiar('nombre', v)} options={OPCIONES.nombre} placeholder="Elige o escribe tu nombre" required />
+              <ComboEditable label="Correo" value={datos.email} onChange={(v) => cambiar('email', v)} options={OPCIONES.correo} placeholder="Elige o escribe tu correo" type="email" required />
+              <ComboEditable label="Telefono" value={datos.telefono} onChange={(v) => cambiar('telefono', v)} options={OPCIONES.telefono} placeholder="Elige o escribe tu telefono" type="tel" />
               <ComboEditable label="Ciudad o modalidad" value={datos.ciudad} onChange={(v) => cambiar('ciudad', v)} options={OPCIONES.ciudad} placeholder="Elige o escribe" />
               <ComboEditable label="Perfil profesional" value={datos.rol} onChange={(v) => cambiar('rol', v)} options={OPCIONES.rol} placeholder="Elige o escribe tu profesion" required />
               <ComboEditable label="Nivel" value={datos.nivel} onChange={(v) => cambiar('nivel', v)} options={OPCIONES.nivel} placeholder="Elige o escribe" />
