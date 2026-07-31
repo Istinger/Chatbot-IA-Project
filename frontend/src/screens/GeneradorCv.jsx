@@ -314,6 +314,7 @@ export default function GeneradorCv() {
   const cuentaCreada = useRef(false);
   const [paso, setPaso] = useState(1);
   const [datos, setDatos] = useState(INICIAL);
+  const [correosDemo, setCorreosDemo] = useState(OPCIONES.correo);
   const [skills, setSkills] = useState([]);
   const [idiomas, setIdiomas] = useState([]);
   const [error, setError] = useState('');
@@ -325,6 +326,18 @@ export default function GeneradorCv() {
   useEffect(() => {
     contenedorRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [paso]);
+
+  useEffect(() => {
+    let activo = true;
+    api.correosDemo(OPCIONES.correo)
+      .then(({ emails }) => {
+        if (activo && emails?.length) setCorreosDemo(emails);
+      })
+      // Sin conexion se conservan las opciones locales y el registro demo
+      // resolvera el sufijo cuando la API vuelva a estar disponible.
+      .catch(() => {});
+    return () => { activo = false; };
+  }, []);
 
   const siguiente = () => {
     setError('');
@@ -345,17 +358,26 @@ export default function GeneradorCv() {
   const descargarYContinuar = async () => {
     setError('');
     setProcesando(true);
-    const completos = { ...datos, perfil: datos.perfil || resumenSugerido(datos, skills), skills, idiomas };
 
     try {
-      const pdf = await crearCvPdf(completos);
-      descargarPdf(pdf.blob, pdf.archivo);
+      let datosFinales = { ...datos };
 
       if (!cuentaCreada.current) {
         const claveTemporal = `Jobia-${crypto.randomUUID()}!`;
-        await registrarDemo(datos.email, claveTemporal);
+        const registro = await registrarDemo(datos.email, claveTemporal);
+        datosFinales = { ...datosFinales, email: registro.user.email };
+        cambiar('email', registro.user.email);
         cuentaCreada.current = true;
       }
+
+      const completos = {
+        ...datosFinales,
+        perfil: datosFinales.perfil || resumenSugerido(datosFinales, skills),
+        skills,
+        idiomas,
+      };
+      const pdf = await crearCvPdf(completos);
+      descargarPdf(pdf.blob, pdf.archivo);
 
       await api.subirCv(pdf.file);
       await api.guardarSkills(skills);
@@ -414,7 +436,7 @@ export default function GeneradorCv() {
           {paso === 1 && (
             <div className="cvgen__form">
               <ComboEditable label="Nombre completo" value={datos.nombre} onChange={(v) => cambiar('nombre', v)} options={OPCIONES.nombre} placeholder="Elige o escribe tu nombre" required />
-              <ComboEditable label="Correo" value={datos.email} onChange={(v) => cambiar('email', v)} options={OPCIONES.correo} placeholder="Elige o escribe tu correo" type="email" required />
+              <ComboEditable label="Correo" value={datos.email} onChange={(v) => cambiar('email', v)} options={correosDemo} placeholder="Elige o escribe tu correo" type="email" required />
               <ComboEditable label="Telefono" value={datos.telefono} onChange={(v) => cambiar('telefono', v)} options={OPCIONES.telefono} placeholder="Elige o escribe tu telefono" type="tel" />
               <ComboEditable label="Ciudad o modalidad" value={datos.ciudad} onChange={(v) => cambiar('ciudad', v)} options={OPCIONES.ciudad} placeholder="Elige o escribe" />
               <ComboEditable label="Perfil profesional" value={datos.rol} onChange={(v) => cambiar('rol', v)} options={OPCIONES.rol} placeholder="Elige o escribe tu profesion" required />

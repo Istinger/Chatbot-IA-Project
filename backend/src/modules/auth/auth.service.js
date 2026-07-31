@@ -18,6 +18,16 @@ function firmar(user) {
   });
 }
 
+function correoConSufijo(email, sufijo = 0) {
+  const correo = String(email || '').trim().toLowerCase();
+  const indiceArroba = correo.lastIndexOf('@');
+  if (indiceArroba < 1) return correo;
+
+  const nombre = correo.slice(0, indiceArroba);
+  const dominio = correo.slice(indiceArroba);
+  return `${nombre}${sufijo || ''}${dominio}`;
+}
+
 /**
  * Registro. Crea el User y su Profile vacio de una sola vez: el perfil es
  * obligatorio para el matching, y no tener que crearlo despues evita estados
@@ -34,19 +44,67 @@ async function register({ email, password }) {
   const existe = await prisma.user.findUnique({ where: { email: correo } });
   if (existe) throw new AuthError('Ese correo ya esta registrado', 409);
 
-  const user = await prisma.user.create({
-    data: {
-      email: correo,
-      password: await bcrypt.hash(password, RONDAS),
-      profile: { create: { skills: [] } },
-    },
-    include: { profile: { select: { id: true } } },
-  });
+  let user;
+  try {
+    user = await prisma.user.create({
+      data: {
+        email: correo,
+        password: await bcrypt.hash(password, RONDAS),
+        profile: { create: { skills: [] } },
+      },
+      include: { profile: { select: { id: true } } },
+    });
+  } catch (err) {
+    // Dos equipos pueden pedir el mismo correo al mismo tiempo. La restriccion
+    // unica de Postgres es la ultima autoridad; se traduce al error de dominio.
+    if (err.code === 'P2002') throw new AuthError('Ese correo ya esta registrado', 409);
+    throw err;
+  }
 
   return {
     token: firmar(user),
     user: { id: user.id, email: user.email, profileId: user.profile.id },
   };
+}
+
+/** Opciones de correo de la casa abierta, sin exponer una consulta arbitraria. */
+async function sugerirCorreosDemo(correos) {
+  const bases = [...new Set((Array.isArray(correos) ? correos : [])
+    .slice(0, 8)
+    .map((correo) => String(correo || '').trim().toLowerCase())
+    .filter((correo) => correo.includes('@')))];
+
+  if (!bases.length) return [];
+
+  const ocupados = new Set((await prisma.user.findMany({
+    where: {
+      OR: bases.map((correo) => ({ email: { startsWith: correo.split('@')[0] } })),
+    },
+    select: { email: true },
+  })).map((user) => user.email));
+
+  return bases.map((correo) => {
+    let sufijo = 0;
+    let candidato = correoConSufijo(correo, sufijo);
+    while (ocupados.has(candidato)) {
+      sufijo += 1;
+      candidato = correoConSufijo(correo, sufijo);
+    }
+    ocupados.add(candidato);
+    return candidato;
+  });
+}
+
+/** Registro exclusivo de la demo: resuelve choques de correo entre equipos. */
+async function registerDemo({ email, password }) {
+  for (let sufijo = 0; sufijo < 100; sufijo += 1) {
+    try {
+      return await register({ email: correoConSufijo(email, sufijo), password });
+    } catch (err) {
+      if (err.status !== 409) throw err;
+    }
+  }
+  throw new AuthError('No se pudo asignar un correo de demostracion', 409);
 }
 
 async function login({ email, password }) {
@@ -70,4 +128,4 @@ async function login({ email, password }) {
   };
 }
 
-module.exports = { register, login, AuthError };
+module.exports = { register, registerDemo, sugerirCorreosDemo, login, AuthError };
