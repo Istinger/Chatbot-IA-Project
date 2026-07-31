@@ -110,7 +110,7 @@ const coincideCon = (opcion, texto) => (
   opcion.toLocaleLowerCase().includes(texto.trim().toLocaleLowerCase())
 );
 
-function ComboEditable({ label, value, onChange, options, placeholder, required = false, type = 'text' }) {
+function ComboEditable({ label, value, onChange, options, placeholder, required = false, type = 'text', editable = false }) {
   const id = useId();
   const [abierto, setAbierto] = useState(false);
   const opcionesFiltradas = options.filter((opcion) => (
@@ -127,6 +127,7 @@ function ComboEditable({ label, value, onChange, options, placeholder, required 
           type={type}
           value={value}
           onChange={(e) => {
+            if (!editable) return;
             const texto = e.target.value;
             onChange(texto);
             setAbierto(options.some((opcion) => coincideCon(opcion, texto)));
@@ -137,8 +138,10 @@ function ComboEditable({ label, value, onChange, options, placeholder, required 
           }}
           placeholder={placeholder}
           required={required}
+          readOnly={!editable}
           autoComplete="off"
           role="combobox"
+          aria-readonly={!editable}
           aria-expanded={muestraOpciones}
           aria-controls={`${id}-opciones`}
         />
@@ -548,7 +551,7 @@ export default function GeneradorCv() {
 
           {paso === 1 && (
             <div className="cvgen__form">
-              <ComboEditable label="Nombre completo" value={datos.nombre} onChange={cambiarNombre} options={OPCIONES.nombre} placeholder="Elige o escribe tu nombre" required />
+              <ComboEditable label="Nombre completo" value={datos.nombre} onChange={cambiarNombre} options={OPCIONES.nombre} placeholder="Elige o escribe tu nombre" required editable />
               <label className="cvgen__campo">
                 <span>Correo</span>
                 <input
@@ -564,7 +567,7 @@ export default function GeneradorCv() {
               <ComboEditable label="Telefono" value={datos.telefono} onChange={(v) => cambiar('telefono', v)} options={OPCIONES.telefono} placeholder="Elige o escribe tu telefono" type="tel" />
               <ComboEditable label="Ciudad o modalidad" value={datos.ciudad} onChange={(v) => cambiar('ciudad', v)} options={OPCIONES.ciudad} placeholder="Elige o escribe" />
               <ComboEditable label="Perfil profesional" value={datos.rol} onChange={(v) => cambiar('rol', v)} options={OPCIONES.rol} placeholder="Elige o escribe tu profesion" required />
-              <ComboEditable label="Nivel" value={datos.nivel} onChange={(v) => cambiar('nivel', v)} options={OPCIONES.nivel} placeholder="Elige o escribe" />
+              <ComboEditable label="Nivel" value={datos.nivel} onChange={(v) => cambiar('nivel', v)} options={OPCIONES.nivel} placeholder="Elige" editable={false} />
             </div>
           )}
 

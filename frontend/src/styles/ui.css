@@ -633,6 +633,8 @@
   padding-right: 48px;
 }
 
+.cvgen__combobox input[readonly] { cursor: pointer; }
+
 .cvgen__desplegar {
   grid-row: 1;
   grid-column: 2;
