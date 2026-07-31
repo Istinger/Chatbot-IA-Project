@@ -5201,6 +5201,18 @@
 
   /* Crecer: el pie de las tarjetas de curso (horas, demanda, gratis, flecha)
      no cabe en una linea. */
+  .crecer__cursos,
+  .cursos,
+  .curso,
+  .curso__head {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .cursos { grid-template-columns: minmax(0, 1fr); }
+  .curso__nombre,
+  .curso__provname,
+  .curso__desc { overflow-wrap: anywhere; }
   .curso__foot { flex-wrap: wrap; }
   .curso__ir { margin-left: auto; }
 
