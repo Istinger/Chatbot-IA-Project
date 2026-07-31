@@ -1185,9 +1185,150 @@
   color: var(--text-3);
 }
 
+.rail__animacion {
+  color: var(--violet, #a78bfa);
+}
+
+.rail__animacion:hover {
+  color: #c4b5fd;
+  background: rgba(167, 139, 250, 0.1);
+}
+
 .rail__salir:hover {
   color: var(--danger);
   background: rgba(255, 143, 163, 0.08);
+}
+
+/* ---------------------------------------------------------------------------
+   Animacion de actividad (pestana independiente)
+--------------------------------------------------------------------------- */
+.animacion {
+  position: relative;
+  z-index: var(--z-content);
+  width: 100%;
+  height: var(--alto-app);
+  overflow: hidden;
+  background: #020813;
+}
+
+.animacion__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.animacion__cab {
+  position: absolute;
+  top: clamp(28px, 5vh, 64px);
+  left: clamp(32px, 7vw, 110px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.animacion__marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  color: var(--glow);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.animacion__cab h1 {
+  max-width: 560px;
+  font-size: clamp(30px, 4vw, 52px);
+  line-height: 1.08;
+}
+
+.animacion__cab p {
+  margin-top: 8px;
+  color: var(--text-3);
+  font-size: var(--fs-5);
+}
+
+.animacion__controles {
+  position: absolute;
+  top: clamp(28px, 5vh, 64px);
+  right: clamp(32px, 5vw, 86px);
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+}
+
+.animacion__controles .iconbtn {
+  width: 42px;
+  height: 42px;
+  background: rgba(4, 14, 31, 0.72);
+  border-color: var(--border-2);
+  color: var(--text-2);
+  backdrop-filter: blur(12px);
+}
+
+.animacion__controles .iconbtn:hover {
+  color: var(--glow);
+  border-color: var(--glow);
+}
+
+.animacion__historial {
+  position: absolute;
+  right: clamp(32px, 5vw, 86px);
+  bottom: clamp(26px, 5vh, 62px);
+  z-index: 2;
+  width: min(440px, 38vw);
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: rgba(4, 14, 31, 0.78);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(16px);
+}
+
+.animacion__historial > span {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.animacion__historial > div {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.animacion__historial button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  max-width: 170px;
+  padding: 6px 9px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: rgba(12, 31, 62, 0.5);
+  color: var(--text-3);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.animacion__historial button.is-on {
+  border-color: rgba(114, 229, 255, 0.6);
+  background: rgba(79, 163, 255, 0.17);
+  color: var(--glow);
+}
+
+.animacion__historial p {
+  color: var(--text-3);
+  font-size: 12px;
 }
 
 .lienzo {

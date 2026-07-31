@@ -4,6 +4,8 @@ import { useVista } from '../lib/vista';
 import Icon from './Icon';
 import RichText from './RichText';
 import { formatearSalario } from '../lib/format';
+import { ofertasGuardadas } from '../lib/ofertasGuardadas';
+import { registrarAnimacion } from '../lib/animacion';
 
 /**
  * Modal glass con fondo desenfocado (DESIGN.md).
@@ -173,7 +175,13 @@ export default function JobModal({ job, onClose }) {
           <button
             type="button"
             className="perfil__iabtn modal__guardar"
-            onClick={() => alternarOfertaGuardada(job)}
+            onClick={() => {
+              const estabaGuardada = guardadas.has(job.id);
+              alternarOfertaGuardada(job);
+              if (!estabaGuardada) {
+                registrarAnimacion('oferta_guardada', { oferta: job, total: ofertasGuardadas().length });
+              }
+            }}
             aria-pressed={guardadas.has(job.id)}
           >
             <Icon name="marcador" size={16} />
