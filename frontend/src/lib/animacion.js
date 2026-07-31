@@ -3,13 +3,13 @@ const CANAL = 'jobia-animacion';
 const LIMITE = 6;
 
 export const METAS_ANIMACION = {
-  cv_generado: { titulo: 'Tu CV activa el perfil', subtitulo: 'De tus habilidades a oportunidades reales' },
-  ofertas_encontradas: { titulo: 'Tus ofertas toman forma', subtitulo: 'Encontramos oportunidades para tu perfil' },
-  busqueda_realizada: { titulo: 'Tu busqueda se convierte en resultados', subtitulo: 'La consulta encuentra oportunidades afines' },
-  crecimiento_analizado: { titulo: 'Tu proximo paso se aclara', subtitulo: 'Brechas, habilidades y cursos recomendados' },
-  portafolio_sugerido: { titulo: 'Tus habilidades inspiran proyectos', subtitulo: 'Ideas para demostrar lo que sabes hacer' },
-  oferta_guardada: { titulo: 'La oportunidad queda contigo', subtitulo: 'Guardada para revisarla cuando quieras' },
-  inicio: { titulo: 'Asi se mueve tu camino', subtitulo: 'Elige una accion de la aplicacion para verla aqui' },
+  cv_generado: { titulo: 'Que ocurre cuando cargas tu CV', subtitulo: 'Sigue el recorrido desde el documento hasta las oportunidades' },
+  ofertas_encontradas: { titulo: 'Como encontramos ofertas para ti', subtitulo: 'Tu perfil pasa por cuatro etapas faciles de seguir' },
+  busqueda_realizada: { titulo: 'Como una busqueda llega a resultados', subtitulo: 'Mira que ocurre desde que escribes hasta que aparecen ofertas' },
+  crecimiento_analizado: { titulo: 'Como construimos tu siguiente paso', subtitulo: 'Fortalezas, oportunidades de mejora y recursos en un solo recorrido' },
+  portafolio_sugerido: { titulo: 'Como nacen tus ideas de portafolio', subtitulo: 'Tus habilidades se convierten en proyectos que puedes mostrar' },
+  oferta_guardada: { titulo: 'Que ocurre al guardar una oferta', subtitulo: 'La oportunidad viaja hasta tu lista personal' },
+  inicio: { titulo: 'Mira como trabaja Jobia', subtitulo: 'Cada accion se explica con un mapa claro y datos reales' },
 };
 
 function leer() {

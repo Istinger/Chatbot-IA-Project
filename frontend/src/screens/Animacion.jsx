@@ -2,183 +2,388 @@ import { useEffect, useRef, useState } from 'react';
 import Icon from '../components/Icon';
 import { escucharAnimaciones, METAS_ANIMACION, obtenerAnimaciones } from '../lib/animacion';
 
-const AZUL = '#57a8ff';
-const CIAN = '#72e5ff';
-const VERDE = '#6ee7b7';
-const VIOLETA = '#a78bfa';
-
-const cortar = (texto, limite = 24) => {
-  const limpio = String(texto || '').trim();
-  return limpio.length > limite ? `${limpio.slice(0, limite - 1)}...` : limpio;
+const COLORES = {
+  azul: '#58a6ff',
+  cian: '#62d9f5',
+  verde: '#62d6a8',
+  violeta: '#a78bfa',
+  amarillo: '#f7c66b',
+  texto: '#eef5ff',
+  suave: '#9eb0c9',
 };
 
-function redondear(ctx, x, y, w, h, r = 16) {
+const limitar = (valor, minimo = 0, maximo = 1) => Math.max(minimo, Math.min(maximo, valor));
+const lista = (valor) => (Array.isArray(valor) ? valor : []);
+const textoCorto = (valor, limite = 38) => {
+  const texto = String(valor || '').trim();
+  return texto.length > limite ? `${texto.slice(0, limite - 1)}...` : texto;
+};
+
+function redondear(ctx, x, y, ancho, alto, radio = 12) {
   ctx.beginPath();
-  ctx.roundRect(x, y, w, h, r);
+  ctx.roundRect(x, y, ancho, alto, radio);
 }
 
-function tarjeta(ctx, x, y, w, h, { titulo, detalle, color = AZUL, icono = 'o', pulso = 0 }) {
+function escribirLineas(ctx, texto, x, y, ancho, maximo = 2, altoLinea = 18) {
+  const palabras = String(texto || '').split(/\s+/).filter(Boolean);
+  const lineas = [];
+  let linea = '';
+
+  palabras.forEach((palabra) => {
+    const candidata = linea ? `${linea} ${palabra}` : palabra;
+    if (ctx.measureText(candidata).width <= ancho || !linea) linea = candidata;
+    else {
+      lineas.push(linea);
+      linea = palabra;
+    }
+  });
+  if (linea) lineas.push(linea);
+
+  lineas.slice(0, maximo).forEach((item, indice) => {
+    const ultima = indice === maximo - 1 && lineas.length > maximo;
+    ctx.fillText(ultima ? `${textoCorto(item, Math.max(8, item.length - 2))}...` : item, x, y + indice * altoLinea);
+  });
+}
+
+function dibujarIcono(ctx, tipo, x, y, tamano, color) {
   ctx.save();
-  ctx.shadowColor = `${color}66`;
-  ctx.shadowBlur = 18 + pulso * 12;
-  redondear(ctx, x, y, w, h);
-  ctx.fillStyle = 'rgba(7, 19, 40, 0.88)';
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.strokeStyle = `${color}aa`;
-  ctx.lineWidth = 1.3;
-  ctx.stroke();
+  ctx.strokeStyle = color;
   ctx.fillStyle = `${color}22`;
-  redondear(ctx, x + 12, y + 12, 34, 34, 10);
+  ctx.lineWidth = 2;
+  redondear(ctx, x, y, tamano, tamano, 12);
   ctx.fill();
-  ctx.fillStyle = color;
-  ctx.font = '700 17px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(icono, x + 29, y + 35);
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#edf5ff';
-  ctx.font = '600 14px system-ui, sans-serif';
-  ctx.fillText(cortar(titulo, Math.max(15, Math.floor(w / 8))), x + 56, y + 29);
-  ctx.fillStyle = '#9eafc7';
-  ctx.font = '12px system-ui, sans-serif';
-  ctx.fillText(cortar(detalle, Math.max(18, Math.floor(w / 7))), x + 56, y + 49);
-  ctx.restore();
-}
 
-function conexion(ctx, x1, y1, x2, y2, p, color = AZUL) {
-  ctx.save();
-  ctx.strokeStyle = `${color}66`;
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([5, 7]);
-  ctx.lineDashOffset = -p * 42;
+  const cx = x + tamano / 2;
+  const cy = y + tamano / 2;
   ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
+
+  if (tipo === 'documento') {
+    ctx.rect(cx - 10, cy - 14, 20, 28);
+    ctx.moveTo(cx - 5, cy - 5);
+    ctx.lineTo(cx + 6, cy - 5);
+    ctx.moveTo(cx - 5, cy + 1);
+    ctx.lineTo(cx + 6, cy + 1);
+    ctx.moveTo(cx - 5, cy + 7);
+    ctx.lineTo(cx + 3, cy + 7);
+  } else if (tipo === 'leer') {
+    ctx.ellipse(cx, cy, 15, 9, 0, 0, Math.PI * 2);
+    ctx.moveTo(cx + 4, cy);
+    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  } else if (tipo === 'habilidades') {
+    ctx.arc(cx - 9, cy - 6, 4, 0, Math.PI * 2);
+    ctx.moveTo(cx + 4, cy - 10);
+    ctx.lineTo(cx + 13, cy - 10);
+    ctx.moveTo(cx - 13, cy + 7);
+    ctx.lineTo(cx - 2, cy + 7);
+    ctx.moveTo(cx + 6, cy + 3);
+    ctx.arc(cx + 6, cy + 7, 4, -Math.PI / 2, Math.PI * 1.5);
+  } else if (tipo === 'buscar') {
+    ctx.arc(cx - 3, cy - 3, 10, 0, Math.PI * 2);
+    ctx.moveTo(cx + 5, cy + 5);
+    ctx.lineTo(cx + 14, cy + 14);
+  } else if (tipo === 'comparar') {
+    [-8, 0, 8].forEach((salto, indice) => {
+      ctx.moveTo(cx - 13, cy + salto);
+      ctx.lineTo(cx + 13, cy + salto);
+      ctx.moveTo(cx - 5 + indice * 7, cy + salto - 4);
+      ctx.lineTo(cx - 5 + indice * 7, cy + salto + 4);
+    });
+  } else if (tipo === 'ordenar') {
+    [10, 17, 24].forEach((ancho, indice) => {
+      ctx.rect(cx - 13, cy - 12 + indice * 10, ancho, 5);
+    });
+  } else if (tipo === 'oferta') {
+    ctx.rect(cx - 14, cy - 8, 28, 20);
+    ctx.moveTo(cx - 6, cy - 8);
+    ctx.lineTo(cx - 6, cy - 13);
+    ctx.lineTo(cx + 6, cy - 13);
+    ctx.lineTo(cx + 6, cy - 8);
+    ctx.moveTo(cx - 14, cy);
+    ctx.lineTo(cx + 14, cy);
+  } else if (tipo === 'curso') {
+    ctx.moveTo(cx - 14, cy + 10);
+    ctx.lineTo(cx - 4, cy);
+    ctx.lineTo(cx + 4, cy + 5);
+    ctx.lineTo(cx + 14, cy - 10);
+    ctx.moveTo(cx + 8, cy - 10);
+    ctx.lineTo(cx + 14, cy - 10);
+    ctx.lineTo(cx + 14, cy - 4);
+  } else if (tipo === 'proyecto') {
+    ctx.rect(cx - 14, cy - 12, 11, 11);
+    ctx.rect(cx + 3, cy - 12, 11, 11);
+    ctx.rect(cx - 14, cy + 5, 11, 11);
+    ctx.rect(cx + 3, cy + 5, 11, 11);
+  } else if (tipo === 'guardar') {
+    ctx.moveTo(cx - 9, cy - 14);
+    ctx.lineTo(cx + 9, cy - 14);
+    ctx.lineTo(cx + 9, cy + 14);
+    ctx.lineTo(cx, cy + 8);
+    ctx.lineTo(cx - 9, cy + 14);
+    ctx.closePath();
+  } else {
+    ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+    ctx.moveTo(cx - 5, cy);
+    ctx.lineTo(cx + 5, cy);
+  }
+
   ctx.stroke();
-  ctx.setLineDash([]);
-  const t = (Math.sin(p * Math.PI * 2) + 1) / 2;
-  const x = x1 + (x2 - x1) * t;
-  const y = y1 + (y2 - y1) * t;
-  ctx.beginPath();
-  ctx.arc(x, y, 5, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 16;
-  ctx.fill();
   ctx.restore();
 }
 
-function etiqueta(ctx, texto, x, y, color = '#dceaff') {
-  ctx.fillStyle = color;
-  ctx.font = '600 12px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(cortar(texto, 28), x, y);
-  ctx.textAlign = 'left';
+function flujoDe(accion) {
+  const tipo = accion?.tipo || 'inicio';
+  const datos = accion?.datos || {};
+  const skills = lista(datos.skills);
+  const ofertas = lista(datos.ofertas);
+  const faltantes = lista(datos.faltantes);
+  const cursos = lista(datos.cursos);
+  const ideas = lista(datos.ideas);
+
+  if (tipo === 'cv_generado') {
+    return {
+      pasos: [
+        { titulo: 'Recibimos tu CV', detalle: datos.archivo || 'Documento listo', dato: '1 archivo', icono: 'documento', color: COLORES.cian },
+        { titulo: 'Leemos tu informacion', detalle: datos.nombre || 'Datos del perfil', dato: datos.rol || 'Perfil detectado', icono: 'leer', color: COLORES.azul },
+        { titulo: 'Encontramos habilidades', detalle: skills.slice(0, 3).join(', ') || 'Habilidades del CV', dato: `${skills.length} encontradas`, icono: 'habilidades', color: COLORES.violeta },
+        { titulo: 'Preparamos oportunidades', detalle: datos.ofertas || 'Ofertas para tu perfil', dato: 'Perfil listo', icono: 'oferta', color: COLORES.verde },
+      ],
+      resultado: 'Tu perfil ya puede buscar oportunidades',
+      indicadores: [['CV', 1], ['Habilidades', skills.length], ['Perfil', 1]],
+    };
+  }
+
+  if (tipo === 'ofertas_encontradas' || tipo === 'busqueda_realizada') {
+    const esBusqueda = tipo === 'busqueda_realizada';
+    return {
+      pasos: [
+        { titulo: esBusqueda ? 'Recibimos tu busqueda' : 'Tomamos tu perfil', detalle: esBusqueda ? datos.consulta || 'Lo que quieres encontrar' : datos.perfil || 'Tus preferencias', dato: esBusqueda ? 'Consulta lista' : 'Perfil listo', icono: esBusqueda ? 'buscar' : 'habilidades', color: COLORES.cian },
+        { titulo: 'Revisamos oportunidades', detalle: 'Buscamos coincidencias utiles', dato: `${ofertas.length || datos.total || 0} resultados`, icono: 'buscar', color: COLORES.azul },
+        { titulo: 'Comparamos contigo', detalle: 'Habilidades, puesto y preferencias', dato: 'Mejor encaje primero', icono: 'comparar', color: COLORES.violeta },
+        { titulo: 'Mostramos lo mejor', detalle: ofertas[0]?.title || ofertas[0] || 'Resultados ordenados', dato: ofertas[0]?.company || 'Listo para revisar', icono: 'ordenar', color: COLORES.verde },
+      ],
+      resultado: esBusqueda ? 'Tu busqueda ya tiene resultados' : 'Estas son las oportunidades mas cercanas a ti',
+      indicadores: [['Consulta', 1], ['Revisadas', Math.max(ofertas.length, Number(datos.total) || 0)], ['Destacadas', Math.min(3, ofertas.length)]],
+    };
+  }
+
+  if (tipo === 'crecimiento_analizado') {
+    return {
+      pasos: [
+        { titulo: 'Miramos tus fortalezas', detalle: datos.fortalezas || 'Lo que ya sabes hacer', dato: 'Punto de partida', icono: 'habilidades', color: COLORES.verde },
+        { titulo: 'Vemos que estan pidiendo', detalle: `${datos.analizadas || 'Varias'} ofertas revisadas`, dato: 'Demanda real', icono: 'buscar', color: COLORES.azul },
+        { titulo: 'Detectamos oportunidades', detalle: faltantes.slice(0, 2).join(', ') || 'Habilidades por reforzar', dato: `${faltantes.length} por aprender`, icono: 'comparar', color: COLORES.violeta },
+        { titulo: 'Trazamos un camino', detalle: cursos[0]?.titulo || cursos[0] || 'Curso recomendado', dato: `${cursos.length} recursos`, icono: 'curso', color: COLORES.cian },
+      ],
+      resultado: 'Ya tienes un siguiente paso claro',
+      indicadores: [['Fortalezas', Number(datos.fortalezas?.length) || 1], ['Por aprender', faltantes.length], ['Cursos', cursos.length]],
+    };
+  }
+
+  if (tipo === 'portafolio_sugerido') {
+    return {
+      pasos: [
+        { titulo: 'Partimos de tus habilidades', detalle: skills.slice(0, 3).join(', ') || 'Tu perfil', dato: `${skills.length} habilidades`, icono: 'habilidades', color: COLORES.azul },
+        { titulo: 'Buscamos combinaciones', detalle: 'Ideas que puedes demostrar', dato: 'Opciones posibles', icono: 'comparar', color: COLORES.violeta },
+        { titulo: 'Creamos ideas practicas', detalle: ideas[0]?.titulo || ideas[0] || 'Proyecto sugerido', dato: `${ideas.length} ideas`, icono: 'proyecto', color: COLORES.cian },
+        { titulo: 'Preparamos tu vitrina', detalle: 'Proyectos para mostrar', dato: 'Portafolio listo', icono: 'oferta', color: COLORES.verde },
+      ],
+      resultado: 'Tus habilidades ahora tienen algo visible que mostrar',
+      indicadores: [['Habilidades', skills.length], ['Ideas', ideas.length], ['Proyecto', ideas.length ? 1 : 0]],
+    };
+  }
+
+  if (tipo === 'oferta_guardada') {
+    const oferta = datos.oferta || {};
+    return {
+      pasos: [
+        { titulo: 'Elegiste una oferta', detalle: oferta.title || 'Oportunidad seleccionada', dato: oferta.company || 'Oferta', icono: 'oferta', color: COLORES.azul },
+        { titulo: 'Confirmamos tu eleccion', detalle: 'La marcamos para ti', dato: 'Seleccionada', icono: 'comparar', color: COLORES.cian },
+        { titulo: 'La llevamos a Guardados', detalle: 'Queda disponible en tu perfil', dato: 'Guardada', icono: 'guardar', color: COLORES.violeta },
+        { titulo: 'Lista para volver', detalle: 'Puedes revisarla cuando quieras', dato: `${datos.total || 1} guardada${datos.total === 1 ? '' : 's'}`, icono: 'ordenar', color: COLORES.verde },
+      ],
+      resultado: 'La oportunidad quedo guardada correctamente',
+      indicadores: [['Elegida', 1], ['Guardadas', Number(datos.total) || 1], ['Disponible', 1]],
+    };
+  }
+
+  return {
+    pasos: [
+      { titulo: 'Haz una accion en Jobia', detalle: 'Carga un CV, busca o guarda una oferta', dato: 'Esperando', icono: 'documento', color: COLORES.cian },
+      { titulo: 'Veremos que ocurre', detalle: 'Cada etapa aparecera aqui', dato: 'Paso a paso', icono: 'leer', color: COLORES.azul },
+      { titulo: 'Usaremos tus datos', detalle: 'Solo lo necesario para explicarlo', dato: 'Datos reales', icono: 'comparar', color: COLORES.violeta },
+      { titulo: 'Mostraremos el resultado', detalle: 'Claro y facil de seguir', dato: 'Listo', icono: 'oferta', color: COLORES.verde },
+    ],
+    resultado: 'El mapa se actualiza con la actividad de la aplicacion',
+    indicadores: [['Entrada', 1], ['Etapas', 4], ['Resultado', 1]],
+  };
 }
 
-function ficha(ctx, texto, x, y, color, alfa = 1) {
-  ctx.save();
-  ctx.globalAlpha = alfa;
-  ctx.font = '600 11px system-ui, sans-serif';
-  const w = Math.max(58, ctx.measureText(cortar(texto, 14)).width + 20);
-  ctx.fillStyle = `${color}22`;
-  redondear(ctx, x, y, w, 26, 13);
-  ctx.fill();
-  ctx.strokeStyle = `${color}88`;
-  ctx.stroke();
-  ctx.fillStyle = color;
-  ctx.textAlign = 'center';
-  ctx.fillText(cortar(texto, 14), x + w / 2, y + 17);
-  ctx.restore();
-  return w;
-}
-
-function dibujarFondo(ctx, w, h, t) {
-  const fondo = ctx.createRadialGradient(w * 0.56, h * 0.16, 0, w * 0.56, h * 0.16, Math.max(w, h));
-  fondo.addColorStop(0, '#12366d');
-  fondo.addColorStop(0.42, '#061630');
-  fondo.addColorStop(1, '#020813');
+function dibujarFondo(ctx, ancho, alto) {
+  const fondo = ctx.createLinearGradient(0, 0, ancho, alto);
+  fondo.addColorStop(0, '#06152d');
+  fondo.addColorStop(0.48, '#041023');
+  fondo.addColorStop(1, '#020812');
   ctx.fillStyle = fondo;
-  ctx.fillRect(0, 0, w, h);
-  for (let i = 0; i < 58; i += 1) {
-    const x = (i * 97 + 41) % w;
-    const y = (i * 61 + 29) % h;
-    const brillo = 0.18 + ((Math.sin(t * 0.001 + i) + 1) / 2) * 0.34;
-    ctx.fillStyle = `rgba(116, 177, 255, ${brillo})`;
-    ctx.fillRect(x, y, i % 5 === 0 ? 2 : 1, i % 5 === 0 ? 2 : 1);
+  ctx.fillRect(0, 0, ancho, alto);
+
+  ctx.strokeStyle = 'rgba(100, 157, 225, 0.055)';
+  ctx.lineWidth = 1;
+  const tamano = 48;
+  for (let x = 0; x < ancho; x += tamano) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, alto);
+    ctx.stroke();
+  }
+  for (let y = 0; y < alto; y += tamano) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(ancho, y);
+    ctx.stroke();
   }
 }
 
-function escenaCv(ctx, w, h, p, datos) {
-  const y = h * 0.42;
-  const cvX = w * 0.09;
-  const perfilX = w * 0.39;
-  const ofertaX = w * 0.68;
-  tarjeta(ctx, cvX, y - 42, w * 0.19, 82, { titulo: datos.archivo || 'Tu CV', detalle: datos.nombre || 'Nuevo perfil', color: CIAN, icono: 'CV', pulso: p });
-  tarjeta(ctx, perfilX, y - 52, w * 0.2, 100, { titulo: datos.rol || 'Tu perfil', detalle: `${(datos.skills || []).length} habilidades`, color: AZUL, icono: 'Yo', pulso: p });
-  tarjeta(ctx, ofertaX, y - 52, w * 0.23, 100, { titulo: 'Ofertas para ti', detalle: datos.ofertas || 'Coincidencias reales', color: VERDE, icono: '+', pulso: p });
-  conexion(ctx, cvX + w * 0.19, y, perfilX, y, p, CIAN);
-  conexion(ctx, perfilX + w * 0.2, y, ofertaX, y, p + 0.3, VERDE);
-  let x = perfilX - 4;
-  (datos.skills || []).slice(0, 4).forEach((skill, i) => { x += ficha(ctx, skill, x, y + 68 + (i % 2) * 34, i % 2 ? VIOLETA : CIAN, 0.7 + 0.3 * Math.sin(p * 6 + i)); });
-  etiqueta(ctx, 'El CV hace visible lo que sabes hacer', w / 2, h * 0.2, '#b9d7ff');
+function dibujarConexion(ctx, x1, x2, y, avance, color) {
+  ctx.save();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(105, 145, 196, 0.2)';
+  ctx.beginPath();
+  ctx.moveTo(x1, y);
+  ctx.lineTo(x2, y);
+  ctx.stroke();
+
+  const progreso = limitar(avance);
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x1, y);
+  ctx.lineTo(x1 + (x2 - x1) * progreso, y);
+  ctx.stroke();
+
+  if (progreso > 0 && progreso < 1) {
+    const pulsoX = x1 + (x2 - x1) * progreso;
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.arc(pulsoX, y, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
-function escenaOfertas(ctx, w, h, p, datos, esBusqueda = false) {
-  const consulta = esBusqueda ? datos.consulta || 'Tu busqueda' : datos.perfil || 'Tu perfil';
-  const resultados = datos.ofertas || [];
-  const origenX = w * 0.1;
-  const centroX = w * 0.4;
-  const destinoX = w * 0.68;
-  tarjeta(ctx, origenX, h * 0.42 - 42, w * 0.21, 82, { titulo: consulta, detalle: esBusqueda ? 'Lo que quieres encontrar' : 'Habilidades y preferencias', color: CIAN, icono: esBusqueda ? '?' : 'Yo', pulso: p });
-  tarjeta(ctx, centroX, h * 0.42 - 42, w * 0.18, 82, { titulo: 'Afinidad', detalle: 'Buscando coincidencias', color: VIOLETA, icono: '~', pulso: p });
-  conexion(ctx, origenX + w * 0.21, h * 0.42, centroX, h * 0.42, p, CIAN);
-  conexion(ctx, centroX + w * 0.18, h * 0.42, destinoX, h * 0.42, p + 0.5, VERDE);
-  resultados.slice(0, 3).forEach((oferta, i) => tarjeta(ctx, destinoX, h * 0.24 + i * 86, w * 0.24, 68, { titulo: oferta.title || oferta, detalle: oferta.company || 'Oportunidad encontrada', color: i === 0 ? VERDE : AZUL, icono: '+', pulso: Math.max(0, Math.sin(p * 7 + i)) }));
-  etiqueta(ctx, esBusqueda ? 'Tu consulta se transforma en oportunidades' : 'Las mejores coincidencias llegan a tu pantalla', w / 2, h * 0.16, '#b9d7ff');
+function dibujarPaso(ctx, paso, indice, x, y, ancho, alto, avance) {
+  const completado = avance >= 1;
+  const activo = avance > 0 && avance < 1;
+  const intensidad = completado ? 1 : activo ? 0.88 : 0.48;
+
+  ctx.save();
+  ctx.globalAlpha = intensidad;
+  ctx.shadowColor = activo ? `${paso.color}88` : 'transparent';
+  ctx.shadowBlur = activo ? 24 : 0;
+  redondear(ctx, x, y, ancho, alto, 14);
+  ctx.fillStyle = completado || activo ? 'rgba(8, 24, 49, 0.94)' : 'rgba(6, 17, 35, 0.82)';
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = completado || activo ? `${paso.color}aa` : 'rgba(104, 143, 194, 0.28)';
+  ctx.lineWidth = activo ? 2 : 1;
+  ctx.stroke();
+
+  dibujarIcono(ctx, paso.icono, x + 18, y + 18, 48, paso.color);
+
+  ctx.fillStyle = paso.color;
+  ctx.font = '700 11px system-ui, sans-serif';
+  ctx.fillText(`PASO ${indice + 1}`, x + 80, y + 32);
+  ctx.fillStyle = COLORES.texto;
+  ctx.font = '700 17px system-ui, sans-serif';
+  escribirLineas(ctx, paso.titulo, x + 80, y + 56, ancho - 98, 2, 19);
+
+  ctx.fillStyle = COLORES.suave;
+  ctx.font = '13px system-ui, sans-serif';
+  escribirLineas(ctx, paso.detalle, x + 18, y + 102, ancho - 36, 2, 18);
+
+  ctx.font = '700 12px system-ui, sans-serif';
+  const dato = textoCorto(paso.dato, 28);
+  const pastilla = Math.min(ancho - 36, ctx.measureText(dato).width + 24);
+  redondear(ctx, x + 18, y + alto - 42, pastilla, 26, 13);
+  ctx.fillStyle = `${paso.color}1f`;
+  ctx.fill();
+  ctx.fillStyle = paso.color;
+  ctx.fillText(dato, x + 30, y + alto - 24);
+
+  ctx.fillStyle = completado ? COLORES.verde : activo ? COLORES.amarillo : COLORES.suave;
+  ctx.font = '700 10px system-ui, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(completado ? 'COMPLETADO' : activo ? 'AHORA' : 'SIGUE', x + ancho - 18, y + alto - 24);
+  ctx.restore();
 }
 
-function escenaCrecimiento(ctx, w, h, p, datos) {
-  const faltantes = datos.faltantes || [];
-  const cursos = datos.cursos || [];
-  tarjeta(ctx, w * 0.1, h * 0.36, w * 0.22, 84, { titulo: 'Lo que ya tienes', detalle: datos.fortalezas || 'Tus habilidades', color: VERDE, icono: '+', pulso: p });
-  tarjeta(ctx, w * 0.4, h * 0.36, w * 0.2, 84, { titulo: 'Siguiente paso', detalle: faltantes[0] || 'Brecha prioritaria', color: VIOLETA, icono: '!', pulso: p });
-  tarjeta(ctx, w * 0.68, h * 0.36, w * 0.22, 84, { titulo: 'Por donde empezar', detalle: cursos[0] || 'Curso recomendado', color: CIAN, icono: '>', pulso: p });
-  conexion(ctx, w * 0.32, h * 0.4, w * 0.4, h * 0.4, p, VERDE);
-  conexion(ctx, w * 0.6, h * 0.4, w * 0.68, h * 0.4, p + 0.4, CIAN);
-  faltantes.slice(0, 3).forEach((skill, i) => ficha(ctx, skill, w * 0.39 + i * 82, h * 0.56, VIOLETA, 0.9));
-  etiqueta(ctx, `Analizamos ${datos.analizadas || 'tus'} ofertas para sugerir un camino claro`, w / 2, h * 0.2, '#b9d7ff');
+function dibujarIndicadores(ctx, flujo, x, y, ancho, alto, visible) {
+  ctx.save();
+  ctx.globalAlpha = visible;
+  redondear(ctx, x, y, ancho, alto, 14);
+  ctx.fillStyle = 'rgba(7, 20, 42, 0.9)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(100, 154, 220, 0.28)';
+  ctx.stroke();
+
+  ctx.fillStyle = COLORES.suave;
+  ctx.font = '700 11px system-ui, sans-serif';
+  ctx.fillText('RESULTADO DE ESTA EJECUCION', x + 20, y + 26);
+  ctx.fillStyle = COLORES.texto;
+  ctx.font = '700 18px system-ui, sans-serif';
+  escribirLineas(ctx, flujo.resultado, x + 20, y + 54, ancho * 0.52, 2, 22);
+
+  const maximo = Math.max(1, ...flujo.indicadores.map(([, valor]) => Number(valor) || 0));
+  const inicioX = x + ancho * 0.58;
+  const disponible = ancho * 0.36;
+  flujo.indicadores.slice(0, 3).forEach(([nombre, valor], indice) => {
+    const filaY = y + 25 + indice * 34;
+    const numero = Number(valor) || 0;
+    ctx.fillStyle = COLORES.suave;
+    ctx.font = '11px system-ui, sans-serif';
+    ctx.fillText(nombre, inicioX, filaY);
+    ctx.fillStyle = 'rgba(95, 133, 185, 0.18)';
+    redondear(ctx, inicioX, filaY + 7, disponible, 8, 4);
+    ctx.fill();
+    const barra = numero === 0 ? 0 : Math.max(8, disponible * (numero / maximo));
+    ctx.fillStyle = [COLORES.cian, COLORES.violeta, COLORES.verde][indice];
+    redondear(ctx, inicioX, filaY + 7, barra, 8, 4);
+    ctx.fill();
+    ctx.fillStyle = COLORES.texto;
+    ctx.font = '700 11px system-ui, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(String(numero), x + ancho - 20, filaY);
+    ctx.textAlign = 'left';
+  });
+  ctx.restore();
 }
 
-function escenaPortafolio(ctx, w, h, p, datos) {
-  const ideas = datos.ideas || [];
-  tarjeta(ctx, w * 0.1, h * 0.4, w * 0.22, 84, { titulo: 'Tus habilidades', detalle: (datos.skills || []).slice(0, 3).join(', ') || 'Tu perfil', color: AZUL, icono: 'Yo', pulso: p });
-  tarjeta(ctx, w * 0.4, h * 0.4, w * 0.2, 84, { titulo: 'Una idea toma forma', detalle: 'Lo que puedes demostrar', color: VIOLETA, icono: '*', pulso: p });
-  conexion(ctx, w * 0.32, h * 0.44, w * 0.4, h * 0.44, p, AZUL);
-  conexion(ctx, w * 0.6, h * 0.44, w * 0.68, h * 0.44, p + 0.35, CIAN);
-  ideas.slice(0, 3).forEach((idea, i) => tarjeta(ctx, w * 0.68, h * 0.23 + i * 88, w * 0.22, 68, { titulo: idea.titulo || idea, detalle: idea.tipo || 'Proyecto sugerido', color: i === 0 ? CIAN : VERDE, icono: 'P', pulso: Math.max(0, Math.sin(p * 7 + i)) }));
-  etiqueta(ctx, 'Un proyecto convierte tus habilidades en evidencia visible', w / 2, h * 0.2, '#b9d7ff');
-}
+function dibujarMapa(ctx, ancho, alto, accion, progreso) {
+  dibujarFondo(ctx, ancho, alto);
+  const flujo = flujoDe(accion);
+  const margen = Math.max(48, ancho * 0.065);
+  const separacion = Math.max(18, ancho * 0.015);
+  const anchoPaso = (ancho - margen * 2 - separacion * 3) / 4;
+  const altoPaso = Math.min(205, alto * 0.25);
+  const y = Math.max(220, alto * 0.31);
+  const recorrido = progreso * flujo.pasos.length;
 
-function escenaGuardada(ctx, w, h, p, datos) {
-  const oferta = datos.oferta || {};
-  tarjeta(ctx, w * 0.12, h * 0.38, w * 0.26, 90, { titulo: oferta.title || 'Oferta', detalle: oferta.company || 'Oportunidad seleccionada', color: AZUL, icono: '+', pulso: p });
-  tarjeta(ctx, w * 0.62, h * 0.38, w * 0.26, 90, { titulo: 'Guardados', detalle: `${datos.total || 1} oportunidad${datos.total === 1 ? '' : 'es'} a mano`, color: VERDE, icono: 'B', pulso: p });
-  conexion(ctx, w * 0.38, h * 0.43, w * 0.62, h * 0.43, p, VERDE);
-  etiqueta(ctx, 'La guardaste para volver a ella cuando quieras', w / 2, h * 0.23, '#b9d7ff');
-}
+  ctx.fillStyle = COLORES.suave;
+  ctx.font = '700 11px system-ui, sans-serif';
+  ctx.fillText('ASI AVANZA LA ACCION', margen, y - 30);
 
-function dibujarEscena(ctx, w, h, accion, p) {
-  dibujarFondo(ctx, w, h, p * 1000);
-  const tipo = accion?.tipo || 'inicio';
-  const datos = accion?.datos || {};
-  if (tipo === 'cv_generado') escenaCv(ctx, w, h, p, datos);
-  else if (tipo === 'ofertas_encontradas') escenaOfertas(ctx, w, h, p, datos);
-  else if (tipo === 'busqueda_realizada') escenaOfertas(ctx, w, h, p, datos, true);
-  else if (tipo === 'crecimiento_analizado') escenaCrecimiento(ctx, w, h, p, datos);
-  else if (tipo === 'portafolio_sugerido') escenaPortafolio(ctx, w, h, p, datos);
-  else if (tipo === 'oferta_guardada') escenaGuardada(ctx, w, h, p, datos);
-  else escenaOfertas(ctx, w, h, p, { perfil: 'Tu actividad en Jobia', ofertas: [] });
+  flujo.pasos.forEach((paso, indice) => {
+    const x = margen + indice * (anchoPaso + separacion);
+    const avance = limitar(recorrido - indice);
+    dibujarPaso(ctx, paso, indice, x, y, anchoPaso, altoPaso, avance);
+    if (indice < flujo.pasos.length - 1) {
+      const avanceConexion = limitar(recorrido - indice - 0.76);
+      dibujarConexion(ctx, x + anchoPaso, x + anchoPaso + separacion, y + altoPaso / 2, avanceConexion, paso.color);
+    }
+  });
+
+  const panelY = Math.min(alto - 185, y + altoPaso + Math.max(42, alto * 0.065));
+  dibujarIndicadores(ctx, flujo, margen, panelY, Math.min(ancho * 0.48, 650), 135, limitar((progreso - 0.62) * 3));
 }
 
 export default function Animacion() {
@@ -190,11 +395,12 @@ export default function Animacion() {
   const [pausada, setPausada] = useState(false);
 
   useEffect(() => escucharAnimaciones((nueva) => {
-    const lista = obtenerAnimaciones();
-    setAcciones(lista);
+    const accionesActuales = obtenerAnimaciones();
+    setAcciones(accionesActuales);
     if (nueva) {
       setActiva(nueva);
       inicioRef.current = performance.now();
+      setPausada(false);
     }
   }), []);
 
@@ -206,6 +412,7 @@ export default function Animacion() {
     let frame = 0;
     let ancho = 0;
     let alto = 0;
+
     const ajustar = () => {
       const rect = marco.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -217,11 +424,14 @@ export default function Animacion() {
       canvas.style.height = `${alto}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
+
     const dibujar = (ahora) => {
-      const progreso = pausada ? 0.5 : ((ahora - inicioRef.current) % 9000) / 9000;
-      dibujarEscena(ctx, ancho, alto, activa, progreso);
+      const transcurrido = (ahora - inicioRef.current) % 11000;
+      const progreso = pausada ? 1 : Math.min(transcurrido / 8500, 1);
+      dibujarMapa(ctx, ancho, alto, activa, progreso);
       frame = requestAnimationFrame(dibujar);
     };
+
     ajustar();
     const observer = new ResizeObserver(ajustar);
     observer.observe(marco);
@@ -233,32 +443,48 @@ export default function Animacion() {
   }, [activa, pausada]);
 
   const meta = METAS_ANIMACION[activa?.tipo] || METAS_ANIMACION.inicio;
-  const repetir = () => { inicioRef.current = performance.now(); setPausada(false); };
+  const repetir = () => {
+    inicioRef.current = performance.now();
+    setPausada(false);
+  };
 
   return (
     <main ref={marcoRef} className="animacion">
-      <canvas ref={canvasRef} className="animacion__canvas" aria-label="Animacion de la actividad reciente" />
+      <canvas ref={canvasRef} className="animacion__canvas" aria-label="Mapa visual de la actividad reciente" />
       <header className="animacion__cab">
-        <span className="animacion__marca"><Icon name="animacion" size={18} /> JOBIA EN MOVIMIENTO</span>
+        <span className="animacion__marca"><Icon name="animacion" size={18} /> MAPA EN VIVO</span>
         <div>
           <h1>{meta.titulo}</h1>
           <p>{meta.subtitulo}</p>
         </div>
       </header>
-      <aside className="animacion__controles" aria-label="Controles de animacion">
-        <button type="button" className="iconbtn" onClick={() => setPausada((v) => !v)} aria-label={pausada ? 'Reanudar' : 'Pausar'}>
+      <aside className="animacion__controles" aria-label="Controles del mapa">
+        <button type="button" className="iconbtn" onClick={() => setPausada((valor) => !valor)} aria-label={pausada ? 'Reanudar recorrido' : 'Mostrar resultado'}>
           <Icon name={pausada ? 'derecha' : 'pausa'} size={18} />
         </button>
-        <button type="button" className="iconbtn" onClick={repetir} aria-label="Repetir animacion"><Icon name="refrescar" size={18} /></button>
-        <button type="button" className="iconbtn" onClick={() => window.close()} aria-label="Cerrar pestaña"><Icon name="cerrar" size={18} /></button>
+        <button type="button" className="iconbtn" onClick={repetir} aria-label="Repetir recorrido"><Icon name="refrescar" size={18} /></button>
+        <button type="button" className="iconbtn" onClick={() => window.close()} aria-label="Cerrar pestana"><Icon name="cerrar" size={18} /></button>
       </aside>
       <section className="animacion__historial" aria-label="Acciones recientes">
-        <span>Acciones recientes</span>
+        <span>Ver otra ejecucion</span>
         <div>
           {acciones.length ? acciones.map((accion) => {
             const item = METAS_ANIMACION[accion.tipo] || METAS_ANIMACION.inicio;
-            return <button key={accion.id} type="button" className={activa?.id === accion.id ? 'is-on' : ''} onClick={() => { setActiva(accion); inicioRef.current = performance.now(); }}><Icon name="animacion" size={14} />{item.titulo}</button>;
-          }) : <p>Aun no hay una accion para mostrar.</p>}
+            return (
+              <button
+                key={accion.id}
+                type="button"
+                className={activa?.id === accion.id ? 'is-on' : ''}
+                onClick={() => {
+                  setActiva(accion);
+                  inicioRef.current = performance.now();
+                  setPausada(false);
+                }}
+              >
+                <Icon name="animacion" size={14} />{item.titulo}
+              </button>
+            );
+          }) : <p>Realiza una accion en Jobia para verla paso a paso.</p>}
         </div>
       </section>
     </main>
