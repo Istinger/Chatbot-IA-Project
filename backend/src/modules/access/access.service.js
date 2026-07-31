@@ -50,6 +50,8 @@ function asegurarToken(req, res) {
 
 async function estado(req, res) {
   const token = asegurarToken(req, res);
+  const mobile = esMovil(req);
+  const adminMobile = mobile && Boolean(resolverAdmin(req));
   const [registro, settings] = await Promise.all([
     prisma.deviceAccess.findUnique({
       where: { tokenHash: hashToken(token) },
@@ -58,8 +60,9 @@ async function estado(req, res) {
   ]);
 
   return {
-    mobile: esMovil(req),
-    status: !esMovil(req) && settings.allowAll
+    mobile,
+    adminMobile,
+    status: !mobile && settings.allowAll
       ? 'approved'
       : registro?.status || 'not_requested',
     allowAll: settings.allowAll,

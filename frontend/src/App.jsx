@@ -100,13 +100,24 @@ function useFotos() {
   }, []);
 }
 
-function AplicacionAutorizada() {
+function AplicacionAutorizada({ adminMobile = false }) {
   useFotos();
 
   return (
-    <AuthProvider>
-      <Rutas />
-    </AuthProvider>
+    <>
+      {adminMobile && (
+        <button
+          type="button"
+          className="admin-mobile-return"
+          onClick={() => window.location.assign('/su_admin')}
+        >
+          Volver al panel
+        </button>
+      )}
+      <AuthProvider>
+        <Rutas />
+      </AuthProvider>
+    </>
   );
 }
 
@@ -153,7 +164,9 @@ function ControlEntrada() {
     return <SuperAdmin />;
   }
 
-  if (acceso?.mobile) return <MobileBlocked />;
+  if (acceso?.mobile && !acceso.adminMobile) return <MobileBlocked />;
+
+  if (acceso?.adminMobile) return <AplicacionAutorizada adminMobile />;
 
   if (acceso?.status !== 'approved') {
     if (ubicacion.pathname !== '/') return <Navigate to="/" replace />;

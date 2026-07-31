@@ -258,6 +258,19 @@ export default function SuperAdmin() {
         <div><strong>{grupos.autorizadas.length}</strong><span>Autorizadas</span></div>
       </div>
 
+      <button
+        type="button"
+        className="admin-preview"
+        onClick={() => window.location.assign('/login')}
+      >
+        <span className="admin-preview__icon"><Icon name="ojo" size={22} /></span>
+        <span>
+          <strong>Ver Jobia en este telefono</strong>
+          <small>Navega por la version movil con tu sesion administrativa.</small>
+        </span>
+        <Icon name="derecha" size={18} />
+      </button>
+
       <label className={`admin-bypass ${allowAll ? 'admin-bypass--on' : ''}`}>
         <span className="admin-bypass__check">
           <input
