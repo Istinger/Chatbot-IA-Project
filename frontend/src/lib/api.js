@@ -30,6 +30,7 @@ async function request(path, { method = 'GET', body, formData } = {}) {
     res = await fetch(`${BASE}${path}`, {
       method,
       headers,
+      credentials: 'same-origin',
       body: formData ?? (body ? JSON.stringify(body) : undefined),
     });
   } catch {
@@ -47,6 +48,30 @@ async function request(path, { method = 'GET', body, formData } = {}) {
 }
 
 export const api = {
+  estadoAcceso: () => request('/access/status'),
+
+  solicitarAcceso: () => request('/access/request', { method: 'POST' }),
+
+  adminLogin: (email, password) =>
+    request('/access/admin/login', { method: 'POST', body: { email, password } }),
+
+  adminSesion: () => request('/access/admin/session'),
+
+  adminDispositivos: () => request('/access/admin/devices'),
+
+  adminConfiguracionAcceso: () => request('/access/admin/settings'),
+
+  adminCambiarAccesoLibre: (allowAll) =>
+    request('/access/admin/settings', { method: 'PUT', body: { allowAll } }),
+
+  adminRevisarDispositivo: (id, status) =>
+    request(`/access/admin/devices/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: { status },
+    }),
+
+  adminLogout: () => request('/access/admin/logout', { method: 'POST' }),
+
   registro: (email, password) =>
     request('/auth/register', { method: 'POST', body: { email, password } }),
 

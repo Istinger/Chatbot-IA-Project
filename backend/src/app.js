@@ -4,6 +4,7 @@ const { prisma } = require('./config/db');
 const { connection } = require('./config/redis');
 const { ok, fail } = require('./shared/envelope');
 const { requireAdmin } = require('./shared/admin.middleware');
+const { requireDeviceAccess } = require('./shared/access.middleware');
 const llm = require('./config/openrouter');
 
 const app = express();
@@ -50,6 +51,12 @@ api.get('/health', async (_req, res) => {
  * openrouter.ai/activity).
  */
 api.get('/health/llm', requireAdmin, (_req, res) => ok(res, llm.consumo));
+
+// La puerta de la casa abierta queda antes del resto de modulos. Status,
+// solicitud y panel admin deben poder funcionar cuando la PC aun no fue
+// aprobada; todas las demas rutas exigen el dispositivo autorizado.
+api.use('/access', require('./modules/access/access.controller'));
+api.use(requireDeviceAccess);
 
 api.use('/auth', require('./modules/auth/auth.controller'));
 api.use('/profile', require('./modules/profile/profile.controller'));

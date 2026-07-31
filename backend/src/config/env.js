@@ -14,6 +14,16 @@ module.exports = {
   jwtSecret: required('JWT_SECRET'),
   jwtExpira: process.env.JWT_EXPIRA || '7d',
 
+  demoAccess: {
+    adminEmail: (process.env.DEMO_ADMIN_EMAIL || 'revi@gmail.com').trim().toLowerCase(),
+    // Se exige un hash bcrypt para que la contrasena nunca viva en Git ni en el
+    // frontend. Sin hash, el panel responde 503 y la aplicacion no queda abierta.
+    adminPasswordHash: process.env.DEMO_ADMIN_PASSWORD_HASH || '',
+    adminJwtSecret: process.env.DEMO_ADMIN_JWT_SECRET || process.env.JWT_SECRET,
+    adminExpira: process.env.DEMO_ADMIN_EXPIRA || '8h',
+    deviceCookieDays: Number(process.env.DEMO_DEVICE_COOKIE_DAYS || 7),
+  },
+
   // Secreto de las rutas de diagnostico (GET /health/llm). Es opcional a
   // proposito: si no esta, el endpoint responde 404 en vez de quedar abierto.
   adminToken: process.env.ADMIN_TOKEN || '',
