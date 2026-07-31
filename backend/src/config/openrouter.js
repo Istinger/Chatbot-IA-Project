@@ -11,8 +11,23 @@ const env = require('./env');
  */
 const URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-// Contador de la vida del proceso. Sirve para saber cuanto se esta gastando.
-const consumo = { peticiones: 0, tokensEntrada: 0, tokensSalida: 0, porModelo: {} };
+/**
+ * Contador de la vida del PROCESO: se reinicia al reiniciar el contenedor. No es
+ * un historico de facturacion, es "cuanto lleva gastado este despliegue" — que
+ * es justo lo que hace falta para vigilar una jornada de demo. Se expone en
+ * GET /health/llm (protegido por ADMIN_TOKEN).
+ *
+ * El coste no se calcula con una tabla de precios local: OpenRouter devuelve el
+ * importe exacto en `usage.cost` de cada respuesta. Una tabla propia envejeceria
+ * en silencio y mentiria.
+ */
+const consumo = {
+  peticiones: 0,
+  tokensEntrada: 0,
+  tokensSalida: 0,
+  costeUsd: 0,
+  porModelo: {}, // id -> { peticiones, costeUsd }
+};
 
 class LlmError extends Error {
   constructor(message, status) {
@@ -33,8 +48,8 @@ function traducirError(status, cuerpo) {
   if (status === 402) return new LlmError('OpenRouter: sin saldo suficiente', 502);
   if (status === 429) {
     return new LlmError(
-      'Todos los modelos gratuitos estan saturados ahora mismo. Vuelve a intentarlo ' +
-        'en unos minutos, o carga $10 en OpenRouter (sube la cuota diaria de 50 a 1000).',
+      'Ningun modelo de la cadena respondio: estan saturados o se agoto el limite ' +
+        'de la clave. Reintenta en unos minutos y revisa el saldo en openrouter.ai.',
       429,
     );
   }
@@ -85,6 +100,10 @@ async function intentar(model, payload) {
  * Por eso no se apuesta por un modelo: se configuran varios. Si el primero esta
  * saturado, se reintenta con espera; si sigue caido, entra el siguiente. Es la
  * diferencia entre una demo que funciona y una que se cae delante del tribunal.
+ *
+ * Hoy la cadena arranca por endpoints de PAGO (~$0.0004 por mensaje) justamente
+ * para no depender de esa loteria, y deja los :free al final por si se acaba el
+ * saldo. El orden se configura en el .env; ver el comentario en config/env.js.
  */
 async function chat({ system, messages, maxTokens = 500, temperature = 0.7 }) {
   if (!env.openrouter.apiKey) {
@@ -127,14 +146,23 @@ async function chat({ system, messages, maxTokens = 500, temperature = 0.7 }) {
 
       if (r.ok) {
         const uso = r.body.usage || {};
+        // Los :free devuelven cost = 0; los de pago, el importe real cobrado.
+        const coste = Number(uso.cost) || 0;
+
         consumo.peticiones += 1;
         consumo.tokensEntrada += uso.prompt_tokens || 0;
         consumo.tokensSalida += uso.completion_tokens || 0;
-        consumo.porModelo[model] = (consumo.porModelo[model] || 0) + 1;
+        consumo.costeUsd += coste;
+
+        const porModelo = consumo.porModelo[model] || { peticiones: 0, costeUsd: 0 };
+        porModelo.peticiones += 1;
+        porModelo.costeUsd += coste;
+        consumo.porModelo[model] = porModelo;
 
         console.log(
           `[llm] ${model} | entrada=${uso.prompt_tokens ?? '?'} ` +
-            `salida=${uso.completion_tokens ?? '?'} | total=${consumo.peticiones}`,
+            `salida=${uso.completion_tokens ?? '?'} | coste=$${coste.toFixed(6)} ` +
+            `| total=${consumo.peticiones} acumulado=$${consumo.costeUsd.toFixed(4)}`,
         );
 
         return { texto, uso, model };

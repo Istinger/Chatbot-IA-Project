@@ -14,6 +14,10 @@ module.exports = {
   jwtSecret: required('JWT_SECRET'),
   jwtExpira: process.env.JWT_EXPIRA || '7d',
 
+  // Secreto de las rutas de diagnostico (GET /health/llm). Es opcional a
+  // proposito: si no esta, el endpoint responde 404 en vez de quedar abierto.
+  adminToken: process.env.ADMIN_TOKEN || '',
+
   // epsilon-greedy: 0.15 => 15% de las ranuras se reservan a exploracion.
   epsilon: Number(process.env.MATCHING_EPSILON ?? 0.15),
 
@@ -27,8 +31,20 @@ module.exports = {
     apiKey: process.env.OPENROUTER_API_KEY,
 
     /**
-     * CADENA de modelos, no uno solo. Los endpoints :free se saturan a ratos y
-     * devuelven 429; si el primero esta caido, se usa el siguiente.
+     * CADENA de modelos, no uno solo. Si el primero esta caido, se usa el
+     * siguiente (ver la logica de relevo en openrouter.js).
+     *
+     * ORDEN: los de PAGO primero, los :free de red de seguridad al final.
+     * Parece contraintuitivo teniendo gratuitos, pero los numeros mandan: un
+     * mensaje de chat son ~2.500 tokens de entrada y ~300 de salida, o sea
+     * ~$0.0004 con gemma-4-31b ($0.10/M entrada, $0.34/M salida). Una jornada de
+     * feria con 100 personas cuesta ~$0.35. Lo que SI tumba una demo es el 429
+     * intermitente de los :free y su tope de 20 peticiones/min COMPARTIDO con
+     * todo el mundo: con tres personas probando a la vez se roza. Se paga la
+     * calderilla y se compra que la demo no se caiga delante del tribunal.
+     *
+     * gemma-4-31b de pago es EL MISMO modelo que era primario en :free, asi que
+     * los prompts ya estan afinados contra el: cero riesgo de regresion.
      *
      * Se descarto Llama 3.3 70B :free (el candidato obvio) porque es el gratuito
      * mas demandado y devuelve 429 casi siempre. Tambien se descartan los modelos
@@ -37,7 +53,7 @@ module.exports = {
      */
     modelos: (
       process.env.OPENROUTER_MODELS ||
-      'google/gemma-4-31b-it:free,google/gemma-4-26b-a4b-it:free,openai/gpt-oss-20b:free'
+      'google/gemma-4-31b-it,openai/gpt-oss-20b,google/gemma-4-31b-it:free,openai/gpt-oss-20b:free'
     )
       .split(',')
       .map((m) => m.trim())

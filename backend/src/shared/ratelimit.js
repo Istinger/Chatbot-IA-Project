@@ -11,9 +11,10 @@ const { connection } = require('../config/redis');
  * La clave lleva la fecha, asi que la ventana se reinicia sola cada dia; el TTL
  * limpia la basura sin cron.
  */
+const claveDe = (identidad) => `llm:${new Date().toISOString().slice(0, 10)}:${identidad}`;
+
 async function consumir(identidad, limite) {
-  const hoy = new Date().toISOString().slice(0, 10);
-  const clave = `llm:${hoy}:${identidad}`;
+  const clave = claveDe(identidad);
 
   const usadas = await connection.incr(clave);
 
@@ -24,4 +25,14 @@ async function consumir(identidad, limite) {
   return { permitido: usadas <= limite, usadas, limite };
 }
 
-module.exports = { consumir };
+/**
+ * Cuanto lleva usado, SIN consumir. Lo necesita el chat cuando sirve una
+ * respuesta de cache: no ha llamado al LLM, asi que no debe descontar cuota,
+ * pero la UI sigue esperando el contador.
+ */
+async function asomar(identidad, limite) {
+  const usadas = Number(await connection.get(claveDe(identidad))) || 0;
+  return { permitido: usadas <= limite, usadas, limite };
+}
+
+module.exports = { consumir, asomar };
