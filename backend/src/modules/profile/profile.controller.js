@@ -13,7 +13,17 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB: un CV nunca pesa mas
 });
 
-router.use(requireAuth); // todo el modulo exige sesion
+/** POST /api/profile/demo-cv. Crea la sesion demo desde el correo del PDF. */
+router.post('/demo-cv', upload.single('cv'), async (req, res) => {
+  try {
+    return ok(res, await service.subirCvDemo(req.file), 201);
+  } catch (err) {
+    if (err.code === 'LIMIT_FILE_SIZE') return fail(res, 'El PDF supera los 5 MB', 400);
+    return fail(res, err.message, err.status || 500);
+  }
+});
+
+router.use(requireAuth); // el resto del modulo exige sesion
 
 /** GET /api/profile */
 router.get('/', async (req, res) => {

@@ -14,8 +14,8 @@ import Icon from '../components/Icon';
  * Se puede saltar el CV y escribir las skills a mano: no todo el mundo tiene un
  * PDF a mano, y sin skills el sistema no puede recomendar nada.
  */
-export default function Onboarding() {
-  const { refrescar } = useAuth();
+export default function Onboarding({ demo = false }) {
+  const { refrescar, registrarDesdeCvDemo } = useAuth();
   const navegar = useNavigate();
   const location = useLocation();
   const inputArchivo = useRef(null);
@@ -34,7 +34,7 @@ export default function Onboarding() {
     setError(null);
     setSubiendo(true);
     try {
-      const r = await api.subirCv(file);
+      const r = demo ? await registrarDesdeCvDemo(file) : await api.subirCv(file);
       setSkills(r.skillsDetectadas);
       setSeleccionadas(new Set(r.skillsDetectadas));
       setPaso(2);
@@ -156,7 +156,7 @@ export default function Onboarding() {
             </p>
           )}
 
-          {!cvGenerado && (
+          {!cvGenerado && !demo && (
             <button type="button" className="btn btn--texto" onClick={() => setPaso(2)}>
               No tengo el CV a mano
             </button>
