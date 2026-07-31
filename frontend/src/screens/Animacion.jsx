@@ -489,18 +489,20 @@ function dibujarNodo(ctx, paso, indice, x, y, ancho, avance) {
 
   ctx.save();
   ctx.globalAlpha = intensidad;
-  if (activo || completado) {
-    ctx.strokeStyle = `${paso.color}${activo ? 'aa' : '66'}`;
-    ctx.lineWidth = activo ? 3 : 2;
-    ctx.shadowColor = paso.color;
-    ctx.shadowBlur = activo ? 26 : 10;
-    ctx.beginPath();
-    ctx.arc(x, y, tamanoIcono / 2 + 13, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-  }
-
+  ctx.shadowColor = paso.color;
+  ctx.shadowBlur = activo ? 30 : completado ? 16 : 0;
+  redondear(
+    ctx,
+    x - tamanoIcono / 2,
+    y - tamanoIcono / 2,
+    tamanoIcono,
+    tamanoIcono,
+    12,
+  );
+  ctx.fillStyle = `${paso.color}${activo ? '44' : completado ? '30' : '14'}`;
+  ctx.fill();
   dibujarIcono(ctx, paso.icono, x - tamanoIcono / 2, y - tamanoIcono / 2, tamanoIcono, paso.color);
+  ctx.shadowBlur = 0;
 
   ctx.fillStyle = completado ? COLORES.verde : activo ? COLORES.amarillo : COLORES.suave;
   ctx.font = '700 10px system-ui, sans-serif';
@@ -529,7 +531,7 @@ function dibujarNodo(ctx, paso, indice, x, y, ancho, avance) {
   ctx.restore();
 }
 
-function dibujarMapaMatchingLineal(ctx, ancho, alto, flujo, progreso) {
+function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
   const margenX = Math.max(84, ancho * 0.065);
   const superior = Math.max(205, alto * 0.29);
   const inferior = Math.min(alto - 235, alto * 0.67);
@@ -709,297 +711,6 @@ function dibujarMapaMatchingLineal(ctx, ancho, alto, flujo, progreso) {
   });
 }
 
-function dibujarTarjetaTecnica(ctx, tarjeta, avance) {
-  const { x, y, ancho, alto, titulo, detalle, etiquetas = [], icono, color } = tarjeta;
-  const activo = avance > 0 && avance < 1;
-  ctx.save();
-  ctx.globalAlpha = avance <= 0 ? 0.3 : 1;
-  redondear(ctx, x - ancho / 2, y - alto / 2, ancho, alto, 8);
-  ctx.fillStyle = 'rgba(6, 22, 46, 0.97)';
-  ctx.shadowColor = color;
-  ctx.shadowBlur = activo ? 24 : 8;
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.strokeStyle = `${color}${activo ? 'ee' : '88'}`;
-  ctx.lineWidth = activo ? 2.5 : 1.5;
-  ctx.stroke();
-
-  const tamanoIcono = Math.min(50, alto - 22);
-  dibujarIcono(ctx, icono, x - ancho / 2 + 13, y - tamanoIcono / 2, tamanoIcono, color);
-  const textoX = x - ancho / 2 + tamanoIcono + 26;
-  ctx.textAlign = 'left';
-  ctx.fillStyle = COLORES.texto;
-  ctx.font = '700 15px system-ui, sans-serif';
-  ctx.fillText(textoCorto(titulo, 27), textoX, y - 9);
-  ctx.fillStyle = COLORES.suave;
-  ctx.font = '11px system-ui, sans-serif';
-  ctx.fillText(textoCorto(detalle, 40), textoX, y + 10);
-
-  let etiquetaX = textoX;
-  ctx.font = '700 9px system-ui, sans-serif';
-  etiquetas.filter(Boolean).slice(0, 3).forEach((etiqueta) => {
-    const contenido = textoCorto(etiqueta, 17);
-    const medida = ctx.measureText(contenido).width + 14;
-    redondear(ctx, etiquetaX, y + 18, medida, 19, 7);
-    ctx.fillStyle = `${color}19`;
-    ctx.fill();
-    ctx.strokeStyle = `${color}66`;
-    ctx.stroke();
-    ctx.fillStyle = color;
-    ctx.fillText(contenido, etiquetaX + 7, y + 31);
-    etiquetaX += medida + 5;
-  });
-  ctx.restore();
-}
-
-function dibujarRecolector(ctx, x, y, avance) {
-  ctx.save();
-  ctx.globalAlpha = avance <= 0 ? 0.3 : 1;
-  ctx.fillStyle = 'rgba(9, 37, 80, 0.98)';
-  ctx.strokeStyle = COLORES.azul;
-  ctx.lineWidth = 3;
-  ctx.shadowColor = COLORES.azul;
-  ctx.shadowBlur = avance > 0 && avance < 1 ? 30 : 14;
-  ctx.beginPath();
-  ctx.arc(x, y, 70, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  dibujarIcono(ctx, 'oferta', x - 28, y - 45, 56, COLORES.azul);
-  ctx.textAlign = 'center';
-  ctx.fillStyle = COLORES.texto;
-  ctx.font = '700 16px system-ui, sans-serif';
-  ctx.fillText('Worker de ingesta', x, y + 35);
-  ctx.fillStyle = COLORES.azul;
-  ctx.font = '700 10px system-ui, sans-serif';
-  ctx.fillText('BullMQ · Redis', x, y + 54);
-  ctx.restore();
-}
-
-function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
-  if (ancho < 1200 || alto < 720) {
-    dibujarMapaMatchingLineal(ctx, ancho, alto, flujo, progreso);
-    return;
-  }
-
-  const ofertas = flujo.matching.ofertas;
-  const total = flujo.matching.total;
-  const mejor = flujo.matching.mejor;
-  const habilidadesPerfil = flujo.matching.skills;
-  const colores = [COLORES.verde, COLORES.azul, COLORES.violeta, COLORES.cian, COLORES.amarillo];
-  const nombres = {
-    adzuna: 'Adzuna',
-    jooble: 'Jooble',
-    remoteok: 'Remote OK',
-    remote_ok: 'Remote OK',
-    careerjet: 'Careerjet',
-    arbeitnow: 'Arbeitnow',
-  };
-  const nombreFuente = (fuente) => nombres[String(fuente).toLowerCase()] || fuente;
-  const fuentesReales = [...new Set(ofertas.map((oferta) => oferta.source).filter(Boolean))];
-  const fuentes = (fuentesReales.length
-    ? fuentesReales
-    : ['adzuna', 'jooble', 'remoteok', 'careerjet', 'arbeitnow']).slice(0, 5);
-  const ofertasFuente = (fuente) => ofertas.filter(
-    (oferta) => String(oferta.source).toLowerCase() === String(fuente).toLowerCase(),
-  );
-  const paquetesOferta = ofertas.map((oferta) =>
-    [oferta.title, oferta.company, oferta.location || oferta.country].filter(Boolean).join(' · '),
-  );
-  const paquetesTecnicos = ofertas.map((oferta) =>
-    [
-      oferta.source,
-      oferta.skills?.slice(0, 2).join(' + '),
-      oferta.salaryUsdMax ? `$${Math.round(oferta.salaryUsdMax / 1000)}k USD` : null,
-    ].filter(Boolean).join(' · '),
-  );
-  const paquetesResultado = ofertas.map((oferta) =>
-    [
-      oferta.score != null ? `${Math.round(oferta.score * 100)}%` : null,
-      oferta.title,
-      oferta.company,
-    ].filter(Boolean).join(' · '),
-  );
-
-  const recorrido = progreso * 6;
-  const movimiento = (progreso * 7) % 1;
-  const inicioY = Math.max(190, alto * 0.21);
-  const recolector = { x: ancho * 0.5, y: inicioY + 82 };
-  const posicionesFuente = [
-    { x: ancho * 0.12, y: inicioY },
-    { x: ancho * 0.12, y: inicioY + 88 },
-    { x: ancho * 0.88, y: inicioY },
-    { x: ancho * 0.88, y: inicioY + 88 },
-    { x: ancho * 0.12, y: inicioY + 176 },
-  ];
-  const procesoY = Math.max(inicioY + 250, alto * 0.55);
-  const procesos = [
-    {
-      x: ancho * 0.27,
-      titulo: 'A) Normalizar',
-      detalle: 'Mismo esquema para todas las APIs',
-      etiquetas: ['moneda → USD', 'pais', 'modalidad'],
-      icono: 'documento',
-      color: COLORES.azul,
-    },
-    {
-      x: ancho * 0.5,
-      titulo: 'B) Evitar duplicados',
-      detalle: 'Prisma valida una clave unica',
-      etiquetas: ['externalId', 'upsert', `${total} ofertas`],
-      icono: 'comparar',
-      color: COLORES.violeta,
-    },
-    {
-      x: ancho * 0.73,
-      titulo: 'C) Detectar habilidades',
-      detalle: 'Catalogo estatico, sin LLM',
-      etiquetas: (ofertas.flatMap((oferta) => oferta.skills || []).filter(Boolean).length
-        ? [...new Set(ofertas.flatMap((oferta) => oferta.skills || []))]
-        : ['Python', 'React', 'SQL']).slice(0, 3),
-      icono: 'habilidades',
-      color: COLORES.verde,
-    },
-  ];
-  const finalY = Math.min(alto - 145, procesoY + 180);
-  const catalogo = { x: ancho * 0.42, y: finalY };
-  const comparador = { x: ancho * 0.65, y: finalY };
-  const resultado = { x: ancho * 0.87, y: finalY };
-  const anchoFuente = Math.min(290, ancho * 0.19);
-  const anchoProceso = Math.min(305, ancho * 0.195);
-  const conexiones = [];
-
-  fuentes.forEach((fuente, indice) => {
-    const posicion = posicionesFuente[indice];
-    const izquierda = posicion.x < recolector.x;
-    const deEstaFuente = ofertasFuente(fuente);
-    conexiones.push({
-      inicio: { x: posicion.x + (izquierda ? anchoFuente / 2 : -anchoFuente / 2), y: posicion.y },
-      fin: { x: recolector.x + (izquierda ? -70 : 70), y: recolector.y },
-      control: { x: (posicion.x + recolector.x) / 2, y: posicion.y },
-      etapa: 0,
-      color: colores[indice],
-      etiqueta: 'respuesta API',
-      dato: deEstaFuente.length
-        ? deEstaFuente.map((oferta) => [oferta.title, oferta.company].filter(Boolean).join(' · '))
-        : `${nombreFuente(fuente)} conectado`,
-    });
-  });
-
-  procesos.forEach((proceso, indice) => {
-    conexiones.push({
-      inicio: { x: recolector.x, y: recolector.y + 70 },
-      fin: { x: proceso.x, y: procesoY - 47 },
-      control: { x: proceso.x, y: recolector.y + 108 },
-      etapa: 1,
-      color: proceso.color,
-      etiqueta: ['normaliza', 'deduplica', 'extrae skills'][indice],
-      dato: [paquetesOferta, [`${total} externalId revisados`], paquetesTecnicos][indice],
-    });
-    conexiones.push({
-      inicio: { x: proceso.x, y: procesoY + 47 },
-      fin: { x: catalogo.x, y: finalY - 40 },
-      control: { x: proceso.x, y: finalY - 66 },
-      etapa: 2,
-      color: proceso.color,
-      etiqueta: 'persiste',
-      dato: proceso.etiquetas,
-    });
-  });
-
-  conexiones.push(
-    {
-      inicio: { x: catalogo.x + 132, y: finalY },
-      fin: { x: comparador.x - 122, y: finalY },
-      control: { x: (catalogo.x + comparador.x) / 2, y: finalY },
-      etapa: 3,
-      color: COLORES.violeta,
-      etiqueta: 'cosine <=>',
-      dato: habilidadesPerfil.length
-        ? habilidadesPerfil.map((skill) => `${skill} → embedding`)
-        : ['FastEmbed / ONNX', 'vector local · 384 dimensiones'],
-    },
-    {
-      inicio: { x: comparador.x + 122, y: finalY },
-      fin: { x: resultado.x - 122, y: finalY },
-      control: { x: (comparador.x + resultado.x) / 2, y: finalY },
-      etapa: 4,
-      color: COLORES.verde,
-      etiqueta: 'filtra y ordena',
-      dato: paquetesResultado.length ? paquetesResultado : `${total} resultados`,
-    },
-  );
-
-  conexiones.forEach((conexion, indice) => {
-    dibujarConexionCurva(
-      ctx,
-      conexion.inicio,
-      conexion.fin,
-      conexion.control,
-      limitar(recorrido - conexion.etapa - 0.58),
-      conexion.color,
-      conexion.etiqueta,
-      conexion.dato,
-      (movimiento + indice * 0.13) % 1,
-    );
-  });
-
-  fuentes.forEach((fuente, indice) => {
-    const actuales = ofertasFuente(fuente);
-    const primera = actuales[0];
-    dibujarTarjetaTecnica(ctx, {
-      ...posicionesFuente[indice],
-      ancho: anchoFuente,
-      alto: 68,
-      titulo: nombreFuente(fuente),
-      detalle: primera?.title || `${actuales.length} ofertas visibles`,
-      etiquetas: [primera?.company, primera?.location || primera?.country, primera?.skills?.[0]],
-      icono: 'fuentes',
-      color: colores[indice],
-    }, limitar(recorrido));
-  });
-  dibujarRecolector(ctx, recolector.x, recolector.y, limitar(recorrido - 1));
-  procesos.forEach((proceso) => dibujarTarjetaTecnica(ctx, {
-    ...proceso,
-    y: procesoY,
-    ancho: anchoProceso,
-    alto: 94,
-  }, limitar(recorrido - 2)));
-  dibujarTarjetaTecnica(ctx, {
-    ...catalogo,
-    ancho: 264,
-    alto: 82,
-    titulo: 'Catalogo PostgreSQL',
-    detalle: 'Prisma + tabla Job + pgvector',
-    etiquetas: [`${total} ofertas`, 'embedding', 'skills[]'],
-    icono: 'base',
-    color: COLORES.azul,
-  }, limitar(recorrido - 3));
-  dibujarTarjetaTecnica(ctx, {
-    ...comparador,
-    ancho: 244,
-    alto: 82,
-    titulo: 'Matching semantico',
-    detalle: 'FastEmbed local + similitud coseno',
-    etiquetas: ['384 dim', '<=>', 'umbral'],
-    icono: 'convertir',
-    color: COLORES.violeta,
-  }, limitar(recorrido - 4));
-  dibujarTarjetaTecnica(ctx, {
-    ...resultado,
-    ancho: 244,
-    alto: 82,
-    titulo: 'Resultados para ti',
-    detalle: mejor?.title || 'Ofertas ordenadas',
-    etiquetas: [
-      mejor?.company,
-      mejor?.score != null ? `${Math.round(mejor.score * 100)}% afinidad` : null,
-    ],
-    icono: 'resultado',
-    color: COLORES.verde,
-  }, limitar(recorrido - 5));
-}
-
 function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   dibujarFondo(ctx, ancho, alto);
   const flujo = flujoDe(accion);
@@ -1101,7 +812,6 @@ export default function Animacion() {
       <canvas ref={canvasRef} className="animacion__canvas" aria-label="Mapa visual de la actividad reciente" />
       <header className="animacion__cab">
         <h1>{meta.titulo}</h1>
-        <p>{meta.subtitulo}</p>
       </header>
       <aside className="animacion__controles" aria-label="Controles del mapa">
         <button type="button" className="iconbtn" onClick={() => setPausada((valor) => !valor)} aria-label={pausada ? 'Reanudar recorrido' : 'Mostrar resultado'}>

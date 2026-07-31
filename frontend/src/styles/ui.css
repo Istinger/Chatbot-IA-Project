@@ -1351,25 +1351,33 @@
 
 .animacion__cab {
   position: absolute;
-  top: clamp(24px, 4vh, 48px);
-  left: 50%;
+  top: clamp(28px, 5vh, 64px);
+  left: clamp(32px, 7vw, 110px);
   z-index: 1;
-  width: min(920px, calc(100% - 260px));
-  text-align: center;
-  transform: translateX(-50%);
   pointer-events: none;
 }
 
+.animacion__marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  color: var(--glow);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
 .animacion__cab h1 {
-  max-width: none;
-  font-size: clamp(30px, 3.4vw, 48px);
+  max-width: 880px;
+  font-size: clamp(30px, 4vw, 52px);
   line-height: 1.08;
 }
 
 .animacion__cab p {
   margin-top: 8px;
-  color: var(--text-2);
-  font-size: clamp(13px, 1.3vw, 18px);
+  color: var(--text-3);
+  font-size: var(--fs-5);
 }
 
 .animacion__controles {
