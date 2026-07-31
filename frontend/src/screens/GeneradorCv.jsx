@@ -99,11 +99,11 @@ const INICIAL = {
   rol: '',
   nivel: '',
   perfil: '',
-  estudios: 'Universidad en curso',
+  estudios: '',
   carrera: '',
-  experiencia: 'Proyectos academicos',
-  puesto: 'Proyecto academico',
-  proyecto: 'Aplicacion web responsiva',
+  experiencia: '',
+  puesto: '',
+  proyecto: '',
 };
 
 const coincideCon = (opcion, texto) => (
@@ -328,7 +328,7 @@ function ResumenEditable({ value, onChange, opciones }) {
           }}
           onFocus={() => setAbierto(true)}
           onKeyDown={(e) => e.key === 'Escape' && setAbierto(false)}
-          placeholder={opciones[0]}
+          placeholder="Elige una sugerencia o escribe tu resumen"
           role="combobox"
           aria-expanded={muestraOpciones}
           aria-controls={`${id}-opciones`}
@@ -503,8 +503,16 @@ export default function GeneradorCv() {
       setError('Completa nombre, correo, perfil profesional y nivel.');
       return;
     }
-    if (paso === 2 && (!datos.carrera.trim() || skills.length === 0 || idiomas.length === 0)) {
-      setError('Elige una carrera, al menos una habilidad y un idioma.');
+    if (paso === 2 && (
+      !datos.estudios.trim()
+      || !datos.carrera.trim()
+      || !datos.experiencia.trim()
+      || !datos.puesto.trim()
+      || !datos.proyecto.trim()
+      || skills.length === 0
+      || idiomas.length === 0
+    )) {
+      setError('Completa el perfil, una habilidad y un idioma antes de continuar.');
       return;
     }
     if (paso === 2 && !datos.perfil.trim()) {
