@@ -19,17 +19,30 @@ const UMBRALES = [
   { valor: 0.75, texto: 'Solo lo excelente', ayuda: 'Muy pocos avisos' },
 ];
 
-export default function AvisosTelegram() {
+export default function AvisosTelegram({ onEstadoAnimacion }) {
   const [estado, setEstado] = useState(null);
   const [vinculacion, setVinculacion] = useState(null); // { codigo, enlace, bot }
   const [error, setError] = useState(null);
   const [esperando, setEsperando] = useState(false);
+  const [evento, setEvento] = useState(null);
 
   const cargar = () => api.estadoAvisos().then(setEstado).catch((e) => setError(e.message));
 
   useEffect(() => {
     cargar();
   }, []);
+
+  useEffect(() => {
+    onEstadoAnimacion?.({
+      estado,
+      vinculacion: vinculacion
+        ? { bot: vinculacion.bot, expiraEnMin: vinculacion.expiraEnMin }
+        : null,
+      esperando,
+      error,
+      evento,
+    });
+  }, [error, esperando, estado, evento, onEstadoAnimacion, vinculacion]);
 
   // Mientras hay una vinculacion abierta, se sondea: el "Iniciar" ocurre en
   // Telegram, fuera del navegador, y no hay evento que nos avise.
@@ -62,6 +75,7 @@ export default function AvisosTelegram() {
 
   const vincular = async () => {
     setError(null);
+    setEvento('vincular');
     try {
       const v = await api.vincularTelegram();
       setVinculacion(v);
@@ -72,6 +86,7 @@ export default function AvisosTelegram() {
   };
 
   const desvincular = async () => {
+    setEvento('desvincular');
     try {
       await api.desvincularTelegram();
       await cargar();
@@ -81,6 +96,7 @@ export default function AvisosTelegram() {
   };
 
   const cambiarUmbral = async (valor) => {
+    setEvento('umbral');
     setEstado((p) => ({ ...p, umbral: valor })); // optimista: el control responde ya
     try {
       await api.umbralAvisos(valor);
