@@ -489,18 +489,20 @@ function dibujarNodo(ctx, paso, indice, x, y, ancho, avance) {
 
   ctx.save();
   ctx.globalAlpha = intensidad;
-  if (activo || completado) {
-    ctx.strokeStyle = `${paso.color}${activo ? 'aa' : '66'}`;
-    ctx.lineWidth = activo ? 3 : 2;
-    ctx.shadowColor = paso.color;
-    ctx.shadowBlur = activo ? 26 : 10;
-    ctx.beginPath();
-    ctx.arc(x, y, tamanoIcono / 2 + 13, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-  }
-
+  ctx.shadowColor = paso.color;
+  ctx.shadowBlur = activo ? 30 : completado ? 16 : 0;
+  redondear(
+    ctx,
+    x - tamanoIcono / 2,
+    y - tamanoIcono / 2,
+    tamanoIcono,
+    tamanoIcono,
+    12,
+  );
+  ctx.fillStyle = `${paso.color}${activo ? '44' : completado ? '30' : '14'}`;
+  ctx.fill();
   dibujarIcono(ctx, paso.icono, x - tamanoIcono / 2, y - tamanoIcono / 2, tamanoIcono, paso.color);
+  ctx.shadowBlur = 0;
 
   ctx.fillStyle = completado ? COLORES.verde : activo ? COLORES.amarillo : COLORES.suave;
   ctx.font = '700 10px system-ui, sans-serif';
@@ -803,10 +805,14 @@ export default function Animacion() {
     inicioRef.current = performance.now();
     setPausada(false);
   };
+  const meta = METAS_ANIMACION[activa?.tipo] || METAS_ANIMACION.inicio;
 
   return (
     <main ref={marcoRef} className="animacion">
       <canvas ref={canvasRef} className="animacion__canvas" aria-label="Mapa visual de la actividad reciente" />
+      <header className="animacion__cab">
+        <h1>{meta.titulo}</h1>
+      </header>
       <aside className="animacion__controles" aria-label="Controles del mapa">
         <button type="button" className="iconbtn" onClick={() => setPausada((valor) => !valor)} aria-label={pausada ? 'Reanudar recorrido' : 'Mostrar resultado'}>
           <Icon name={pausada ? 'derecha' : 'pausa'} size={18} />
