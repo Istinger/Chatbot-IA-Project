@@ -6,9 +6,15 @@ import { useAuth } from '../lib/auth';
 import { crearCvPdf, descargarPdf } from '../lib/cvPdf';
 import { registrarAnimacion } from '../lib/animacion';
 
+const PERSONAS_DEMO = [
+  { nombre: 'Ana Torres', correo: 'ana@correo.com' },
+  { nombre: 'Carlos Mena', correo: 'carlos@email.com' },
+  { nombre: 'Sofia Vega', correo: 'sofia@ejemplo.com' },
+  { nombre: 'Diego Castro', correo: 'diego@correo.com' },
+];
+
 const OPCIONES = {
-  nombre: ['Ana Torres', 'Carlos Mena', 'Sofia Vega', 'Diego Castro'],
-  correo: ['ana@correo.com', 'carlos@email.com', 'sofia@ejemplo.com', 'diego@correo.com'],
+  nombre: PERSONAS_DEMO.map((persona) => persona.nombre),
   telefono: ['+593 99 000 0000', '+593 98 123 4567', '+593 96 555 4321'],
   ciudad: ['Quito, Ecuador', 'Guayaquil, Ecuador', 'Cuenca, Ecuador', 'Remoto'],
   rol: [
@@ -314,7 +320,7 @@ export default function GeneradorCv() {
   const cuentaCreada = useRef(false);
   const [paso, setPaso] = useState(1);
   const [datos, setDatos] = useState(INICIAL);
-  const [correosDemo, setCorreosDemo] = useState(OPCIONES.correo);
+  const [correosDemo, setCorreosDemo] = useState(PERSONAS_DEMO.map((persona) => persona.correo));
   const [skills, setSkills] = useState([]);
   const [idiomas, setIdiomas] = useState([]);
   const [error, setError] = useState('');
@@ -322,6 +328,20 @@ export default function GeneradorCv() {
 
   const progreso = useMemo(() => `${paso} de 3`, [paso]);
   const cambiar = (campo, valor) => setDatos((actual) => ({ ...actual, [campo]: valor }));
+  const correoVinculado = useMemo(() => {
+    const nombre = datos.nombre.trim().toLowerCase();
+    const indice = OPCIONES.nombre.findIndex((opcion) => opcion.toLowerCase() === nombre);
+    return indice >= 0 ? correosDemo[indice] : '';
+  }, [datos.nombre, correosDemo]);
+
+  const cambiarNombre = (nombre) => {
+    const indice = OPCIONES.nombre.findIndex((opcion) => opcion.toLowerCase() === nombre.trim().toLowerCase());
+    setDatos((actual) => ({
+      ...actual,
+      nombre,
+      email: indice >= 0 ? correosDemo[indice] : actual.email,
+    }));
+  };
 
   useEffect(() => {
     contenedorRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -329,7 +349,7 @@ export default function GeneradorCv() {
 
   useEffect(() => {
     let activo = true;
-    api.correosDemo(OPCIONES.correo)
+    api.correosDemo(PERSONAS_DEMO.map((persona) => persona.correo))
       .then(({ emails }) => {
         if (activo && emails?.length) setCorreosDemo(emails);
       })
@@ -338,6 +358,10 @@ export default function GeneradorCv() {
       .catch(() => {});
     return () => { activo = false; };
   }, []);
+
+  useEffect(() => {
+    if (correoVinculado && correoVinculado !== datos.email) cambiar('email', correoVinculado);
+  }, [correoVinculado]);
 
   const siguiente = () => {
     setError('');
@@ -435,8 +459,19 @@ export default function GeneradorCv() {
 
           {paso === 1 && (
             <div className="cvgen__form">
-              <ComboEditable label="Nombre completo" value={datos.nombre} onChange={(v) => cambiar('nombre', v)} options={OPCIONES.nombre} placeholder="Elige o escribe tu nombre" required />
-              <ComboEditable label="Correo" value={datos.email} onChange={(v) => cambiar('email', v)} options={correosDemo} placeholder="Elige o escribe tu correo" type="email" required />
+              <ComboEditable label="Nombre completo" value={datos.nombre} onChange={cambiarNombre} options={OPCIONES.nombre} placeholder="Elige o escribe tu nombre" required />
+              <label className="cvgen__campo">
+                <span>Correo</span>
+                <input
+                  className={correoVinculado ? 'cvgen__correo-vinculado' : ''}
+                  type="email"
+                  value={datos.email}
+                  onChange={(e) => cambiar('email', e.target.value)}
+                  placeholder="Escribe tu correo"
+                  readOnly={Boolean(correoVinculado)}
+                  required
+                />
+              </label>
               <ComboEditable label="Telefono" value={datos.telefono} onChange={(v) => cambiar('telefono', v)} options={OPCIONES.telefono} placeholder="Elige o escribe tu telefono" type="tel" />
               <ComboEditable label="Ciudad o modalidad" value={datos.ciudad} onChange={(v) => cambiar('ciudad', v)} options={OPCIONES.ciudad} placeholder="Elige o escribe" />
               <ComboEditable label="Perfil profesional" value={datos.rol} onChange={(v) => cambiar('rol', v)} options={OPCIONES.rol} placeholder="Elige o escribe tu profesion" required />

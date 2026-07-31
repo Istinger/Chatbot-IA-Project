@@ -614,6 +614,13 @@
   box-shadow: 0 0 0 3px rgba(79, 163, 255, 0.12);
 }
 
+.cvgen__correo-vinculado {
+  border-color: rgba(79, 163, 255, 0.4) !important;
+  background: rgba(25, 64, 113, 0.48) !important;
+  color: var(--text-2) !important;
+  cursor: not-allowed;
+}
+
 .cvgen__combobox {
   position: relative;
   display: grid;
