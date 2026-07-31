@@ -286,6 +286,45 @@ function flujoDe(accion) {
     };
   }
 
+  if (
+    tipo === 'entrevista_configurada'
+    || tipo === 'entrevista_practica'
+    || tipo === 'entrevista_feedback'
+    || tipo === 'entrevista_historial'
+  ) {
+    return {
+      modo: 'entrevista',
+      entrevista: {
+        estado:
+          tipo === 'entrevista_historial'
+            ? 'historial'
+            : tipo === 'entrevista_feedback'
+              ? 'feedback'
+              : tipo === 'entrevista_practica'
+                ? 'practica'
+                : 'configuracion',
+        fase: datos.fase || 'setup',
+        cfg: datos.cfg || {},
+        area: datos.area || null,
+        sessionId: datos.sessionId || null,
+        totalPreguntas: Number(datos.totalPreguntas) || 0,
+        pendientes: Number(datos.pendientes) || 0,
+        respondidas: Number(datos.respondidas) || 0,
+        preguntaActual: datos.preguntaActual || null,
+        esRepregunta: Boolean(datos.esRepregunta),
+        respuestaActual: datos.respuestaActual || '',
+        pensando: Boolean(datos.pensando),
+        escuchando: Boolean(datos.escuchando),
+        ultimaRepregunta: datos.ultimaRepregunta || null,
+        transcript: lista(datos.transcript),
+        feedback: datos.feedback || null,
+        entrevistas: lista(datos.entrevistas),
+        recurrentes: lista(datos.recurrentes),
+        planEstado: datos.planEstado || 'disponible',
+      },
+    };
+  }
+
   if (tipo === 'oferta_guardada') {
     const oferta = datos.oferta || {};
     return {
@@ -1539,6 +1578,572 @@ function dibujarMapaPortafolio(ctx, ancho, alto, flujo, progreso) {
   });
 }
 
+function dibujarMapaEntrevista(ctx, ancho, alto, flujo, progreso) {
+  const datos = flujo.entrevista;
+  const margen = Math.max(145, ancho * 0.075);
+  const superior = Math.max(225, alto * 0.29);
+  const medio = Math.max(superior + 190, alto * 0.51);
+  const inferior = Math.min(alto - 170, alto * 0.77);
+  const anchoNodo = Math.min(205, ancho * 0.13);
+  const cfg = datos.cfg;
+  let nodos = [];
+  let conexiones = [];
+  let etapas = 5;
+  const titulos = [];
+
+  const agregarTitulos = () => {
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.font = '700 12px system-ui, sans-serif';
+    titulos.forEach((titulo) => {
+      ctx.fillStyle = titulo.color;
+      ctx.fillText(titulo.texto, titulo.x, titulo.y);
+    });
+    ctx.restore();
+  };
+
+  if (datos.estado === 'configuracion') {
+    const posiciones = {
+      config: { x: margen, y: superior },
+      area: { x: ancho * 0.29, y: superior },
+      banco: { x: ancho * 0.49, y: superior },
+      sesion: { x: ancho * 0.69, y: superior },
+      modalidad: { x: ancho * 0.29, y: inferior },
+      pregunta: { x: ancho * 0.86, y: medio },
+    };
+    titulos.push(
+      { texto: 'LO QUE ELIGES', x: posiciones.config.x - 43, y: superior - 112, color: COLORES.cian },
+      { texto: 'PREPARACION EXACTA · SIN IA', x: posiciones.banco.x - 95, y: superior - 112, color: COLORES.azul },
+      { texto: 'EXPERIENCIA EN EL NAVEGADOR', x: posiciones.modalidad.x - 95, y: inferior - 112, color: COLORES.verde },
+    );
+    nodos = [
+      {
+        paso: {
+          titulo: 'Configuracion actual',
+          detalle: `${cfg.puesto || 'Puesto general'} · ${cfg.nivel || 'Junior'} · ${cfg.tipo || 'mixta'}`,
+          dato: cfg.modalidad === 'video' ? 'Videollamada' : 'Chat de texto',
+          icono: 'comparar',
+          color: COLORES.cian,
+        },
+        posicion: posiciones.config,
+        etapa: 0,
+      },
+      {
+        paso: {
+          titulo: 'Detector de area',
+          detalle: datos.area ? `Area detectada: ${datos.area}` : 'Lee palabras del puesto al comenzar',
+          dato: datos.area || 'frontend · backend · data…',
+          icono: 'buscar',
+          color: COLORES.azul,
+        },
+        posicion: posiciones.area,
+        etapa: 1,
+      },
+      {
+        paso: {
+          titulo: 'Banco de preguntas',
+          detalle: 'Preguntas tecnicas y de RRHH incluidas en el backend',
+          dato: 'Catalogo estatico · cero IA',
+          icono: 'documento',
+          color: COLORES.azul,
+        },
+        posicion: posiciones.banco,
+        etapa: 2,
+      },
+      {
+        paso: {
+          titulo: 'Sesion temporal',
+          detalle: 'Redis conserva puesto, nivel, tipo y area durante 2 horas',
+          dato: datos.sessionId ? textoCorto(datos.sessionId, 16) : 'Se crea al empezar',
+          icono: 'base',
+          color: COLORES.violeta,
+        },
+        posicion: posiciones.sesion,
+        etapa: 3,
+      },
+      {
+        paso: {
+          titulo: cfg.modalidad === 'video' ? 'Camara, microfono y voz' : 'Texto, dictado y voz',
+          detalle: cfg.modalidad === 'video'
+            ? 'La camara solo muestra tu imagen; no se graba ni se sube'
+            : 'SpeechRecognition dicta y SpeechSynthesis lee localmente',
+          dato: cfg.leerVoz ? 'Lectura en voz activa' : 'Lectura en voz desactivada',
+          icono: cfg.modalidad === 'video' ? 'app' : 'entrevista',
+          color: COLORES.verde,
+        },
+        posicion: posiciones.modalidad,
+        etapa: 1,
+      },
+      {
+        paso: {
+          titulo: 'Primera pregunta',
+          detalle: datos.preguntaActual || 'Aparece al pulsar Empezar entrevista',
+          dato: datos.totalPreguntas ? `${datos.totalPreguntas} preguntas base` : 'Lista para comenzar',
+          icono: 'resultado',
+          color: COLORES.verde,
+        },
+        posicion: posiciones.pregunta,
+        etapa: 4,
+      },
+    ];
+    conexiones = [
+      {
+        inicio: { x: posiciones.config.x + 55, y: superior },
+        fin: { x: posiciones.area.x - 55, y: superior },
+        control: { x: ancho * 0.19, y: superior },
+        etapa: 0, color: COLORES.cian, etiqueta: 'envia configuracion',
+        dato: [cfg.puesto || 'puesto general', cfg.nivel || 'Junior', cfg.tipo || 'mixta'],
+      },
+      {
+        inicio: { x: posiciones.area.x + 55, y: superior },
+        fin: { x: posiciones.banco.x - 55, y: superior },
+        control: { x: ancho * 0.39, y: superior },
+        etapa: 1, color: COLORES.azul, etiqueta: 'elige la categoria',
+        dato: datos.area || 'area por detectar',
+      },
+      {
+        inicio: { x: posiciones.banco.x + 55, y: superior },
+        fin: { x: posiciones.sesion.x - 55, y: superior },
+        control: { x: ancho * 0.59, y: superior },
+        etapa: 2, color: COLORES.violeta, etiqueta: 'baraja sin repetir',
+        dato: cfg.nivel || 'Junior',
+      },
+      {
+        inicio: { x: posiciones.sesion.x + 55, y: superior + 10 },
+        fin: { x: posiciones.pregunta.x - 55, y: medio - 10 },
+        control: { x: ancho * 0.8, y: superior + 20 },
+        etapa: 3, color: COLORES.verde, etiqueta: 'abre la practica',
+        dato: datos.preguntaActual || 'primera pregunta',
+      },
+      {
+        inicio: { x: posiciones.config.x + 40, y: superior + 40 },
+        fin: { x: posiciones.modalidad.x - 40, y: inferior - 40 },
+        control: { x: margen + ancho * 0.08, y: medio },
+        etapa: 0, color: COLORES.verde, etiqueta: 'activa modalidad',
+        dato: cfg.modalidad === 'video' ? 'camara + microfono' : 'texto + dictado',
+      },
+      {
+        inicio: { x: posiciones.modalidad.x + 55, y: inferior - 10 },
+        fin: { x: posiciones.pregunta.x - 55, y: medio + 28 },
+        control: { x: ancho * 0.62, y: inferior },
+        etapa: 2, color: COLORES.verde, etiqueta: 'presenta la pregunta',
+        dato: cfg.leerVoz ? 'texto + voz sintetizada' : 'texto en pantalla',
+      },
+    ];
+  } else if (datos.estado === 'historial') {
+    const recurrentes = datos.recurrentes.map((item) =>
+      [item?.texto, item?.n > 1 ? `${item.n} veces` : null].filter(Boolean).join(' · '),
+    );
+    const practicas = datos.entrevistas.map((item) =>
+      [item?.puesto || 'Puesto general', item?.nivel, item?.guardada ? 'guardada' : null]
+        .filter(Boolean).join(' · '),
+    );
+    const posiciones = {
+      local: { x: margen, y: medio },
+      practicas: { x: ancho * 0.31, y: superior },
+      base: { x: ancho * 0.31, y: inferior },
+      conteo: { x: ancho * 0.52, y: medio },
+      plan: { x: ancho * 0.72, y: medio },
+      pantalla: { x: ancho * 0.87, y: medio },
+    };
+    titulos.push(
+      { texto: 'DATOS DE ESTE EQUIPO', x: posiciones.local.x - 55, y: medio - 112, color: COLORES.cian },
+      { texto: 'ANALISIS LOCAL · SIN IA', x: posiciones.conteo.x - 82, y: medio - 112, color: COLORES.verde },
+      { texto: 'AYUDA OPCIONAL', x: posiciones.plan.x - 55, y: medio - 112, color: COLORES.violeta },
+    );
+    const planEstado = {
+      generando: ['OpenRouter esta preparando el plan', 'Generando ahora', COLORES.amarillo],
+      listo: ['El plan ya aparece debajo de las mejoras', 'Plan listo', COLORES.violeta],
+      disponible: ['Solo se usa cuando pulsas Pedir un plan a la IA', 'Listo para solicitar', COLORES.suave],
+    }[datos.planEstado] || ['Ayuda opcional', 'Disponible', COLORES.suave];
+    nodos = [
+      {
+        paso: {
+          titulo: 'Historial local',
+          detalle: 'Las entrevistas terminadas viven en localStorage',
+          dato: `${datos.entrevistas.length} practicas`,
+          icono: 'guardar', color: COLORES.cian,
+        },
+        posicion: posiciones.local, etapa: 0,
+      },
+      {
+        paso: {
+          titulo: 'Entrevistas anteriores',
+          detalle: practicas.join(' · ') || 'Todavia no hay entrevistas',
+          dato: `${datos.entrevistas.filter((item) => item.guardada).length} guardadas`,
+          icono: 'entrevista', color: COLORES.azul,
+        },
+        posicion: posiciones.practicas, etapa: 1,
+      },
+      {
+        paso: {
+          titulo: 'Consejos de inicio',
+          detalle: 'STAR, datos concretos, honestidad y proyectos preparados',
+          dato: 'Respaldo estatico',
+          icono: 'documento', color: COLORES.azul,
+        },
+        posicion: posiciones.base, etapa: 1,
+      },
+      {
+        paso: {
+          titulo: 'Puntos recurrentes',
+          detalle: recurrentes.join(' · ') || 'Se muestran consejos base hasta tener historial',
+          dato: recurrentes.length ? `${recurrentes.length} patrones` : 'Conteo exacto · sin IA',
+          icono: 'comparar', color: COLORES.verde,
+        },
+        posicion: posiciones.conteo, etapa: 2,
+      },
+      {
+        paso: {
+          titulo: 'Plan opcional con IA',
+          detalle: planEstado[0],
+          dato: planEstado[1],
+          icono: 'app', color: planEstado[2],
+        },
+        posicion: posiciones.plan, etapa: 3,
+      },
+      {
+        paso: {
+          titulo: 'Historial y mejoras',
+          detalle: recurrentes[0] || practicas[0] || 'Preparado para tu primera practica',
+          dato: 'Visible en la pantalla',
+          icono: 'resultado', color: COLORES.verde,
+        },
+        posicion: posiciones.pantalla, etapa: 4,
+      },
+    ];
+    conexiones = [
+      {
+        inicio: { x: posiciones.local.x + 55, y: medio - 15 },
+        fin: { x: posiciones.practicas.x - 55, y: superior + 15 },
+        control: { x: ancho * 0.22, y: superior + 20 },
+        etapa: 0, color: COLORES.azul, etiqueta: 'lee practicas',
+        dato: practicas.length ? practicas : 'historial vacio',
+      },
+      {
+        inicio: { x: posiciones.local.x + 55, y: medio + 15 },
+        fin: { x: posiciones.base.x - 55, y: inferior - 15 },
+        control: { x: ancho * 0.22, y: inferior - 20 },
+        etapa: 0, color: COLORES.azul, etiqueta: 'usa respaldo',
+        dato: 'consejos para empezar',
+      },
+      {
+        inicio: { x: posiciones.practicas.x + 55, y: superior + 20 },
+        fin: { x: posiciones.conteo.x - 55, y: medio - 20 },
+        control: { x: ancho * 0.43, y: superior + 25 },
+        etapa: 1, color: COLORES.verde, etiqueta: 'cuenta repeticiones',
+        dato: recurrentes.length ? recurrentes : 'feedback de cada practica',
+      },
+      {
+        inicio: { x: posiciones.conteo.x + 55, y: medio },
+        fin: { x: posiciones.plan.x - 55, y: medio },
+        control: { x: ancho * 0.62, y: medio },
+        etapa: 2, color: COLORES.violeta, etiqueta: 'si pides un plan',
+        dato: recurrentes.length ? recurrentes : '3 consejos + ejercicio',
+      },
+      {
+        inicio: { x: posiciones.plan.x + 55, y: medio },
+        fin: { x: posiciones.pantalla.x - 55, y: medio },
+        control: { x: ancho * 0.795, y: medio },
+        etapa: 3, color: COLORES.verde, etiqueta: 'muestra',
+        dato: datos.planEstado === 'listo' ? 'plan personalizado' : 'mejoras actuales',
+      },
+    ];
+  } else if (datos.estado === 'feedback') {
+    const mejoras = lista(datos.feedback?.mejorar);
+    const fortalezas = lista(datos.feedback?.fortalezas);
+    const transcript = datos.transcript.map((item) =>
+      `${textoCorto(item?.pregunta, 22)} → ${textoCorto(item?.respuesta || 'sin respuesta', 22)}`,
+    );
+    const origen = datos.feedback?.cacheado
+      ? ['Redis reutiliza el feedback', 'Cache de 7 dias · sin nueva IA', COLORES.cian, 'base']
+      : datos.feedback?.generico
+        ? ['Feedback de respaldo', 'La cuota o el modelo no estuvieron disponibles', COLORES.azul, 'documento']
+        : ['OpenRouter evalua el transcript', 'Una llamada al terminar la practica', COLORES.violeta, 'app'];
+    const posiciones = {
+      transcript: { x: margen, y: medio },
+      fuente: { x: ancho * 0.34, y: medio },
+      parseo: { x: ancho * 0.53, y: medio },
+      fortalezas: { x: ancho * 0.72, y: superior },
+      mejoras: { x: ancho * 0.72, y: inferior },
+      historial: { x: ancho * 0.87, y: medio },
+    };
+    titulos.push(
+      { texto: 'CIERRE DE LA PRACTICA', x: posiciones.transcript.x - 56, y: medio - 112, color: COLORES.cian },
+      { texto: 'UNA EVALUACION AL FINAL', x: posiciones.fuente.x - 85, y: medio - 112, color: COLORES.violeta },
+      { texto: 'RESULTADO ACCIONABLE', x: posiciones.fortalezas.x - 78, y: superior - 112, color: COLORES.verde },
+    );
+    nodos = [
+      {
+        paso: {
+          titulo: 'Transcript de la entrevista',
+          detalle: transcript.join(' · ') || 'Reuniendo preguntas y respuestas',
+          dato: `${datos.respondidas} respuestas`,
+          icono: 'documento', color: COLORES.cian,
+        },
+        posicion: posiciones.transcript, etapa: 0,
+      },
+      {
+        paso: {
+          titulo: origen[0], detalle: origen[1],
+          dato: datos.pensando ? 'Evaluando ahora' : 'Evaluacion recibida',
+          icono: origen[3], color: origen[2],
+        },
+        posicion: posiciones.fuente, etapa: 1,
+      },
+      {
+        paso: {
+          titulo: 'JSON validado',
+          detalle: 'Resumen, fortalezas, mejoras y una respuesta modelo',
+          dato: datos.feedback ? 'Estructura correcta' : 'Esperando respuesta',
+          icono: 'comparar', color: COLORES.azul,
+        },
+        posicion: posiciones.parseo, etapa: 2,
+      },
+      {
+        paso: {
+          titulo: 'Fortalezas detectadas',
+          detalle: fortalezas.join(' · ') || 'Preparando fortalezas',
+          dato: `${fortalezas.length} puntos`,
+          icono: 'habilidades', color: COLORES.verde,
+        },
+        posicion: posiciones.fortalezas, etapa: 3,
+      },
+      {
+        paso: {
+          titulo: 'Como mejorar',
+          detalle: mejoras.join(' · ') || 'Preparando recomendaciones',
+          dato: `${mejoras.length} acciones`,
+          icono: 'curso', color: COLORES.amarillo,
+        },
+        posicion: posiciones.mejoras, etapa: 3,
+      },
+      {
+        paso: {
+          titulo: 'Historial local',
+          detalle: 'Guarda resumen y recomendaciones; no el transcript completo',
+          dato: `${datos.entrevistas.length} practicas`,
+          icono: 'guardar', color: COLORES.verde,
+        },
+        posicion: posiciones.historial, etapa: 4,
+      },
+    ];
+    conexiones = [
+      {
+        inicio: { x: posiciones.transcript.x + 55, y: medio },
+        fin: { x: posiciones.fuente.x - 55, y: medio },
+        control: { x: ancho * 0.245, y: medio },
+        etapa: 0, color: origen[2], etiqueta: 'envia una vez',
+        dato: transcript.length ? transcript : 'preguntas + respuestas',
+      },
+      {
+        inicio: { x: posiciones.fuente.x + 55, y: medio },
+        fin: { x: posiciones.parseo.x - 55, y: medio },
+        control: { x: ancho * 0.435, y: medio },
+        etapa: 1, color: COLORES.azul, etiqueta: 'devuelve JSON',
+        dato: 'resumen + fortalezas + mejoras',
+      },
+      {
+        inicio: { x: posiciones.parseo.x + 55, y: medio - 18 },
+        fin: { x: posiciones.fortalezas.x - 55, y: superior + 18 },
+        control: { x: ancho * 0.63, y: superior + 25 },
+        etapa: 2, color: COLORES.verde, etiqueta: 'separa',
+        dato: fortalezas.length ? fortalezas : 'fortalezas',
+      },
+      {
+        inicio: { x: posiciones.parseo.x + 55, y: medio + 18 },
+        fin: { x: posiciones.mejoras.x - 55, y: inferior - 18 },
+        control: { x: ancho * 0.63, y: inferior - 25 },
+        etapa: 2, color: COLORES.amarillo, etiqueta: 'prioriza',
+        dato: mejoras.length ? mejoras : 'acciones para mejorar',
+      },
+      {
+        inicio: { x: posiciones.fortalezas.x + 45, y: superior + 35 },
+        fin: { x: posiciones.historial.x - 55, y: medio - 20 },
+        control: { x: ancho * 0.82, y: superior + 45 },
+        etapa: 3, color: COLORES.verde, etiqueta: 'guarda resumen',
+        dato: datos.feedback?.resumen || 'feedback final',
+      },
+      {
+        inicio: { x: posiciones.mejoras.x + 45, y: inferior - 35 },
+        fin: { x: posiciones.historial.x - 55, y: medio + 20 },
+        control: { x: ancho * 0.82, y: inferior - 45 },
+        etapa: 3, color: COLORES.verde, etiqueta: 'guarda mejoras',
+        dato: mejoras.length ? mejoras : 'recomendaciones',
+      },
+    ];
+  } else {
+    const respuesta = datos.respuestaActual || datos.transcript.at(-1)?.respuesta || 'Esperando tu respuesta';
+    const rep = datos.ultimaRepregunta;
+    const estadoRep = rep?.estado === 'generada'
+      ? [rep.texto, 'Repregunta generada', COLORES.violeta]
+      : rep
+        ? [`Se omitio: ${rep.estado}`, 'La entrevista continua', COLORES.azul]
+        : ['Solo se intenta con respuestas de 40 o mas caracteres', 'Maximo 2 por sesion', COLORES.suave];
+    const posiciones = {
+      config: { x: margen, y: superior },
+      banco: { x: margen, y: inferior },
+      sesion: { x: ancho * 0.29, y: medio },
+      pregunta: { x: ancho * 0.47, y: medio },
+      respuesta: { x: ancho * 0.64, y: medio },
+      repregunta: { x: ancho * 0.82, y: superior },
+      transcript: { x: ancho * 0.82, y: inferior },
+    };
+    titulos.push(
+      { texto: 'SESION ACTIVA', x: posiciones.config.x - 40, y: superior - 112, color: COLORES.cian },
+      { texto: 'TURNO ACTUAL', x: posiciones.pregunta.x - 50, y: medio - 112, color: COLORES.verde },
+      { texto: 'IA OPCIONAL Y RACIONADA', x: posiciones.repregunta.x - 88, y: superior - 112, color: COLORES.violeta },
+    );
+    nodos = [
+      {
+        paso: {
+          titulo: 'Configuracion de la practica',
+          detalle: `${cfg.puesto || 'Puesto general'} · ${cfg.nivel || 'Junior'} · ${datos.area || 'general'}`,
+          dato: cfg.tipo || 'mixta',
+          icono: 'comparar', color: COLORES.cian,
+        },
+        posicion: posiciones.config, etapa: 0,
+      },
+      {
+        paso: {
+          titulo: 'Banco estatico',
+          detalle: `${datos.totalPreguntas} preguntas base barajadas sin repetir`,
+          dato: 'Preguntas · cero IA',
+          icono: 'documento', color: COLORES.azul,
+        },
+        posicion: posiciones.banco, etapa: 0,
+      },
+      {
+        paso: {
+          titulo: 'Sesion en Redis',
+          detalle: 'Configuracion temporal con vencimiento de 2 horas',
+          dato: textoCorto(datos.sessionId || 'sesion activa', 18),
+          icono: 'base', color: COLORES.violeta,
+        },
+        posicion: posiciones.sesion, etapa: 1,
+      },
+      {
+        paso: {
+          titulo: datos.esRepregunta ? 'Repregunta actual' : 'Pregunta actual',
+          detalle: datos.preguntaActual || 'Preparando la siguiente pregunta',
+          dato: `${datos.respondidas} respondidas · ${datos.pendientes} pendientes`,
+          icono: 'entrevista', color: COLORES.verde,
+        },
+        posicion: posiciones.pregunta, etapa: 2,
+      },
+      {
+        paso: {
+          titulo: cfg.modalidad === 'video' ? 'Voz o texto del candidato' : 'Respuesta del candidato',
+          detalle: respuesta,
+          dato: datos.escuchando ? 'Microfono escuchando' : `${datos.respuestaActual.length} caracteres`,
+          icono: cfg.modalidad === 'video' ? 'app' : 'persona',
+          color: datos.escuchando ? COLORES.amarillo : COLORES.cian,
+        },
+        posicion: posiciones.respuesta, etapa: 3,
+      },
+      {
+        paso: {
+          titulo: 'Repregunta opcional',
+          detalle: estadoRep[0],
+          dato: estadoRep[1],
+          icono: 'app', color: estadoRep[2],
+        },
+        posicion: posiciones.repregunta, etapa: 4,
+      },
+      {
+        paso: {
+          titulo: 'Transcript temporal',
+          detalle: datos.transcript
+            .map((item) => textoCorto(item?.respuesta || 'sin respuesta', 24))
+            .join(' · ') || 'Se arma mientras respondes',
+          dato: `${datos.respondidas} turnos guardados`,
+          icono: 'documento', color: COLORES.azul,
+        },
+        posicion: posiciones.transcript, etapa: 4,
+      },
+    ];
+    conexiones = [
+      {
+        inicio: { x: posiciones.config.x + 55, y: superior + 12 },
+        fin: { x: posiciones.sesion.x - 55, y: medio - 18 },
+        control: { x: ancho * 0.2, y: superior + 20 },
+        etapa: 0, color: COLORES.cian, etiqueta: 'configura',
+        dato: [cfg.puesto || 'puesto general', cfg.nivel || 'Junior', cfg.tipo || 'mixta'],
+      },
+      {
+        inicio: { x: posiciones.banco.x + 55, y: inferior - 12 },
+        fin: { x: posiciones.sesion.x - 55, y: medio + 18 },
+        control: { x: ancho * 0.2, y: inferior - 20 },
+        etapa: 0, color: COLORES.azul, etiqueta: 'entrega preguntas',
+        dato: `${datos.totalPreguntas} preguntas`,
+      },
+      {
+        inicio: { x: posiciones.sesion.x + 55, y: medio },
+        fin: { x: posiciones.pregunta.x - 55, y: medio },
+        control: { x: ancho * 0.38, y: medio },
+        etapa: 1, color: COLORES.verde, etiqueta: 'muestra turno',
+        dato: datos.preguntaActual || 'pregunta actual',
+      },
+      {
+        inicio: { x: posiciones.pregunta.x + 55, y: medio },
+        fin: { x: posiciones.respuesta.x - 55, y: medio },
+        control: { x: ancho * 0.555, y: medio },
+        etapa: 2, color: COLORES.cian, etiqueta: 'recibe respuesta',
+        dato: respuesta,
+      },
+      {
+        inicio: { x: posiciones.respuesta.x + 48, y: medio - 28 },
+        fin: { x: posiciones.repregunta.x - 55, y: superior + 18 },
+        control: { x: ancho * 0.74, y: superior + 35 },
+        etapa: 3, color: COLORES.violeta, etiqueta: 'si tiene 40+ caracteres',
+        dato: rep?.texto || `${datos.respuestaActual.length} caracteres`,
+      },
+      {
+        inicio: { x: posiciones.respuesta.x + 48, y: medio + 28 },
+        fin: { x: posiciones.transcript.x - 55, y: inferior - 18 },
+        control: { x: ancho * 0.74, y: inferior - 35 },
+        etapa: 3, color: COLORES.azul, etiqueta: 'anota el turno',
+        dato: respuesta,
+      },
+      {
+        inicio: { x: posiciones.repregunta.x + 58, y: superior + 35 },
+        fin: { x: posiciones.transcript.x + 58, y: inferior - 35 },
+        control: { x: posiciones.repregunta.x + ancho * 0.06, y: medio },
+        etapa: 4, color: COLORES.violeta, etiqueta: 'si se genero',
+        dato: rep?.texto || 'continua con el banco',
+      },
+    ];
+  }
+
+  agregarTitulos();
+  const recorrido = progreso * etapas;
+  const movimiento = (progreso * etapas) % 1;
+  conexiones.forEach((conexion, indice) => {
+    dibujarConexionCurva(
+      ctx,
+      conexion.inicio,
+      conexion.fin,
+      conexion.control,
+      limitar(recorrido - conexion.etapa - 0.62),
+      conexion.color,
+      conexion.etiqueta,
+      conexion.dato,
+      (movimiento + indice * 0.14) % 1,
+    );
+  });
+  nodos.forEach(({ paso, posicion, etapa }) => {
+    dibujarNodo(
+      ctx,
+      paso,
+      etapa,
+      posicion.x,
+      posicion.y,
+      anchoNodo,
+      limitar(recorrido - etapa),
+    );
+  });
+}
+
 function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   dibujarFondo(ctx, ancho, alto);
   const flujo = flujoDe(accion);
@@ -1552,6 +2157,10 @@ function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   }
   if (flujo.modo === 'portafolio') {
     dibujarMapaPortafolio(ctx, ancho, alto, flujo, progreso);
+    return;
+  }
+  if (flujo.modo === 'entrevista') {
+    dibujarMapaEntrevista(ctx, ancho, alto, flujo, progreso);
     return;
   }
   if (flujo.modo === 'matching') {
