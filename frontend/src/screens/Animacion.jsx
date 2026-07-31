@@ -147,6 +147,12 @@ function flujoDe(accion) {
         { titulo: 'Encontramos habilidades', detalle: skills.slice(0, 3).join(', ') || 'Habilidades del CV', dato: `${skills.length} encontradas`, icono: 'habilidades', color: COLORES.violeta },
         { titulo: 'Preparamos oportunidades', detalle: datos.ofertas || 'Ofertas para tu perfil', dato: 'Perfil listo', icono: 'oferta', color: COLORES.verde },
       ],
+      relaciones: ['se lee', 'crea tu perfil', 'busca coincidencias'],
+      transferencias: [
+        datos.archivo || 'CV en PDF',
+        datos.nombre || datos.rol || 'Datos del perfil',
+        skills.slice(0, 2).join(' + ') || `${skills.length} habilidades`,
+      ],
       resultado: 'Tu perfil ya puede buscar oportunidades',
       indicadores: [['CV', 1], ['Habilidades', skills.length], ['Perfil', 1]],
     };
@@ -161,6 +167,12 @@ function flujoDe(accion) {
         { titulo: 'Comparamos contigo', detalle: 'Habilidades, puesto y preferencias', dato: 'Mejor encaje primero', icono: 'comparar', color: COLORES.violeta },
         { titulo: 'Mostramos lo mejor', detalle: ofertas[0]?.title || ofertas[0] || 'Resultados ordenados', dato: ofertas[0]?.company || 'Listo para revisar', icono: 'ordenar', color: COLORES.verde },
       ],
+      relaciones: ['inicia la revision', 'compara contigo', 'ordena resultados'],
+      transferencias: [
+        esBusqueda ? datos.consulta || 'Tu busqueda' : datos.perfil || 'Tu perfil',
+        `${ofertas.length || datos.total || 0} ofertas`,
+        ofertas[0]?.title || ofertas[0] || 'Mejores resultados',
+      ],
       resultado: esBusqueda ? 'Tu busqueda ya tiene resultados' : 'Estas son las oportunidades mas cercanas a ti',
       indicadores: [['Consulta', 1], ['Revisadas', Math.max(ofertas.length, Number(datos.total) || 0)], ['Destacadas', Math.min(3, ofertas.length)]],
     };
@@ -174,6 +186,12 @@ function flujoDe(accion) {
         { titulo: 'Detectamos oportunidades', detalle: faltantes.slice(0, 2).join(', ') || 'Habilidades por reforzar', dato: `${faltantes.length} por aprender`, icono: 'comparar', color: COLORES.violeta },
         { titulo: 'Trazamos un camino', detalle: cursos[0]?.titulo || cursos[0] || 'Curso recomendado', dato: `${cursos.length} recursos`, icono: 'curso', color: COLORES.cian },
       ],
+      relaciones: ['se contrasta con', 'descubre', 'recomienda'],
+      transferencias: [
+        datos.fortalezas || 'Tus habilidades',
+        `${datos.analizadas || 'Varias'} ofertas`,
+        faltantes.slice(0, 2).join(' + ') || `${faltantes.length} oportunidades`,
+      ],
       resultado: 'Ya tienes un siguiente paso claro',
       indicadores: [['Fortalezas', Number(datos.fortalezas?.length) || 1], ['Por aprender', faltantes.length], ['Cursos', cursos.length]],
     };
@@ -186,6 +204,12 @@ function flujoDe(accion) {
         { titulo: 'Buscamos combinaciones', detalle: 'Ideas que puedes demostrar', dato: 'Opciones posibles', icono: 'comparar', color: COLORES.violeta },
         { titulo: 'Creamos ideas practicas', detalle: ideas[0]?.titulo || ideas[0] || 'Proyecto sugerido', dato: `${ideas.length} ideas`, icono: 'proyecto', color: COLORES.cian },
         { titulo: 'Preparamos tu vitrina', detalle: 'Proyectos para mostrar', dato: 'Portafolio listo', icono: 'oferta', color: COLORES.verde },
+      ],
+      relaciones: ['se combinan', 'generan', 'se convierten en'],
+      transferencias: [
+        skills.slice(0, 2).join(' + ') || 'Tus habilidades',
+        `${ideas.length} ideas`,
+        ideas[0]?.titulo || ideas[0] || 'Proyecto sugerido',
       ],
       resultado: 'Tus habilidades ahora tienen algo visible que mostrar',
       indicadores: [['Habilidades', skills.length], ['Ideas', ideas.length], ['Proyecto', ideas.length ? 1 : 0]],
@@ -201,6 +225,12 @@ function flujoDe(accion) {
         { titulo: 'La llevamos a Guardados', detalle: 'Queda disponible en tu perfil', dato: 'Guardada', icono: 'guardar', color: COLORES.violeta },
         { titulo: 'Lista para volver', detalle: 'Puedes revisarla cuando quieras', dato: `${datos.total || 1} guardada${datos.total === 1 ? '' : 's'}`, icono: 'ordenar', color: COLORES.verde },
       ],
+      relaciones: ['la seleccionas', 'se mueve a', 'queda disponible'],
+      transferencias: [
+        oferta.title || 'Oferta elegida',
+        oferta.company || 'Oportunidad',
+        `${datos.total || 1} guardada${datos.total === 1 ? '' : 's'}`,
+      ],
       resultado: 'La oportunidad quedo guardada correctamente',
       indicadores: [['Elegida', 1], ['Guardadas', Number(datos.total) || 1], ['Disponible', 1]],
     };
@@ -213,6 +243,8 @@ function flujoDe(accion) {
       { titulo: 'Usaremos tus datos', detalle: 'Solo lo necesario para explicarlo', dato: 'Datos reales', icono: 'comparar', color: COLORES.violeta },
       { titulo: 'Mostraremos el resultado', detalle: 'Claro y facil de seguir', dato: 'Listo', icono: 'oferta', color: COLORES.verde },
     ],
+    relaciones: ['activa', 'conecta', 'produce'],
+    transferencias: ['Tu accion', 'Datos reales', 'Resultado'],
     resultado: 'El mapa se actualiza con la actividad de la aplicacion',
     indicadores: [['Entrada', 1], ['Etapas', 4], ['Resultado', 1]],
   };
@@ -243,77 +275,120 @@ function dibujarFondo(ctx, ancho, alto) {
   }
 }
 
-function dibujarConexion(ctx, x1, x2, y, avance, color) {
+function dibujarConexion(ctx, x1, x2, y, avance, color, etiqueta, dato, movimiento) {
   ctx.save();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(105, 145, 196, 0.2)';
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(105, 145, 196, 0.28)';
   ctx.beginPath();
   ctx.moveTo(x1, y);
   ctx.lineTo(x2, y);
   ctx.stroke();
 
   const progreso = limitar(avance);
+  const finalX = x1 + (x2 - x1) * progreso;
+  ctx.lineWidth = 4;
   ctx.strokeStyle = color;
   ctx.beginPath();
   ctx.moveTo(x1, y);
-  ctx.lineTo(x1 + (x2 - x1) * progreso, y);
+  ctx.lineTo(finalX, y);
   ctx.stroke();
 
+  ctx.fillStyle = progreso >= 1 ? color : 'rgba(105, 145, 196, 0.4)';
+  ctx.beginPath();
+  ctx.moveTo(x2 - 9, y - 6);
+  ctx.lineTo(x2, y);
+  ctx.lineTo(x2 - 9, y + 6);
+  ctx.closePath();
+  ctx.fill();
+
   if (progreso > 0 && progreso < 1) {
-    const pulsoX = x1 + (x2 - x1) * progreso;
     ctx.fillStyle = color;
     ctx.shadowColor = color;
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = 20;
     ctx.beginPath();
-    ctx.arc(pulsoX, y, 6, 0, Math.PI * 2);
+    ctx.arc(finalX, y, 7, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  ctx.shadowBlur = 0;
+  ctx.font = '700 11px system-ui, sans-serif';
+  const rotulo = textoCorto(etiqueta, 24);
+  const anchoRotulo = ctx.measureText(rotulo).width + 20;
+  redondear(ctx, (x1 + x2 - anchoRotulo) / 2, y - 31, anchoRotulo, 22, 11);
+  ctx.fillStyle = 'rgba(5, 16, 34, 0.96)';
+  ctx.fill();
+  ctx.strokeStyle = `${color}66`;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = progreso >= 1 ? color : COLORES.suave;
+  ctx.textAlign = 'center';
+  ctx.fillText(rotulo, (x1 + x2) / 2, y - 16);
+
+  if (progreso > 0) {
+    const contenido = textoCorto(dato, 22);
+    ctx.font = '700 11px system-ui, sans-serif';
+    const anchoDato = Math.min(x2 - x1 - 10, Math.max(66, ctx.measureText(contenido).width + 24));
+    const posicion = progreso < 1 ? progreso : movimiento;
+    const centroDato = x1 + anchoDato / 2 + (x2 - x1 - anchoDato) * posicion;
+    redondear(ctx, centroDato - anchoDato / 2, y + 14, anchoDato, 26, 13);
+    ctx.fillStyle = 'rgba(8, 24, 49, 0.97)';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = `${color}aa`;
+    ctx.stroke();
+    ctx.fillStyle = COLORES.texto;
+    ctx.fillText(contenido, centroDato, y + 31);
   }
   ctx.restore();
 }
 
-function dibujarPaso(ctx, paso, indice, x, y, ancho, alto, avance) {
+function dibujarNodo(ctx, paso, indice, x, y, ancho, avance) {
   const completado = avance >= 1;
   const activo = avance > 0 && avance < 1;
-  const intensidad = completado ? 1 : activo ? 0.88 : 0.48;
+  const intensidad = completado ? 1 : activo ? 0.94 : 0.42;
+  const tamanoIcono = 82;
 
   ctx.save();
   ctx.globalAlpha = intensidad;
-  ctx.shadowColor = activo ? `${paso.color}88` : 'transparent';
-  ctx.shadowBlur = activo ? 24 : 0;
-  redondear(ctx, x, y, ancho, alto, 14);
-  ctx.fillStyle = completado || activo ? 'rgba(8, 24, 49, 0.94)' : 'rgba(6, 17, 35, 0.82)';
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.strokeStyle = completado || activo ? `${paso.color}aa` : 'rgba(104, 143, 194, 0.28)';
-  ctx.lineWidth = activo ? 2 : 1;
-  ctx.stroke();
+  if (activo || completado) {
+    ctx.strokeStyle = `${paso.color}${activo ? 'aa' : '66'}`;
+    ctx.lineWidth = activo ? 3 : 2;
+    ctx.shadowColor = paso.color;
+    ctx.shadowBlur = activo ? 26 : 10;
+    ctx.beginPath();
+    ctx.arc(x, y, tamanoIcono / 2 + 13, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
 
-  dibujarIcono(ctx, paso.icono, x + 18, y + 18, 48, paso.color);
-
-  ctx.fillStyle = paso.color;
-  ctx.font = '700 11px system-ui, sans-serif';
-  ctx.fillText(`PASO ${indice + 1}`, x + 80, y + 32);
-  ctx.fillStyle = COLORES.texto;
-  ctx.font = '700 17px system-ui, sans-serif';
-  escribirLineas(ctx, paso.titulo, x + 80, y + 56, ancho - 98, 2, 19);
-
-  ctx.fillStyle = COLORES.suave;
-  ctx.font = '13px system-ui, sans-serif';
-  escribirLineas(ctx, paso.detalle, x + 18, y + 102, ancho - 36, 2, 18);
-
-  ctx.font = '700 12px system-ui, sans-serif';
-  const dato = textoCorto(paso.dato, 28);
-  const pastilla = Math.min(ancho - 36, ctx.measureText(dato).width + 24);
-  redondear(ctx, x + 18, y + alto - 42, pastilla, 26, 13);
-  ctx.fillStyle = `${paso.color}1f`;
-  ctx.fill();
-  ctx.fillStyle = paso.color;
-  ctx.fillText(dato, x + 30, y + alto - 24);
+  dibujarIcono(ctx, paso.icono, x - tamanoIcono / 2, y - tamanoIcono / 2, tamanoIcono, paso.color);
 
   ctx.fillStyle = completado ? COLORES.verde : activo ? COLORES.amarillo : COLORES.suave;
   ctx.font = '700 10px system-ui, sans-serif';
-  ctx.textAlign = 'right';
-  ctx.fillText(completado ? 'COMPLETADO' : activo ? 'AHORA' : 'SIGUE', x + ancho - 18, y + alto - 24);
+  ctx.textAlign = 'center';
+  ctx.fillText(completado ? 'COMPLETADO' : activo ? 'AHORA' : `PASO ${indice + 1}`, x, y - 64);
+
+  ctx.fillStyle = COLORES.texto;
+  ctx.font = '700 18px system-ui, sans-serif';
+  escribirLineas(ctx, paso.titulo, x, y + 70, ancho, 2, 21);
+
+  ctx.fillStyle = COLORES.suave;
+  ctx.font = '13px system-ui, sans-serif';
+  escribirLineas(ctx, paso.detalle, x, y + 116, ancho, 2, 18);
+
+  ctx.font = '700 12px system-ui, sans-serif';
+  const dato = textoCorto(paso.dato, 28);
+  const pastilla = Math.min(ancho, ctx.measureText(dato).width + 24);
+  redondear(ctx, x - pastilla / 2, y + 151, pastilla, 27, 14);
+  ctx.fillStyle = `${paso.color}1f`;
+  ctx.fill();
+  ctx.strokeStyle = `${paso.color}66`;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = paso.color;
+  ctx.fillText(dato, x, y + 169);
   ctx.restore();
 }
 
@@ -361,28 +436,37 @@ function dibujarIndicadores(ctx, flujo, x, y, ancho, alto, visible) {
 function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   dibujarFondo(ctx, ancho, alto);
   const flujo = flujoDe(accion);
-  const margen = Math.max(48, ancho * 0.065);
-  const separacion = Math.max(18, ancho * 0.015);
-  const anchoPaso = (ancho - margen * 2 - separacion * 3) / 4;
-  const altoPaso = Math.min(205, alto * 0.25);
-  const y = Math.max(220, alto * 0.31);
+  const margen = Math.max(80, ancho * 0.075);
+  const espacioUtil = ancho - margen * 2;
+  const anchoNodo = Math.min(220, espacioUtil / 4.6);
+  const y = Math.max(265, alto * 0.39);
   const recorrido = progreso * flujo.pasos.length;
+  const centros = flujo.pasos.map((_, indice) => margen + (espacioUtil * indice) / 3);
 
   ctx.fillStyle = COLORES.suave;
   ctx.font = '700 11px system-ui, sans-serif';
-  ctx.fillText('ASI AVANZA LA ACCION', margen, y - 30);
+  ctx.fillText('ELEMENTOS CONECTADOS EN ESTA ACCION', margen, y - 112);
 
-  flujo.pasos.forEach((paso, indice) => {
-    const x = margen + indice * (anchoPaso + separacion);
-    const avance = limitar(recorrido - indice);
-    dibujarPaso(ctx, paso, indice, x, y, anchoPaso, altoPaso, avance);
-    if (indice < flujo.pasos.length - 1) {
-      const avanceConexion = limitar(recorrido - indice - 0.76);
-      dibujarConexion(ctx, x + anchoPaso, x + anchoPaso + separacion, y + altoPaso / 2, avanceConexion, paso.color);
-    }
+  flujo.relaciones.forEach((relacion, indice) => {
+    const avanceConexion = limitar(recorrido - indice - 0.72);
+    dibujarConexion(
+      ctx,
+      centros[indice] + 56,
+      centros[indice + 1] - 56,
+      y,
+      avanceConexion,
+      flujo.pasos[indice].color,
+      relacion,
+      flujo.transferencias[indice],
+      (progreso * 5 + indice * 0.24) % 1,
+    );
   });
 
-  const panelY = Math.min(alto - 185, y + altoPaso + Math.max(42, alto * 0.065));
+  flujo.pasos.forEach((paso, indice) => {
+    dibujarNodo(ctx, paso, indice, centros[indice], y, anchoNodo, limitar(recorrido - indice));
+  });
+
+  const panelY = Math.min(alto - 185, y + 215);
   dibujarIndicadores(ctx, flujo, margen, panelY, Math.min(ancho * 0.48, 650), 135, limitar((progreso - 0.62) * 3));
 }
 
