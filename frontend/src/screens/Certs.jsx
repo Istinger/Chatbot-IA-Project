@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { useVista } from '../lib/vista';
 import { alternarProgreso, leerProgreso, proyeccion } from '../lib/crecer';
@@ -49,17 +49,50 @@ export default function Certs() {
   useEffect(() => {
     api
       .certificados()
-      .then((r) => {
-        setDatos(r);
-        registrarAnimacion('crecimiento_analizado', {
-          analizadas: r.analizadas,
-          faltantes: r.faltantes?.slice(0, 3).map((item) => item.skill),
-          fortalezas: r.fortalezas?.slice(0, 3).map((item) => item.skill).join(', '),
-          cursos: r.cursos?.slice(0, 3).map((item) => item.opciones?.[0]?.titulo || item.skill),
-        });
-      })
+      .then((r) => setDatos(r))
       .catch((e) => setError(e.message));
   }, []);
+
+  const proyActual = useMemo(
+    () => (datos ? proyeccion(datos.faltantes, progreso, datos.analizadas) : null),
+    [datos, progreso],
+  );
+
+  // La pestaña Animacion refleja siempre el estado que el usuario esta viendo
+  // en Crecer, incluidos los cambios de progreso y el detalle abierto.
+  useEffect(() => {
+    const temporizador = window.setTimeout(() => {
+      if (!datos) {
+        registrarAnimacion('crecer_abierta', {});
+        return;
+      }
+
+      registrarAnimacion('crecimiento_analizado', {
+        analizadas: datos.analizadas,
+        tusSkills: datos.tusSkills,
+        fortalezas: datos.fortalezas,
+        faltantes: datos.faltantes,
+        cursos: datos.cursos.map((curso) => ({
+          skill: curso.skill,
+          porcentaje: curso.porcentaje,
+          opciones: curso.opciones.slice(0, 2).map((opcion) => ({
+            titulo: opcion.titulo,
+            proveedor: opcion.proveedor,
+            nivel: opcion.nivel,
+            horas: opcion.horas,
+            gratis: opcion.gratis,
+          })),
+        })),
+        progreso: Object.entries(progreso).map(([skill, estado]) => ({ skill, estado })),
+        proyeccion: proyActual,
+        abierta,
+        tienePlan: Boolean(plan),
+        tieneExplicacion: Boolean(abierta && explica[abierta]),
+      });
+    }, 180);
+
+    return () => window.clearTimeout(temporizador);
+  }, [abierta, datos, explica, plan, progreso, proyActual]);
 
   // Se le cuenta al Asistente que brechas y cursos esta viendo el usuario, para
   // que "que aprendo primero?" o "cursos para X" tengan contexto real. Se limpia
@@ -114,7 +147,7 @@ export default function Certs() {
   const { analizadas, fortalezas, faltantes, cursos } = datos;
 
   // Lo marcado alimenta la proyeccion: "si aprendes esto, alcanzas N ofertas".
-  const proy = proyeccion(faltantes, progreso, analizadas);
+  const proy = proyActual;
   const cursosDe = (skill) => cursos.find((c) => c.skill === skill)?.opciones || [];
 
   /** Explicacion de UNA brecha. Se muestra aqui mismo, junto a sus cursos. */
