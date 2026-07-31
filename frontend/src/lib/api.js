@@ -50,6 +50,12 @@ export const api = {
   registro: (email, password) =>
     request('/auth/register', { method: 'POST', body: { email, password } }),
 
+  correosDemo: (emails) =>
+    request('/auth/demo-emails', { method: 'POST', body: { emails } }),
+
+  registroDemo: (email, password) =>
+    request('/auth/demo-register', { method: 'POST', body: { email, password } }),
+
   login: (email, password) =>
     request('/auth/login', { method: 'POST', body: { email, password } }),
 

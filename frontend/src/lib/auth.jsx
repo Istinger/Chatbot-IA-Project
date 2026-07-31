@@ -53,9 +53,10 @@ export function AuthProvider({ children }) {
   // Registro del flujo CV Express. Guarda el token, pero mantiene la pantalla
   // publica montada hasta que el PDF y las skills hayan quedado vinculados.
   const registrarDemo = useCallback(async (email, password) => {
-    const { token } = await api.registro(email, password);
+    const respuesta = await api.registroDemo(email, password);
+    const { token } = respuesta;
     setToken(token);
-    return token;
+    return respuesta;
   }, []);
 
   const salir = useCallback(() => {
