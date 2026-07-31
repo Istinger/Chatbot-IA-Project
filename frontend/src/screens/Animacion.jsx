@@ -566,6 +566,19 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
   const recorrido = progreso * 4;
   const movimiento = (progreso * 6) % 1;
 
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.font = '700 12px system-ui, sans-serif';
+  ctx.fillStyle = COLORES.cian;
+  ctx.fillText('CUANDO EL USUARIO ENTRA', xEntrada - 42, superior - 112);
+  ctx.fillStyle = COLORES.azul;
+  ctx.fillText('PROCESO AUTOMATICO PREVIO', xEntrada - 42, inferior - 112);
+  ctx.font = '11px system-ui, sans-serif';
+  ctx.fillStyle = COLORES.suave;
+  ctx.fillText('Se ejecuta con el perfil que esta viendo la aplicacion', xEntrada - 42, superior - 94);
+  ctx.fillText('Las ofertas se actualizan periodicamente antes de la busqueda', xEntrada - 42, inferior - 94);
+  ctx.restore();
+
   const nodos = [
     {
       paso: {
@@ -606,7 +619,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
     {
       paso: {
         titulo: 'Catálogo preparado',
-        detalle: ofertas.slice(0, 2).map((oferta) => oferta.title).filter(Boolean).join(' · ') || 'Normaliza, detecta skills y evita duplicados',
+        detalle: 'Normaliza, elimina duplicados y detecta skills',
         dato: `${total || 'Varias'} ofertas`,
         icono: 'oferta',
         color: COLORES.azul,
@@ -618,8 +631,8 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
     {
       paso: {
         titulo: 'PostgreSQL + pgvector',
-        detalle: 'Compara qué tan cerca están los vectores',
-        dato: 'Similitud semántica',
+        detalle: 'Similitud coseno entre el perfil y las ofertas',
+        dato: 'Operador <=>',
         icono: 'base',
         color: COLORES.violeta,
       },
@@ -666,7 +679,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
       control: { x: ancho * 0.45, y: superior },
       etapa: 1,
       color: COLORES.cian,
-      etiqueta: 'envía',
+      etiqueta: 'embedding del perfil',
       dato: [
         ...habilidades.map((skill) => `${skill} → valor numérico`),
         'vector del perfil · 384 valores',
@@ -678,8 +691,11 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
       control: { x: ancho * 0.45, y: inferior },
       etapa: 1,
       color: COLORES.azul,
-      etiqueta: 'consulta',
-      dato: catalogoEnViaje.length ? catalogoEnViaje : `${total || 'varios'} vectores de ofertas`,
+      etiqueta: 'embeddings de ofertas',
+      dato: [
+        'vectores de ofertas · 384 dimensiones',
+        ...(catalogoEnViaje.length ? catalogoEnViaje : [`${total || 'varios'} vectores de ofertas`]),
+      ],
     },
     {
       inicio: { x: xComparador + 58, y: centroY },
@@ -687,7 +703,7 @@ function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
       control: { x: (xComparador + xResultado) / 2, y: centroY },
       etapa: 2,
       color: COLORES.verde,
-      etiqueta: 'ordena por afinidad',
+      etiqueta: 'umbral + afinidad',
       dato: resultadosEnViaje.length ? resultadosEnViaje : puntaje,
     },
   ];
@@ -749,13 +765,10 @@ export default function Animacion() {
   const canvasRef = useRef(null);
   const marcoRef = useRef(null);
   const inicioRef = useRef(performance.now());
-  const [acciones, setAcciones] = useState(() => obtenerAnimaciones());
   const [activa, setActiva] = useState(() => obtenerAnimaciones()[0] || { tipo: 'inicio', datos: {} });
   const [pausada, setPausada] = useState(false);
 
   useEffect(() => escucharAnimaciones((nueva) => {
-    const accionesActuales = obtenerAnimaciones();
-    setAcciones(accionesActuales);
     if (nueva) {
       setActiva(nueva);
       inicioRef.current = performance.now();
@@ -820,28 +833,6 @@ export default function Animacion() {
         <button type="button" className="iconbtn" onClick={repetir} aria-label="Repetir recorrido"><Icon name="refrescar" size={18} /></button>
         <button type="button" className="iconbtn" onClick={() => window.close()} aria-label="Cerrar pestana"><Icon name="cerrar" size={18} /></button>
       </aside>
-      <section className="animacion__historial" aria-label="Acciones recientes">
-        <span>Ver otra ejecucion</span>
-        <div>
-          {acciones.length ? acciones.map((accion) => {
-            const item = METAS_ANIMACION[accion.tipo] || METAS_ANIMACION.inicio;
-            return (
-              <button
-                key={accion.id}
-                type="button"
-                className={activa?.id === accion.id ? 'is-on' : ''}
-                onClick={() => {
-                  setActiva(accion);
-                  inicioRef.current = performance.now();
-                  setPausada(false);
-                }}
-              >
-                <Icon name="animacion" size={14} />{item.titulo}
-              </button>
-            );
-          }) : <p>Realiza una accion en Jobia para verla paso a paso.</p>}
-        </div>
-      </section>
     </main>
   );
 }
