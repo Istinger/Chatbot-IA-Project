@@ -654,6 +654,20 @@
 
 .cvgen__desplegar svg { transform: rotate(90deg); }
 
+.cvgen__combobox--texto { display: block; }
+
+.cvgen__combobox--texto textarea {
+  display: block;
+  padding-right: 56px;
+}
+
+.cvgen__combobox--texto .cvgen__desplegar {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  height: 42px;
+}
+
 .cvgen__opciones {
   position: absolute;
   z-index: 12;
