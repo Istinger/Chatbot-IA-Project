@@ -45,9 +45,9 @@ class ChatError extends Error {
  * principio de la conversacion y nunca veria lo que el usuario acaba de decir.
  * (Es el bug que tenia la version original.)
  */
-async function historial(sessionId) {
+async function historial(sessionId, userId = null) {
   const mensajes = await prisma.message.findMany({
-    where: { sessionId },
+    where: { sessionId, userId },
     orderBy: { createdAt: 'desc' },
     take: TURNOS * 2, // un turno = pregunta + respuesta
     select: { role: true, content: true },
@@ -124,7 +124,16 @@ async function responder({ mensaje, sessionId, user, perfil, jobViendo, contexto
   const texto = String(mensaje || '').trim().slice(0, MAX_MENSAJE);
   if (!texto) throw new ChatError('El mensaje esta vacio', 400);
 
-  const sesion = sessionId || crypto.randomUUID();
+  const propietario = user?.id ?? null;
+  let sesion = sessionId || crypto.randomUUID();
+
+  if (sessionId) {
+    const mensajeExistente = await prisma.message.findFirst({
+      where: { sessionId },
+      select: { userId: true },
+    });
+    if (mensajeExistente && mensajeExistente.userId !== propietario) sesion = crypto.randomUUID();
+  }
 
   // Los visitantes tambien consumen cuota: se les limita por sesion.
   //
@@ -136,7 +145,7 @@ async function responder({ mensaje, sessionId, user, perfil, jobViendo, contexto
   const identidad = user?.id || `anon:${sesion}`;
 
   const [previos, jobs] = await Promise.all([
-    historial(sesion),
+    historial(sesion, propietario),
     recuperar({ mensaje: texto, perfil }),
   ]);
 
@@ -232,9 +241,9 @@ async function responder({ mensaje, sessionId, user, perfil, jobViendo, contexto
   };
 }
 
-async function obtenerHistorial(sessionId) {
+async function obtenerHistorial(sessionId, userId = null) {
   return prisma.message.findMany({
-    where: { sessionId },
+    where: { sessionId, userId },
     orderBy: { createdAt: 'asc' },
     select: { role: true, content: true, createdAt: true },
   });

@@ -349,10 +349,19 @@ export const FASES = [
  * las MISMAS que vio el listado, sin volver a pedirlas. IDEAS (arriba) queda solo
  * como ultimo respaldo si el backend no estuviera disponible. */
 export const CLAVE_CACHE = 'jobia_portafolio_ideas';
+const CLAVE_CACHE_META = 'jobia_portafolio_ideas_meta';
 
-export function guardarIdeasCache(ideas) {
+export function guardarIdeasCache(ideas, meta = {}) {
   try {
     sessionStorage.setItem(CLAVE_CACHE, JSON.stringify(ideas));
+    sessionStorage.setItem(
+      CLAVE_CACHE_META,
+      JSON.stringify({
+        personalizado: Boolean(meta.personalizado),
+        origen: meta.origen || null,
+        actualizadoEn: Date.now(),
+      }),
+    );
   } catch {
     /* sessionStorage lleno o bloqueado: no es critico */
   }
@@ -363,6 +372,22 @@ export function leerIdeasCache() {
     return JSON.parse(sessionStorage.getItem(CLAVE_CACHE) || '[]');
   } catch {
     return [];
+  }
+}
+
+/** Permite pintar el ultimo resultado al instante mientras la API lo actualiza. */
+export function leerEstadoIdeasCache() {
+  const ideas = leerIdeasCache();
+  try {
+    const meta = JSON.parse(sessionStorage.getItem(CLAVE_CACHE_META) || '{}');
+    return {
+      ideas,
+      personalizado: Boolean(meta.personalizado),
+      origen: meta.origen || null,
+      actualizadoEn: Number(meta.actualizadoEn) || null,
+    };
+  } catch {
+    return { ideas, personalizado: false, origen: null, actualizadoEn: null };
   }
 }
 

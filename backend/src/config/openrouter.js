@@ -66,7 +66,7 @@ function traducirError(status, cuerpo) {
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Una sola llamada, sin reintentos ni relevos. */
-async function intentar(model, payload) {
+async function intentar(model, payload, timeoutMs = 45000) {
   const res = await fetch(URL, {
     method: 'POST',
     headers: {
@@ -77,7 +77,7 @@ async function intentar(model, payload) {
       'X-Title': 'Jobia',
     },
     body: JSON.stringify({ ...payload, model }),
-    signal: AbortSignal.timeout(45000),
+    signal: AbortSignal.timeout(Math.max(1, Math.min(45000, timeoutMs))),
   });
 
   const body = await res.json().catch(() => null);
@@ -105,7 +105,7 @@ async function intentar(model, payload) {
  * para no depender de esa loteria, y deja los :free al final por si se acaba el
  * saldo. El orden se configura en el .env; ver el comentario en config/env.js.
  */
-async function chat({ system, messages, maxTokens = 500, temperature = 0.7 }) {
+async function chat({ system, messages, maxTokens = 500, temperature = 0.7, timeoutMs = null }) {
   if (!env.openrouter.apiKey) {
     throw new LlmError('Falta OPENROUTER_API_KEY en el .env', 503);
   }
@@ -117,16 +117,22 @@ async function chat({ system, messages, maxTokens = 500, temperature = 0.7 }) {
   };
 
   let ultimo = { status: 429, body: null };
+  const venceEn = timeoutMs ? Date.now() + timeoutMs : Number.POSITIVE_INFINITY;
 
   for (const model of env.openrouter.modelos) {
     // Un reintento por modelo: si el 429 es un pico pasajero, esto lo salva; si
     // el endpoint esta realmente saturado, insistir mas es perder el tiempo y es
     // mejor pasar al siguiente modelo.
     for (let intento = 0; intento <= 1; intento += 1) {
+      const restante = venceEn - Date.now();
+      if (restante <= 0) throw new LlmError('OpenRouter excedio el tiempo de espera', 504);
       let r;
       try {
-        r = await intentar(model, payload);
+        r = await intentar(model, payload, restante);
       } catch {
+        if (Date.now() >= venceEn) {
+          throw new LlmError('OpenRouter excedio el tiempo de espera', 504);
+        }
         break; // fallo de red con este modelo: probar el siguiente
       }
 
@@ -138,7 +144,7 @@ async function chat({ system, messages, maxTokens = 500, temperature = 0.7 }) {
       if (r.ok && !texto) {
         console.warn(`[llm] ${model} devolvio contenido vacio; reintentando`);
         if (intento === 0) {
-          await dormir(1200);
+          await dormir(Math.min(1200, Math.max(0, venceEn - Date.now())));
           continue;
         }
         break; // siguiente modelo
@@ -174,7 +180,7 @@ async function chat({ system, messages, maxTokens = 500, temperature = 0.7 }) {
       const reintentable = r.status === 429 || r.status >= 500;
       if (!reintentable) throw traducirError(r.status, r.body);
 
-      if (intento === 0) await dormir(1200);
+      if (intento === 0) await dormir(Math.min(1200, Math.max(0, venceEn - Date.now())));
     }
 
     console.warn(`[llm] ${model} saturado (${ultimo.status}); pasando al siguiente`);

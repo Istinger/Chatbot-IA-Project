@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useVista } from '../lib/vista';
-import { IDEAS, guardarIdeasCache, ideasGuardadas, imagenIdea } from '../lib/portafolio';
+import {
+  IDEAS,
+  guardarIdeasCache,
+  ideasGuardadas,
+  imagenIdea,
+  leerEstadoIdeasCache,
+} from '../lib/portafolio';
 import Icon from '../components/Icon';
 import PortTags from '../components/PortTags';
 import PortCard from '../components/PortCard';
@@ -26,8 +32,9 @@ function Esqueleto() {
  * skills + brecha. La IA solo adapta los textos; si falla, se usa el catalogo.
  */
 export default function Portafolio() {
-  const [ideas, setIdeas] = useState(null); // null = cargando
-  const [personalizado, setPersonalizado] = useState(false);
+  const [cacheInicial] = useState(() => leerEstadoIdeasCache());
+  const [ideas, setIdeas] = useState(() => (cacheInicial.ideas.length ? cacheInicial.ideas : null));
+  const [personalizado, setPersonalizado] = useState(cacheInicial.personalizado);
   const [error, setError] = useState(null);
   const guardadas = ideasGuardadas();
   const { setContextoPantalla } = useVista();
@@ -41,7 +48,10 @@ export default function Portafolio() {
         if (!vivo) return;
         setIdeas(r.ideas);
         setPersonalizado(Boolean(r.personalizado));
-        guardarIdeasCache(r.ideas); // el detalle/asistente leen de aqui
+        guardarIdeasCache(r.ideas, {
+          personalizado: r.personalizado,
+          origen: r.proceso?.origen,
+        }); // el detalle/asistente leen de aqui
         registrarAnimacion('portafolio_sugerido', {
           ideas: r.ideas.map((idea) => ({
             id: idea.id,
@@ -64,6 +74,8 @@ export default function Portafolio() {
       })
       .catch((err) => {
         if (!vivo) return;
+        // Si ya habia una respuesta local, se conserva sin interrumpir la vista.
+        if (cacheInicial.ideas.length) return;
         // Ultimo respaldo del cliente: si la API ni responde, las estaticas.
         setError(err.message);
         setIdeas(IDEAS);
@@ -86,11 +98,13 @@ export default function Portafolio() {
     return () => {
       vivo = false;
     };
-  }, []);
+  }, [cacheInicial]);
 
   const cargando = ideas === null;
   const destacada = !cargando && (ideas.find((i) => i.destacada) || ideas[0]);
   const resto = !cargando ? ideas.filter((i) => i !== destacada) : [];
+  const idsVisibles = new Set((ideas || []).map((idea) => idea.id));
+  const guardadasNoRepetidas = guardadas.filter((idea) => !idsVisibles.has(idea.id));
 
   // El Asistente sabe que ideas tienes delante, para poder responder "cual me
   // conviene mas?" o "como empiezo la segunda" sin que se las expliques.
@@ -173,19 +187,23 @@ export default function Portafolio() {
           </div>
         </header>
 
-        {guardadas.length ? (
+        {guardadasNoRepetidas.length ? (
           <div className="port-guardadas__grid">
-            {guardadas.map((idea) => (
+            {guardadasNoRepetidas.map((idea) => (
               <PortCard key={idea.id} idea={idea} />
             ))}
           </div>
         ) : (
           <div className="port-guardadas__vacio">
             <Icon name="marcador" size={24} />
-            <p>
-              Aun no has guardado ninguna idea. Abre una y pulsa <strong>Guardar idea</strong>{' '}
-              para tenerla aqui.
-            </p>
+            {guardadas.length ? (
+              <p>Tus ideas guardadas ya aparecen entre las recomendaciones de arriba.</p>
+            ) : (
+              <p>
+                Aun no has guardado ninguna idea. Abre una y pulsa <strong>Guardar idea</strong>{' '}
+                para tenerla aqui.
+              </p>
+            )}
           </div>
         )}
       </section>
