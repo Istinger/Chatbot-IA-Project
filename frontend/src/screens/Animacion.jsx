@@ -100,6 +100,38 @@ function dibujarIcono(ctx, tipo, x, y, tamano, color) {
     ctx.lineTo(cx + 6, cy - 8);
     ctx.moveTo(cx - 14, cy);
     ctx.lineTo(cx + 14, cy);
+  } else if (tipo === 'persona') {
+    ctx.arc(cx, cy - 8, 7, 0, Math.PI * 2);
+    ctx.moveTo(cx - 14, cy + 14);
+    ctx.quadraticCurveTo(cx, cy - 1, cx + 14, cy + 14);
+  } else if (tipo === 'app') {
+    ctx.rect(cx - 15, cy - 13, 30, 26);
+    ctx.moveTo(cx - 15, cy - 5);
+    ctx.lineTo(cx + 15, cy - 5);
+    ctx.moveTo(cx - 10, cy - 9);
+    ctx.lineTo(cx - 9, cy - 9);
+    ctx.moveTo(cx - 5, cy - 9);
+    ctx.lineTo(cx - 4, cy - 9);
+    ctx.moveTo(cx - 9, cy + 1);
+    ctx.lineTo(cx + 9, cy + 1);
+    ctx.moveTo(cx - 9, cy + 7);
+    ctx.lineTo(cx + 4, cy + 7);
+  } else if (tipo === 'base') {
+    ctx.ellipse(cx, cy - 11, 14, 6, 0, 0, Math.PI * 2);
+    ctx.moveTo(cx - 14, cy - 11);
+    ctx.lineTo(cx - 14, cy + 11);
+    ctx.moveTo(cx + 14, cy - 11);
+    ctx.lineTo(cx + 14, cy + 11);
+    ctx.moveTo(cx - 14, cy);
+    ctx.bezierCurveTo(cx - 8, cy + 7, cx + 8, cy + 7, cx + 14, cy);
+    ctx.moveTo(cx - 14, cy + 10);
+    ctx.bezierCurveTo(cx - 8, cy + 17, cx + 8, cy + 17, cx + 14, cy + 10);
+  } else if (tipo === 'resultado') {
+    [-10, 0, 10].forEach((salto, indice) => {
+      ctx.rect(cx - 14, cy + salto - 4, 6, 6);
+      ctx.moveTo(cx - 3, cy + salto - 1);
+      ctx.lineTo(cx + 14 - indice * 2, cy + salto - 1);
+    });
   } else if (tipo === 'curso') {
     ctx.moveTo(cx - 14, cy + 10);
     ctx.lineTo(cx - 4, cy);
@@ -142,12 +174,12 @@ function flujoDe(accion) {
   if (tipo === 'cv_generado') {
     return {
       pasos: [
-        { titulo: 'Recibimos tu CV', detalle: datos.archivo || 'Documento listo', dato: '1 archivo', icono: 'documento', color: COLORES.cian },
-        { titulo: 'Leemos tu informacion', detalle: datos.nombre || 'Datos del perfil', dato: datos.rol || 'Perfil detectado', icono: 'leer', color: COLORES.azul },
-        { titulo: 'Encontramos habilidades', detalle: skills.slice(0, 3).join(', ') || 'Habilidades del CV', dato: `${skills.length} encontradas`, icono: 'habilidades', color: COLORES.violeta },
-        { titulo: 'Preparamos oportunidades', detalle: datos.ofertas || 'Ofertas para tu perfil', dato: 'Perfil listo', icono: 'oferta', color: COLORES.verde },
+        { titulo: 'Tu CV', detalle: datos.archivo || 'Documento en PDF', dato: 'Archivo de entrada', icono: 'documento', color: COLORES.cian },
+        { titulo: 'Lector de CV', detalle: 'Reconoce la informacion del documento', dato: datos.nombre || 'Datos detectados', icono: 'leer', color: COLORES.azul },
+        { titulo: 'Tu perfil en Jobia', detalle: skills.slice(0, 3).join(', ') || 'Habilidades encontradas', dato: `${skills.length} habilidades`, icono: 'persona', color: COLORES.violeta },
+        { titulo: 'Buscador de ofertas', detalle: datos.ofertas || 'Oportunidades relacionadas', dato: 'Perfil listo', icono: 'oferta', color: COLORES.verde },
       ],
-      relaciones: ['se lee', 'crea tu perfil', 'busca coincidencias'],
+      relaciones: ['envia el documento', 'crea', 'activa'],
       transferencias: [
         datos.archivo || 'CV en PDF',
         datos.nombre || datos.rol || 'Datos del perfil',
@@ -162,16 +194,16 @@ function flujoDe(accion) {
     const esBusqueda = tipo === 'busqueda_realizada';
     return {
       pasos: [
-        { titulo: esBusqueda ? 'Recibimos tu busqueda' : 'Tomamos tu perfil', detalle: esBusqueda ? datos.consulta || 'Lo que quieres encontrar' : datos.perfil || 'Tus preferencias', dato: esBusqueda ? 'Consulta lista' : 'Perfil listo', icono: esBusqueda ? 'buscar' : 'habilidades', color: COLORES.cian },
-        { titulo: 'Revisamos oportunidades', detalle: 'Buscamos coincidencias utiles', dato: `${ofertas.length || datos.total || 0} resultados`, icono: 'buscar', color: COLORES.azul },
-        { titulo: 'Comparamos contigo', detalle: 'Habilidades, puesto y preferencias', dato: 'Mejor encaje primero', icono: 'comparar', color: COLORES.violeta },
-        { titulo: 'Mostramos lo mejor', detalle: ofertas[0]?.title || ofertas[0] || 'Resultados ordenados', dato: ofertas[0]?.company || 'Listo para revisar', icono: 'ordenar', color: COLORES.verde },
+        { titulo: esBusqueda ? 'Tu busqueda' : 'Tu perfil', detalle: esBusqueda ? datos.consulta || 'Lo que quieres encontrar' : datos.perfil || 'Habilidades y preferencias', dato: esBusqueda ? 'Consulta' : 'Perfil profesional', icono: esBusqueda ? 'buscar' : 'persona', color: COLORES.cian },
+        { titulo: 'Jobia', detalle: 'Recibe lo que estas buscando', dato: 'Solicitud recibida', icono: 'app', color: COLORES.azul },
+        { titulo: 'Ofertas disponibles', detalle: `${ofertas.length || datos.total || 0} oportunidades para revisar`, dato: 'Catalogo de empleos', icono: 'base', color: COLORES.violeta },
+        { titulo: 'Resultados para ti', detalle: ofertas[0]?.title || ofertas[0] || 'Ofertas ordenadas por afinidad', dato: ofertas[0]?.company || 'Mejor coincidencia', icono: 'resultado', color: COLORES.verde },
       ],
-      relaciones: ['inicia la revision', 'compara contigo', 'ordena resultados'],
+      relaciones: ['envia', 'consulta', 'devuelve'],
       transferencias: [
         esBusqueda ? datos.consulta || 'Tu busqueda' : datos.perfil || 'Tu perfil',
-        `${ofertas.length || datos.total || 0} ofertas`,
-        ofertas[0]?.title || ofertas[0] || 'Mejores resultados',
+        esBusqueda ? datos.consulta || 'Palabras de busqueda' : 'Habilidades + preferencias',
+        `${ofertas.length || datos.total || 0} ofertas encontradas`,
       ],
       resultado: esBusqueda ? 'Tu busqueda ya tiene resultados' : 'Estas son las oportunidades mas cercanas a ti',
       indicadores: [['Consulta', 1], ['Revisadas', Math.max(ofertas.length, Number(datos.total) || 0)], ['Destacadas', Math.min(3, ofertas.length)]],
@@ -181,15 +213,15 @@ function flujoDe(accion) {
   if (tipo === 'crecimiento_analizado') {
     return {
       pasos: [
-        { titulo: 'Miramos tus fortalezas', detalle: datos.fortalezas || 'Lo que ya sabes hacer', dato: 'Punto de partida', icono: 'habilidades', color: COLORES.verde },
-        { titulo: 'Vemos que estan pidiendo', detalle: `${datos.analizadas || 'Varias'} ofertas revisadas`, dato: 'Demanda real', icono: 'buscar', color: COLORES.azul },
-        { titulo: 'Detectamos oportunidades', detalle: faltantes.slice(0, 2).join(', ') || 'Habilidades por reforzar', dato: `${faltantes.length} por aprender`, icono: 'comparar', color: COLORES.violeta },
-        { titulo: 'Trazamos un camino', detalle: cursos[0]?.titulo || cursos[0] || 'Curso recomendado', dato: `${cursos.length} recursos`, icono: 'curso', color: COLORES.cian },
+        { titulo: 'Tu perfil', detalle: datos.fortalezas || 'Habilidades que ya tienes', dato: 'Tus fortalezas', icono: 'persona', color: COLORES.verde },
+        { titulo: 'Ofertas del mercado', detalle: `${datos.analizadas || 'Varias'} ofertas publicadas`, dato: 'Lo que estan pidiendo', icono: 'base', color: COLORES.azul },
+        { titulo: 'Comparador de habilidades', detalle: faltantes.slice(0, 2).join(', ') || 'Oportunidades para mejorar', dato: `${faltantes.length} por aprender`, icono: 'comparar', color: COLORES.violeta },
+        { titulo: 'Cursos recomendados', detalle: cursos[0]?.titulo || cursos[0] || 'Recursos para avanzar', dato: `${cursos.length} recursos`, icono: 'curso', color: COLORES.cian },
       ],
-      relaciones: ['se contrasta con', 'descubre', 'recomienda'],
+      relaciones: ['se compara con', 'pasa por', 'encuentra'],
       transferencias: [
         datos.fortalezas || 'Tus habilidades',
-        `${datos.analizadas || 'Varias'} ofertas`,
+        `Requisitos de ${datos.analizadas || 'varias'} ofertas`,
         faltantes.slice(0, 2).join(' + ') || `${faltantes.length} oportunidades`,
       ],
       resultado: 'Ya tienes un siguiente paso claro',
@@ -200,12 +232,12 @@ function flujoDe(accion) {
   if (tipo === 'portafolio_sugerido') {
     return {
       pasos: [
-        { titulo: 'Partimos de tus habilidades', detalle: skills.slice(0, 3).join(', ') || 'Tu perfil', dato: `${skills.length} habilidades`, icono: 'habilidades', color: COLORES.azul },
-        { titulo: 'Buscamos combinaciones', detalle: 'Ideas que puedes demostrar', dato: 'Opciones posibles', icono: 'comparar', color: COLORES.violeta },
-        { titulo: 'Creamos ideas practicas', detalle: ideas[0]?.titulo || ideas[0] || 'Proyecto sugerido', dato: `${ideas.length} ideas`, icono: 'proyecto', color: COLORES.cian },
-        { titulo: 'Preparamos tu vitrina', detalle: 'Proyectos para mostrar', dato: 'Portafolio listo', icono: 'oferta', color: COLORES.verde },
+        { titulo: 'Tus habilidades', detalle: skills.slice(0, 3).join(', ') || 'Lo que sabes hacer', dato: `${skills.length} habilidades`, icono: 'habilidades', color: COLORES.azul },
+        { titulo: 'Jobia', detalle: 'Combina tus fortalezas', dato: 'Perfil recibido', icono: 'app', color: COLORES.violeta },
+        { titulo: 'Ideas de proyecto', detalle: ideas[0]?.titulo || ideas[0] || 'Proyecto sugerido', dato: `${ideas.length} ideas`, icono: 'proyecto', color: COLORES.cian },
+        { titulo: 'Tu portafolio', detalle: 'Proyectos que puedes mostrar', dato: 'Vitrina profesional', icono: 'resultado', color: COLORES.verde },
       ],
-      relaciones: ['se combinan', 'generan', 'se convierten en'],
+      relaciones: ['se envian a', 'genera', 'alimenta'],
       transferencias: [
         skills.slice(0, 2).join(' + ') || 'Tus habilidades',
         `${ideas.length} ideas`,
@@ -220,15 +252,15 @@ function flujoDe(accion) {
     const oferta = datos.oferta || {};
     return {
       pasos: [
-        { titulo: 'Elegiste una oferta', detalle: oferta.title || 'Oportunidad seleccionada', dato: oferta.company || 'Oferta', icono: 'oferta', color: COLORES.azul },
-        { titulo: 'Confirmamos tu eleccion', detalle: 'La marcamos para ti', dato: 'Seleccionada', icono: 'comparar', color: COLORES.cian },
-        { titulo: 'La llevamos a Guardados', detalle: 'Queda disponible en tu perfil', dato: 'Guardada', icono: 'guardar', color: COLORES.violeta },
-        { titulo: 'Lista para volver', detalle: 'Puedes revisarla cuando quieras', dato: `${datos.total || 1} guardada${datos.total === 1 ? '' : 's'}`, icono: 'ordenar', color: COLORES.verde },
+        { titulo: 'Oferta elegida', detalle: oferta.title || 'Oportunidad seleccionada', dato: oferta.company || 'Oferta', icono: 'oferta', color: COLORES.azul },
+        { titulo: 'Jobia', detalle: 'Recibe tu seleccion', dato: 'Marcada por ti', icono: 'app', color: COLORES.cian },
+        { titulo: 'Guardados', detalle: 'Conserva la oportunidad', dato: `${datos.total || 1} oferta${datos.total === 1 ? '' : 's'}`, icono: 'base', color: COLORES.violeta },
+        { titulo: 'Tu perfil', detalle: 'La muestra cuando vuelvas', dato: 'Disponible', icono: 'persona', color: COLORES.verde },
       ],
-      relaciones: ['la seleccionas', 'se mueve a', 'queda disponible'],
+      relaciones: ['envia', 'guarda en', 'muestra a'],
       transferencias: [
         oferta.title || 'Oferta elegida',
-        oferta.company || 'Oportunidad',
+        oferta.id || oferta.company || 'Identificador de oferta',
         `${datos.total || 1} guardada${datos.total === 1 ? '' : 's'}`,
       ],
       resultado: 'La oportunidad quedo guardada correctamente',
@@ -238,10 +270,10 @@ function flujoDe(accion) {
 
   return {
     pasos: [
-      { titulo: 'Haz una accion en Jobia', detalle: 'Carga un CV, busca o guarda una oferta', dato: 'Esperando', icono: 'documento', color: COLORES.cian },
-      { titulo: 'Veremos que ocurre', detalle: 'Cada etapa aparecera aqui', dato: 'Paso a paso', icono: 'leer', color: COLORES.azul },
-      { titulo: 'Usaremos tus datos', detalle: 'Solo lo necesario para explicarlo', dato: 'Datos reales', icono: 'comparar', color: COLORES.violeta },
-      { titulo: 'Mostraremos el resultado', detalle: 'Claro y facil de seguir', dato: 'Listo', icono: 'oferta', color: COLORES.verde },
+      { titulo: 'Tu accion', detalle: 'Carga un CV, busca o guarda una oferta', dato: 'Esperando', icono: 'persona', color: COLORES.cian },
+      { titulo: 'Jobia', detalle: 'Recibe la accion que realizaste', dato: 'Paso a paso', icono: 'app', color: COLORES.azul },
+      { titulo: 'Datos relacionados', detalle: 'Solo la informacion necesaria', dato: 'Datos reales', icono: 'base', color: COLORES.violeta },
+      { titulo: 'Resultado', detalle: 'Lo que la aplicacion preparo para ti', dato: 'Listo', icono: 'resultado', color: COLORES.verde },
     ],
     relaciones: ['activa', 'conecta', 'produce'],
     transferencias: ['Tu accion', 'Datos reales', 'Resultado'],
