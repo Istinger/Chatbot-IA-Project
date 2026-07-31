@@ -132,6 +132,20 @@ function dibujarIcono(ctx, tipo, x, y, tamano, color) {
       ctx.moveTo(cx - 3, cy + salto - 1);
       ctx.lineTo(cx + 14 - indice * 2, cy + salto - 1);
     });
+  } else if (tipo === 'convertir') {
+    ctx.rect(cx - 13, cy - 13, 9, 9);
+    ctx.rect(cx + 4, cy - 13, 9, 9);
+    ctx.rect(cx - 4, cy + 4, 9, 9);
+    ctx.moveTo(cx - 8, cy - 4);
+    ctx.lineTo(cx - 2, cy + 2);
+    ctx.moveTo(cx + 8, cy - 4);
+    ctx.lineTo(cx + 2, cy + 2);
+  } else if (tipo === 'fuentes') {
+    [-10, 0, 10].forEach((salto) => {
+      ctx.rect(cx - 14, cy + salto - 4, 8, 8);
+      ctx.moveTo(cx - 2, cy + salto);
+      ctx.lineTo(cx + 14, cy + salto);
+    });
   } else if (tipo === 'curso') {
     ctx.moveTo(cx - 14, cy + 10);
     ctx.lineTo(cx - 4, cy);
@@ -193,6 +207,7 @@ function flujoDe(accion) {
   if (tipo === 'ofertas_encontradas' || tipo === 'busqueda_realizada') {
     const esBusqueda = tipo === 'busqueda_realizada';
     return {
+      modo: 'matching',
       pasos: [
         { titulo: esBusqueda ? 'Tu busqueda' : 'Tu perfil', detalle: esBusqueda ? datos.consulta || 'Lo que quieres encontrar' : datos.perfil || 'Habilidades y preferencias', dato: esBusqueda ? 'Consulta' : 'Perfil profesional', icono: esBusqueda ? 'buscar' : 'persona', color: COLORES.cian },
         { titulo: 'Jobia', detalle: 'Recibe lo que estas buscando', dato: 'Solicitud recibida', icono: 'app', color: COLORES.azul },
@@ -207,6 +222,11 @@ function flujoDe(accion) {
       ],
       resultado: esBusqueda ? 'Tu busqueda ya tiene resultados' : 'Estas son las oportunidades mas cercanas a ti',
       indicadores: [['Consulta', 1], ['Revisadas', Math.max(ofertas.length, Number(datos.total) || 0)], ['Destacadas', Math.min(3, ofertas.length)]],
+      matching: {
+        entrada: esBusqueda ? datos.consulta || 'Tu busqueda' : datos.perfil || 'Tu perfil profesional',
+        total: Math.max(ofertas.length, Number(datos.total) || 0),
+        mejor: ofertas[0],
+      },
     };
   }
 
@@ -376,6 +396,87 @@ function dibujarConexion(ctx, x1, x2, y, avance, color, etiqueta, dato, movimien
   ctx.restore();
 }
 
+function puntoCurva(inicio, control, fin, t) {
+  const inverso = 1 - t;
+  return {
+    x: inverso * inverso * inicio.x + 2 * inverso * t * control.x + t * t * fin.x,
+    y: inverso * inverso * inicio.y + 2 * inverso * t * control.y + t * t * fin.y,
+  };
+}
+
+function dibujarConexionCurva(ctx, inicio, fin, control, avance, color, etiqueta, dato, movimiento) {
+  const progreso = limitar(avance);
+  const puntoFinal = puntoCurva(inicio, control, fin, progreso);
+  const centro = puntoCurva(inicio, control, fin, 0.5);
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(105, 145, 196, 0.25)';
+  ctx.beginPath();
+  ctx.moveTo(inicio.x, inicio.y);
+  ctx.quadraticCurveTo(control.x, control.y, fin.x, fin.y);
+  ctx.stroke();
+
+  if (progreso > 0) {
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 9;
+    ctx.beginPath();
+    ctx.moveTo(inicio.x, inicio.y);
+    ctx.quadraticCurveTo(
+      inicio.x + (control.x - inicio.x) * progreso,
+      inicio.y + (control.y - inicio.y) * progreso,
+      puntoFinal.x,
+      puntoFinal.y,
+    );
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  const antes = puntoCurva(inicio, control, fin, 0.96);
+  const angulo = Math.atan2(fin.y - antes.y, fin.x - antes.x);
+  ctx.fillStyle = progreso >= 1 ? color : 'rgba(105, 145, 196, 0.42)';
+  ctx.beginPath();
+  ctx.moveTo(fin.x, fin.y);
+  ctx.lineTo(fin.x - 12 * Math.cos(angulo - 0.5), fin.y - 12 * Math.sin(angulo - 0.5));
+  ctx.lineTo(fin.x - 12 * Math.cos(angulo + 0.5), fin.y - 12 * Math.sin(angulo + 0.5));
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.font = '700 11px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  const rotulo = textoCorto(etiqueta, 22);
+  const anchoRotulo = ctx.measureText(rotulo).width + 20;
+  redondear(ctx, centro.x - anchoRotulo / 2, centro.y - 31, anchoRotulo, 22, 11);
+  ctx.fillStyle = 'rgba(5, 16, 34, 0.96)';
+  ctx.fill();
+  ctx.strokeStyle = `${color}66`;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = progreso >= 1 ? color : COLORES.suave;
+  ctx.fillText(rotulo, centro.x, centro.y - 16);
+
+  if (progreso > 0) {
+    const posicion = progreso < 1 ? progreso : movimiento;
+    const paquete = puntoCurva(inicio, control, fin, posicion);
+    const contenido = textoCorto(dato, 28);
+    const anchoDato = Math.max(78, ctx.measureText(contenido).width + 24);
+    redondear(ctx, paquete.x - anchoDato / 2, paquete.y + 12, anchoDato, 27, 13);
+    ctx.fillStyle = 'rgba(8, 24, 49, 0.98)';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 13;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = `${color}aa`;
+    ctx.stroke();
+    ctx.fillStyle = COLORES.texto;
+    ctx.fillText(contenido, paquete.x, paquete.y + 30);
+  }
+  ctx.restore();
+}
+
 function dibujarNodo(ctx, paso, indice, x, y, ancho, avance) {
   const completado = avance >= 1;
   const activo = avance > 0 && avance < 1;
@@ -424,60 +525,176 @@ function dibujarNodo(ctx, paso, indice, x, y, ancho, avance) {
   ctx.restore();
 }
 
-function dibujarIndicadores(ctx, flujo, x, y, ancho, alto, visible) {
-  ctx.save();
-  ctx.globalAlpha = visible;
-  redondear(ctx, x, y, ancho, alto, 14);
-  ctx.fillStyle = 'rgba(7, 20, 42, 0.9)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(100, 154, 220, 0.28)';
-  ctx.stroke();
+function dibujarMapaMatching(ctx, ancho, alto, flujo, progreso) {
+  const margenX = Math.max(84, ancho * 0.065);
+  const superior = Math.max(205, alto * 0.29);
+  const inferior = Math.min(alto - 235, alto * 0.67);
+  const centroY = (superior + inferior) / 2;
+  const xEntrada = margenX;
+  const xConversor = ancho * 0.31;
+  const xComparador = ancho * 0.57;
+  const xResultado = ancho - margenX;
+  const total = flujo.matching.total;
+  const mejor = flujo.matching.mejor;
+  const puntaje = mejor?.score ? `${Math.round(mejor.score * 100)}% afinidad` : `${total} ofertas ordenadas`;
+  const recorrido = progreso * 4;
+  const movimiento = (progreso * 6) % 1;
 
-  ctx.fillStyle = COLORES.suave;
-  ctx.font = '700 11px system-ui, sans-serif';
-  ctx.fillText('RESULTADO DE ESTA EJECUCION', x + 20, y + 26);
-  ctx.fillStyle = COLORES.texto;
-  ctx.font = '700 18px system-ui, sans-serif';
-  escribirLineas(ctx, flujo.resultado, x + 20, y + 54, ancho * 0.52, 2, 22);
+  const nodos = [
+    {
+      paso: {
+        titulo: flujo.pasos[0].titulo,
+        detalle: flujo.pasos[0].detalle,
+        dato: flujo.pasos[0].dato,
+        icono: flujo.pasos[0].icono,
+        color: COLORES.cian,
+      },
+      x: xEntrada,
+      y: superior,
+      etapa: 0,
+    },
+    {
+      paso: {
+        titulo: 'Fuentes de empleo',
+        detalle: 'Adzuna · Jooble · Remote OK · Careerjet · Arbeitnow',
+        dato: '5 fuentes conectadas',
+        icono: 'fuentes',
+        color: COLORES.azul,
+      },
+      x: xEntrada,
+      y: inferior,
+      etapa: 0,
+    },
+    {
+      paso: {
+        titulo: 'Vector de tu perfil',
+        detalle: 'Convierte el significado en 384 valores',
+        dato: '[0.12 · 0.73 · ...]',
+        icono: 'convertir',
+        color: COLORES.cian,
+      },
+      x: xConversor,
+      y: superior,
+      etapa: 1,
+    },
+    {
+      paso: {
+        titulo: 'Catálogo preparado',
+        detalle: 'Normaliza, detecta skills y evita duplicados',
+        dato: `${total || 'Varias'} ofertas`,
+        icono: 'oferta',
+        color: COLORES.azul,
+      },
+      x: xConversor,
+      y: inferior,
+      etapa: 1,
+    },
+    {
+      paso: {
+        titulo: 'PostgreSQL + pgvector',
+        detalle: 'Compara qué tan cerca están los vectores',
+        dato: 'Similitud semántica',
+        icono: 'base',
+        color: COLORES.violeta,
+      },
+      x: xComparador,
+      y: centroY,
+      etapa: 2,
+    },
+    {
+      paso: {
+        titulo: 'Resultados para ti',
+        detalle: mejor?.title || mejor || 'Las oportunidades más cercanas',
+        dato: mejor?.company || puntaje,
+        icono: 'resultado',
+        color: COLORES.verde,
+      },
+      x: xResultado,
+      y: centroY,
+      etapa: 3,
+    },
+  ];
 
-  const maximo = Math.max(1, ...flujo.indicadores.map(([, valor]) => Number(valor) || 0));
-  const inicioX = x + ancho * 0.58;
-  const disponible = ancho * 0.36;
-  flujo.indicadores.slice(0, 3).forEach(([nombre, valor], indice) => {
-    const filaY = y + 25 + indice * 34;
-    const numero = Number(valor) || 0;
-    ctx.fillStyle = COLORES.suave;
-    ctx.font = '11px system-ui, sans-serif';
-    ctx.fillText(nombre, inicioX, filaY);
-    ctx.fillStyle = 'rgba(95, 133, 185, 0.18)';
-    redondear(ctx, inicioX, filaY + 7, disponible, 8, 4);
-    ctx.fill();
-    const barra = numero === 0 ? 0 : Math.max(8, disponible * (numero / maximo));
-    ctx.fillStyle = [COLORES.cian, COLORES.violeta, COLORES.verde][indice];
-    redondear(ctx, inicioX, filaY + 7, barra, 8, 4);
-    ctx.fill();
-    ctx.fillStyle = COLORES.texto;
-    ctx.font = '700 11px system-ui, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(String(numero), x + ancho - 20, filaY);
-    ctx.textAlign = 'left';
+  const conexiones = [
+    {
+      inicio: { x: xEntrada + 55, y: superior },
+      fin: { x: xConversor - 55, y: superior },
+      control: { x: (xEntrada + xConversor) / 2, y: superior },
+      etapa: 0,
+      color: COLORES.cian,
+      etiqueta: 'convierte',
+      dato: flujo.matching.entrada,
+    },
+    {
+      inicio: { x: xEntrada + 55, y: inferior },
+      fin: { x: xConversor - 55, y: inferior },
+      control: { x: (xEntrada + xConversor) / 2, y: inferior },
+      etapa: 0,
+      color: COLORES.azul,
+      etiqueta: 'reúne y limpia',
+      dato: 'título + empresa + salario + skills',
+    },
+    {
+      inicio: { x: xConversor + 55, y: superior },
+      fin: { x: xComparador - 58, y: centroY - 30 },
+      control: { x: ancho * 0.45, y: superior },
+      etapa: 1,
+      color: COLORES.cian,
+      etiqueta: 'envía',
+      dato: 'vector del perfil · 384 valores',
+    },
+    {
+      inicio: { x: xConversor + 55, y: inferior },
+      fin: { x: xComparador - 58, y: centroY + 30 },
+      control: { x: ancho * 0.45, y: inferior },
+      etapa: 1,
+      color: COLORES.azul,
+      etiqueta: 'consulta',
+      dato: `${total || 'varios'} vectores de ofertas`,
+    },
+    {
+      inicio: { x: xComparador + 58, y: centroY },
+      fin: { x: xResultado - 58, y: centroY },
+      control: { x: (xComparador + xResultado) / 2, y: centroY },
+      etapa: 2,
+      color: COLORES.verde,
+      etiqueta: 'ordena por afinidad',
+      dato: puntaje,
+    },
+  ];
+
+  conexiones.forEach((conexion, indice) => {
+    dibujarConexionCurva(
+      ctx,
+      conexion.inicio,
+      conexion.fin,
+      conexion.control,
+      limitar(recorrido - conexion.etapa - 0.62),
+      conexion.color,
+      conexion.etiqueta,
+      conexion.dato,
+      (movimiento + indice * 0.17) % 1,
+    );
   });
-  ctx.restore();
+
+  nodos.forEach(({ paso, x, y, etapa }) => {
+    dibujarNodo(ctx, paso, etapa, x, y, Math.min(230, ancho * 0.17), limitar(recorrido - etapa));
+  });
 }
 
 function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   dibujarFondo(ctx, ancho, alto);
   const flujo = flujoDe(accion);
+  if (flujo.modo === 'matching') {
+    dibujarMapaMatching(ctx, ancho, alto, flujo, progreso);
+    return;
+  }
   const margen = Math.max(80, ancho * 0.075);
   const espacioUtil = ancho - margen * 2;
   const anchoNodo = Math.min(220, espacioUtil / 4.6);
-  const y = Math.max(265, alto * 0.39);
+  const y = Math.max(235, alto * 0.42);
   const recorrido = progreso * flujo.pasos.length;
   const centros = flujo.pasos.map((_, indice) => margen + (espacioUtil * indice) / 3);
-
-  ctx.fillStyle = COLORES.suave;
-  ctx.font = '700 11px system-ui, sans-serif';
-  ctx.fillText('ELEMENTOS CONECTADOS EN ESTA ACCION', margen, y - 112);
 
   flujo.relaciones.forEach((relacion, indice) => {
     const avanceConexion = limitar(recorrido - indice - 0.72);
@@ -497,9 +714,6 @@ function dibujarMapa(ctx, ancho, alto, accion, progreso) {
   flujo.pasos.forEach((paso, indice) => {
     dibujarNodo(ctx, paso, indice, centros[indice], y, anchoNodo, limitar(recorrido - indice));
   });
-
-  const panelY = Math.min(alto - 185, y + 215);
-  dibujarIndicadores(ctx, flujo, margen, panelY, Math.min(ancho * 0.48, 650), 135, limitar((progreso - 0.62) * 3));
 }
 
 export default function Animacion() {
@@ -558,7 +772,6 @@ export default function Animacion() {
     };
   }, [activa, pausada]);
 
-  const meta = METAS_ANIMACION[activa?.tipo] || METAS_ANIMACION.inicio;
   const repetir = () => {
     inicioRef.current = performance.now();
     setPausada(false);
@@ -567,13 +780,6 @@ export default function Animacion() {
   return (
     <main ref={marcoRef} className="animacion">
       <canvas ref={canvasRef} className="animacion__canvas" aria-label="Mapa visual de la actividad reciente" />
-      <header className="animacion__cab">
-        <span className="animacion__marca"><Icon name="animacion" size={18} /> MAPA EN VIVO</span>
-        <div>
-          <h1>{meta.titulo}</h1>
-          <p>{meta.subtitulo}</p>
-        </div>
-      </header>
       <aside className="animacion__controles" aria-label="Controles del mapa">
         <button type="button" className="iconbtn" onClick={() => setPausada((valor) => !valor)} aria-label={pausada ? 'Reanudar recorrido' : 'Mostrar resultado'}>
           <Icon name={pausada ? 'derecha' : 'pausa'} size={18} />
