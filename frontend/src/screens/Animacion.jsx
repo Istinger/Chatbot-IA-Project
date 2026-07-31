@@ -264,6 +264,8 @@ function flujoDe(accion) {
         abierta: datos.abierta || null,
         tienePlan: Boolean(datos.tienePlan),
         tieneExplicacion: Boolean(datos.tieneExplicacion),
+        estadoPlan: datos.estadoPlan || (datos.tienePlan ? 'listo' : 'disponible'),
+        errorPlan: datos.errorPlan || null,
       },
     };
   }
@@ -1007,6 +1009,7 @@ function dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso) {
     ofertas: { x: margen, y: inferior },
     analisis: { x: ancho * 0.34, y: medio },
     fortalezas: { x: ancho * 0.57, y: superior },
+    asistente: { x: ancho * 0.82, y: superior },
     brechas: { x: ancho * 0.57, y: medio },
     cursos: { x: ancho * 0.82, y: medio },
     progreso: { x: ancho * 0.57, y: inferior },
@@ -1022,7 +1025,36 @@ function dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso) {
   ctx.fillText('CALCULO EXACTO · SIN IA', posiciones.analisis.x - 82, medio - 112);
   ctx.fillStyle = COLORES.verde;
   ctx.fillText('SIGUIENTE PASO', posiciones.cursos.x - 65, medio - 112);
+  ctx.fillStyle = COLORES.violeta;
+  ctx.fillText('AYUDA OPCIONAL CON IA', posiciones.asistente.x - 76, superior - 112);
   ctx.restore();
+
+  const estadoPlan = {
+    disponible: {
+      detalle: 'Se activa al pulsar el boton de 4 semanas',
+      dato: 'Listo para solicitar',
+      color: COLORES.suave,
+    },
+    generando: {
+      detalle: 'OpenRouter organiza tus brechas y progreso por semana',
+      dato: 'Generando ahora',
+      color: COLORES.amarillo,
+    },
+    listo: {
+      detalle: 'El plan aparece y se enfoca en la columna derecha',
+      dato: 'Plan de 4 semanas listo',
+      color: COLORES.violeta,
+    },
+    error: {
+      detalle: datos.errorPlan || 'El servicio no pudo responder',
+      dato: 'Solicitud con error',
+      color: COLORES.amarillo,
+    },
+  }[datos.estadoPlan] || {
+    detalle: 'Se activa al pulsar el boton de 4 semanas',
+    dato: 'Listo para solicitar',
+    color: COLORES.suave,
+  };
 
   const nodos = [
     {
@@ -1068,6 +1100,17 @@ function dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso) {
       },
       posicion: posiciones.fortalezas,
       etapa: 2,
+    },
+    {
+      paso: {
+        titulo: 'Plan opcional con IA',
+        detalle: estadoPlan.detalle,
+        dato: estadoPlan.dato,
+        icono: 'app',
+        color: estadoPlan.color,
+      },
+      posicion: posiciones.asistente,
+      etapa: 3,
     },
     {
       paso: {
@@ -1162,6 +1205,19 @@ function dibujarMapaCrecer(ctx, ancho, alto, flujo, progreso) {
       color: COLORES.verde,
       etiqueta: 'consulta catalogo',
       dato: cursos.length ? cursos : 'catalogo estatico',
+    },
+    {
+      inicio: { x: posiciones.brechas.x + 40, y: medio - 38 },
+      fin: { x: posiciones.asistente.x - 55, y: superior + 18 },
+      control: { x: ancho * 0.7, y: superior + 42 },
+      etapa: 2,
+      color: COLORES.violeta,
+      etiqueta: 'arma el mensaje',
+      dato: [
+        `${datos.analizadas} ofertas analizadas`,
+        ...faltantes,
+        ...(progresoSkills.length ? progresoSkills : ['sin progreso marcado']),
+      ],
     },
     {
       inicio: { x: posiciones.brechas.x, y: medio + 55 },

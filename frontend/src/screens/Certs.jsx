@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../lib/api';
 import { useVista } from '../lib/vista';
 import { alternarProgreso, leerProgreso, proyeccion } from '../lib/crecer';
@@ -45,6 +45,9 @@ export default function Certs() {
   const [explica, setExplica] = useState({}); // { [skill]: texto }
   const [cargandoIA, setCargandoIA] = useState(null); // 'skill:python' | 'plan'
   const [plan, setPlan] = useState(null);
+  const [errorIA, setErrorIA] = useState(null);
+  const columnaDerechaRef = useRef(null);
+  const planRef = useRef(null);
 
   useEffect(() => {
     api
@@ -88,11 +91,29 @@ export default function Certs() {
         abierta,
         tienePlan: Boolean(plan),
         tieneExplicacion: Boolean(abierta && explica[abierta]),
+        estadoPlan:
+          cargandoIA === 'plan'
+            ? 'generando'
+            : plan
+              ? 'listo'
+              : errorIA?.origen === 'plan'
+                ? 'error'
+                : 'disponible',
+        errorPlan: errorIA?.origen === 'plan' ? errorIA.mensaje : null,
       });
     }, 180);
 
     return () => window.clearTimeout(temporizador);
-  }, [abierta, datos, explica, plan, progreso, proyActual]);
+  }, [abierta, cargandoIA, datos, errorIA, explica, plan, progreso, proyActual]);
+
+  useEffect(() => {
+    if (!plan) return;
+    columnaDerechaRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    const marco = window.requestAnimationFrame(() => {
+      planRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(marco);
+  }, [plan]);
 
   // Se le cuenta al Asistente que brechas y cursos esta viendo el usuario, para
   // que "que aprendo primero?" o "cursos para X" tengan contexto real. Se limpia
@@ -154,14 +175,14 @@ export default function Certs() {
   const explicar = async (skill) => {
     const pct = faltantes.find((f) => f.skill === skill)?.porcentaje ?? 0;
     setCargandoIA(`skill:${skill}`);
-    setError(null);
+    setErrorIA(null);
     try {
       const r = await api.chat(
         `Estoy revisando mi brecha de habilidades. El ${pct}% de las ${analizadas} ofertas que encajan con mi perfil pide "${skill}", y yo no lo tengo. Explicame brevemente: para que se usa en el trabajo real, que nivel me basta para un puesto junior, y por donde empezar. Se concreto y no te enrolles.`,
       );
       setExplica((prev) => ({ ...prev, [skill]: r.respuesta }));
     } catch (err) {
-      setError(err.message);
+      setErrorIA({ origen: `skill:${skill}`, mensaje: err.message });
     } finally {
       setCargandoIA(null);
     }
@@ -171,7 +192,8 @@ export default function Certs() {
   const pedirPlan = async () => {
     const enCurso = Object.keys(progreso).filter((s) => progreso[s] === 'progreso');
     setCargandoIA('plan');
-    setError(null);
+    setErrorIA(null);
+    columnaDerechaRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     try {
       const r = await api.chat(
         [
@@ -185,7 +207,7 @@ export default function Certs() {
       );
       setPlan(r.respuesta);
     } catch (err) {
-      setError(err.message);
+      setErrorIA({ origen: 'plan', mensaje: err.message });
     } finally {
       setCargandoIA(null);
     }
@@ -296,8 +318,24 @@ export default function Certs() {
             disabled={cargandoIA === 'plan'}
           >
             <Icon name="asistente" size={16} />
-            {cargandoIA === 'plan' ? 'Armando el plan…' : 'Armar mi plan de 4 semanas'}
+            {cargandoIA === 'plan'
+              ? 'Armando el plan…'
+              : plan
+                ? 'Actualizar mi plan de 4 semanas'
+                : 'Armar mi plan de 4 semanas'}
           </button>
+          {cargandoIA === 'plan' && (
+            <p className="crecer__estado" role="status">
+              <Icon name="asistente" size={15} />
+              El asistente esta organizando tus brechas por semana. Puede tardar unos segundos.
+            </p>
+          )}
+          {errorIA?.origen === 'plan' && (
+            <p className="crecer__estado crecer__estado--error" role="alert">
+              <Icon name="aviso" size={15} />
+              No se pudo generar el plan: {errorIA.mensaje}
+            </p>
+          )}
         </section>
       )}
 
@@ -326,7 +364,7 @@ export default function Certs() {
 
       {/* Columna derecha. El detalle y el plan se AÑADEN arriba: los cursos
           siguen siempre visibles debajo. */}
-      <div className="crecer__der">
+      <div className="crecer__der" ref={columnaDerechaRef}>
 
       {abierta && (
         <section className="panel crecer__detalle">
@@ -362,6 +400,12 @@ export default function Certs() {
               {cargandoIA === `skill:${abierta}` ? 'Preguntando…' : 'Explicame esta habilidad'}
             </button>
           )}
+          {errorIA?.origen === `skill:${abierta}` && (
+            <p className="crecer__estado crecer__estado--error" role="alert">
+              <Icon name="aviso" size={15} />
+              No se pudo obtener la explicacion: {errorIA.mensaje}
+            </p>
+          )}
 
           {cursosDe(abierta).length > 0 && (
             <>
@@ -382,7 +426,7 @@ export default function Certs() {
       )}
 
       {plan && (
-        <section className="panel crecer__detalle">
+        <section className="panel crecer__detalle" ref={planRef} tabIndex="-1">
           <header className="seccion__cab">
             <span className="seccion__icono seccion__icono--cursos"><Icon name="crecer" size={20} /></span>
             <div className="seccion__txt">
