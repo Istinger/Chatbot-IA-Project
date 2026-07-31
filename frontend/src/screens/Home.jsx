@@ -17,25 +17,46 @@ export default function Home() {
   const [filasExtra, setFilasExtra] = useState(0);
   // La oferta abierta vive en el contexto compartido: asi el Asistente sabe
   // cual estas viendo. El modal se monta una sola vez en el Shell.
-  const { setOfertaActiva } = useVista();
+  const { setOfertaActiva, setContextoPantalla } = useVista();
 
   useEffect(() => {
     const calcular = () => {
-      // Como MUCHO una fila extra (2 filas en total): mas romperia el scroll-snap
-      // de la primera pagina. Y solo se añade si las 2 filas caben ENTERAS en el
-      // viewport, para que no asome una tercera ni desborde la pagina.
+      // Se mide el SCROLLER real (.lienzo), no la ventana: la app vive dentro de
+      // un marco mas pequeño, y medir con innerHeight metia una fila que no cabia
+      // y hacia que la pagina 1 se solapara con "Mas ofertas".
+      const lienzo = document.querySelector('.lienzo');
+      let disponible = window.innerHeight;
+      if (lienzo) {
+        const cs = getComputedStyle(lienzo);
+        disponible =
+          lienzo.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      }
+
+      const CHROME = 150; // cabecera de la seccion + nota "haz scroll"
+      const FILA = 430; // alto real de una fila de tarjetas (imagen + cuerpo)
+      const filasQueCaben = Math.floor((disponible - CHROME) / FILA);
+
       if (window.innerWidth < 861) {
+        // Las mismas 4 ofertas que en escritorio. Ahi caben en una fila; aqui se
+        // apilan y no entran en la pantalla, pero la pagina NO crece: mide una
+        // pantalla justa y la fila scrollea por dentro (ver .ofertas__fila en el
+        // bloque movil de ui.css). Asi el snap sigue enganchando.
         setFilasExtra(0);
         return;
       }
-      const CHROME = 210; // cabecera + nota "haz scroll" + margenes
-      const FILA = 430; // alto real de una fila de tarjetas (imagen + cuerpo)
-      const filasQueCaben = Math.floor((window.innerHeight - CHROME) / FILA);
+
+      // Como MUCHO una fila extra (2 filas en total): mas romperia el snap. Y
+      // solo si las 2 caben ENTERAS, para que no asome una tercera.
       setFilasExtra(filasQueCaben >= 2 ? 1 : 0);
     };
-    calcular();
+
+    // Tras el primer pintado: antes, .lienzo aun no esta en el DOM.
+    const id = requestAnimationFrame(calcular);
     window.addEventListener('resize', calcular);
-    return () => window.removeEventListener('resize', calcular);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener('resize', calcular);
+    };
   }, []);
 
   useEffect(() => {
@@ -62,7 +83,22 @@ export default function Home() {
 
   const cargando = recomendadas === null;
   const destacada = recomendadas?.[0];
+  // Solo las que caben en la fila (ver `porFila`): lo que no cabe se ve en
+  // "Mas ofertas" en vez de quedar fuera de pantalla.
   const chicas = recomendadas?.slice(1, 4) ?? [];
+
+  // El Asistente sabe que ofertas tienes delante: asi "cual me conviene mas?" o
+  // "hablame de la primera" tienen sentido sin que se las describas.
+  useEffect(() => {
+    if (!recomendadas?.length) return undefined;
+    setContextoPantalla(
+      `El usuario esta en "Ofertas nuevas" (su home), viendo ${recomendadas.length} ofertas recomendadas para su perfil. Las de arriba son: ${recomendadas
+        .slice(0, 4)
+        .map((j) => `${j.title} en ${j.company}${j.score != null ? ` (${Math.round(j.score * 100)}% afin)` : ''}`)
+        .join('; ')}.`,
+    );
+    return () => setContextoPantalla(null);
+  }, [recomendadas, setContextoPantalla]);
 
   // "Mas ofertas": el resto de recomendadas + exterior + locales, sin repetir.
   // Asi la home conserva el valor de exterior/local que el mock no muestra.

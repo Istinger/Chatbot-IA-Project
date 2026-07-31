@@ -38,4 +38,26 @@ router.get('/jobs', optionalAuth, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/matching/reformular  { texto } -> { consulta, cambiada }
+ *
+ * Reescribe una busqueda en lenguaje natural como consulta AFIRMATIVA, porque el
+ * buscador es semantico y las negaciones lo confunden (ver matching.service).
+ *
+ * NO se hace por /chat a proposito: ese endpoint persiste cada mensaje y
+ * alimenta el historial de la conversacion, asi que reescribir busquedas por ahi
+ * ensuciaria el chat del usuario.
+ *
+ * Nunca falla hacia fuera: si el LLM no responde o no hay cuota, devuelve el
+ * texto original y la busqueda sigue su curso.
+ */
+router.post('/reformular', optionalAuth, async (req, res) => {
+  const texto = req.body?.texto;
+  if (!texto) return fail(res, 'Falta el texto de la busqueda', 400);
+
+  // Los visitantes tambien consumen cuota: se les limita por su IP.
+  const identidad = req.user?.id || `anon:${req.ip}`;
+  return ok(res, await service.reformular(texto, identidad));
+});
+
 module.exports = router;

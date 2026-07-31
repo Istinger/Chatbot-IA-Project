@@ -16,7 +16,24 @@ import Icon from '../components/Icon';
 import RichText from '../components/RichText';
 import VideoLlamada from '../components/VideoLlamada';
 
+import {
+  CONSEJOS_BASE,
+  alternarGuardadaEntrevista,
+  anotarEntrevista,
+  borrarEntrevista,
+  fechaCorta,
+  leerEntrevistas,
+  puntosRecurrentes,
+} from '../lib/entrevistas';
+
 const NIVELES = ['Junior', 'Semi Senior', 'Senior'];
+
+/**
+ * Silencio que cierra tu turno en la videollamada (ms). Con menos, una pausa para
+ * pensar cortaba la respuesta a medias; con mucho mas, la entrevista se siente
+ * lenta. Es el mismo margen que deja un entrevistador antes de seguir.
+ */
+const PAUSA_FIN = 2800;
 const TIPOS = [
   { id: 'mixta', txt: 'Mixta' },
   { id: 'tecnica', txt: 'Tecnica' },
@@ -67,14 +84,32 @@ export default function Entrevista() {
   const [hablando, setHablando] = useState(false);
   const [pulso, setPulso] = useState(0);
   const [enviarTrasDictado, setEnviarTrasDictado] = useState(false);
+  // Historial de entrevistas terminadas (localStorage: el backend no las guarda).
+  const [entrevistas, setEntrevistas] = useState(() => leerEntrevistas());
+  const [plan, setPlan] = useState(null); // consejo de la IA en la pantalla inicial
+  const [planCargando, setPlanCargando] = useState(false);
+  const [vistaInicio, setVistaInicio] = useState('entrevista'); // entrevista | historial
 
   const dictadoRef = useRef(null);
+  // Al parar el dictado todavia llega un ultimo `onresult`. Si ya se envio (o el
+  // usuario se puso a teclear), ese texto tardio NO debe repoblar la respuesta:
+  // parecia que enviar "no hacia nada" porque el campo se volvia a llenar solo.
+  const ignorarDictado = useRef(false);
+  // Cuenta atras de silencio en video: el turno termina cuando llevas PAUSA_FIN
+  // sin decir nada, no al primer respiro (asi puedes pensar a media respuesta).
+  const silencioRef = useRef(null);
   const braveRef = useRef(false);
   const finRef = useRef(null);
 
   useEffect(() => {
     if (vozSoportada) esBrave().then((b) => (braveRef.current = b));
-    return () => callarVoz(); // al salir de la pantalla, corta la lectura
+    return () => {
+      // Al salir de la pantalla: corta la lectura, el micro y la cuenta atras.
+      callarVoz();
+      ignorarDictado.current = true;
+      clearTimeout(silencioRef.current);
+      dictadoRef.current?.stop();
+    };
   }, []);
 
   // El hilo siempre muestra lo ultimo, como cualquier chat.
@@ -142,6 +177,18 @@ export default function Entrevista() {
         respuestas: hist.map((h) => h.respuesta),
       });
       setFeedback(r);
+      // Queda anotada en el historial (con su feedback: de ahi salen luego los
+      // puntos que mas se te repiten).
+      setEntrevistas(
+        anotarEntrevista({
+          puesto: cfg.puesto,
+          nivel: cfg.nivel,
+          tipo: cfg.tipo,
+          modalidad: cfg.modalidad,
+          nRespuestas: hist.filter((h) => h.respuesta?.trim()).length,
+          feedback: { resumen: r.resumen, mejorar: r.mejorar, fortalezas: r.fortalezas },
+        }),
+      );
     } catch (err) {
       setError(err.message);
     } finally {
@@ -151,6 +198,8 @@ export default function Entrevista() {
 
   const responder = async (terminar = false) => {
     if (!actual || pensando) return;
+    // La transcripcion que llegue tarde ya no cuenta: esta respuesta se envia.
+    ignorarDictado.current = true;
     detenerDictado();
     callarVoz();
     setHablando(false);
@@ -193,14 +242,45 @@ export default function Entrevista() {
     }
   };
 
+  const limpiarPausaFin = () => {
+    clearTimeout(silencioRef.current);
+    silencioRef.current = null;
+  };
+
+  /**
+   * Reinicia la cuenta atras de fin de turno. Se llama en cada trozo de voz: el
+   * turno solo termina tras PAUSA_FIN de silencio, no en cada respiro.
+   */
+  const armarPausaFin = () => {
+    limpiarPausaFin();
+    silencioRef.current = setTimeout(() => dictadoRef.current?.stop(), PAUSA_FIN);
+  };
+
   /** Abre el micro. Se usa a mano (boton) y solo (tras hablar el entrevistador). */
   const abrirDictado = () => {
     setError(null);
     callarVoz(); // no dictar encima de la lectura
+    ignorarDictado.current = false;
+    const esVideo = cfg.modalidad === 'video';
     const d = crearDictado({
-      onTexto: (t) => setRespuesta(t),
-      onFin: () => setEscuchando(false),
+      // En video el dictado NO se corta solo: lo cierra la pausa de abajo.
+      continuo: esVideo,
+      onTexto: (t) => {
+        if (ignorarDictado.current) return;
+        setRespuesta(t);
+        // Cada vez que dices algo se reinicia la cuenta atras del turno.
+        if (esVideo) armarPausaFin();
+      },
+      onFin: () => {
+        limpiarPausaFin();
+        setEscuchando(false);
+        // En video, cerrar el micro ES terminar tu turno: la respuesta se envia
+        // sola (sin pulsar nada, como en una entrevista real). Antes se quedaba
+        // parada aqui y no pasaba nada.
+        if (esVideo && !ignorarDictado.current) setEnviarTrasDictado(true);
+      },
       onError: (codigo) => {
+        limpiarPausaFin();
         setEscuchando(false);
         const msg = mensajeDeError(codigo, { brave: braveRef.current });
         if (msg) setError(msg);
@@ -244,9 +324,13 @@ export default function Entrevista() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enviarTrasDictado, escuchando]);
 
-  const detenerDictado = () => dictadoRef.current?.stop();
+  const detenerDictado = () => {
+    limpiarPausaFin();
+    dictadoRef.current?.stop();
+  };
 
   const reiniciar = () => {
+    ignorarDictado.current = true; // parada a proposito: no autoenvia al salir
     detenerDictado();
     callarVoz();
     setHablando(false);
@@ -262,15 +346,47 @@ export default function Entrevista() {
 
   // --- SETUP -----------------------------------------------------------------
   if (fase === 'setup') {
+    const recurrentes = puntosRecurrentes(entrevistas);
+
+    // El plan se pide y se muestra AQUI, no en el panel del Asistente: /entrevista
+    // lo oculta en escritorio, asi que la respuesta no se veria.
+    const pedirPlan = async () => {
+      setPlanCargando(true);
+      setError(null);
+      try {
+        const r = await api.chat(
+          recurrentes.length
+            ? `He hecho ${entrevistas.length} entrevistas simuladas para "${cfg.puesto || 'un puesto tech'}" (${cfg.nivel}). Lo que mas se me repite para mejorar es: ${recurrentes
+                .map((p) => p.texto)
+                .join('; ')}. Dame un plan corto y concreto para corregirlo antes de mi proxima entrevista.`
+            : `Voy a practicar una entrevista simulada para "${cfg.puesto || 'un puesto tech'}" (${cfg.nivel}). Dame 3 consejos concretos para responder mejor y un ejercicio para practicarlos.`,
+        );
+        setPlan(r.respuesta);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setPlanCargando(false);
+      }
+    };
+
     return (
+      <div className={`entrev-inicio entrev-inicio--${vistaInicio}`}>
       <div className="entrev-chat entrev-chat--setup">
-        <header className="entrev-chat__cab">
+        <header className="entrev-chat__cab entrev-inicio__cab">
           <div>
             <h1>Entrevista simulada</h1>
             <p className="saludo__sub">
               Practica con preguntas de tu area. Al final recibes recomendaciones.
             </p>
           </div>
+          <button
+            type="button"
+            className="entrev-miga-btn"
+            onClick={() => setVistaInicio('historial')}
+          >
+            <Icon name="reloj" size={16} />
+            Historial y mejoras
+          </button>
         </header>
 
         <div className="entrev entrev-setup">
@@ -368,6 +484,113 @@ export default function Entrevista() {
           </button>
         </div>
       </div>
+
+      {/* Panel lateral: lo que ya practicaste y en que fallas mas. */}
+      <aside className="entrev-lat">
+        <h1 className="entrev-lat__titulo">Historial y mejoras</h1>
+        <nav className="entrev-migas" aria-label="Migas de pan">
+          <button type="button" onClick={() => setVistaInicio('entrevista')}>
+            Entrevista
+          </button>
+        </nav>
+
+        <section className="entrev-lat__caja">
+          <header className="entrev-lat__cab">
+            <span className="port-ico port-ico--sm"><Icon name="reloj" size={16} /></span>
+            <div>
+              <strong>Entrevistas anteriores</strong>
+              <span>
+                {entrevistas.length
+                  ? `${entrevistas.length} practicada${entrevistas.length > 1 ? 's' : ''}`
+                  : 'Todavia no has practicado'}
+              </span>
+            </div>
+          </header>
+
+          {entrevistas.length ? (
+            <ul className="entrev-lat__lista">
+              {entrevistas.map((e) => (
+                <li key={e.id} className={`entrev-lat__item ${e.guardada ? 'is-guardada' : ''}`}>
+                  <div className="entrev-lat__txt">
+                    <strong>{e.puesto || 'Puesto general'}</strong>
+                    <span>
+                      {e.nivel} · {e.modalidad === 'video' ? 'Videollamada' : 'Chat'} ·{' '}
+                      {fechaCorta(e.fecha)}
+                    </span>
+                    {e.feedback?.resumen && <p>{e.feedback.resumen}</p>}
+                  </div>
+                  <div className="entrev-lat__acc">
+                    <button
+                      type="button"
+                      className="iconbtn"
+                      onClick={() => setEntrevistas(alternarGuardadaEntrevista(e.id))}
+                      aria-pressed={Boolean(e.guardada)}
+                      aria-label={e.guardada ? 'Quitar de guardadas' : 'Guardar esta entrevista'}
+                      title={e.guardada ? 'Guardada' : 'Guardar'}
+                    >
+                      <Icon name="marcador" size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className="iconbtn"
+                      onClick={() => setEntrevistas(borrarEntrevista(e.id))}
+                      aria-label="Borrar del historial"
+                      title="Borrar"
+                    >
+                      <Icon name="cerrar" size={16} />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="entrev-lat__vacio">
+              Cuando termines una entrevista aparecera aqui, con su resumen. Puedes
+              guardar las que quieras conservar.
+            </p>
+          )}
+        </section>
+
+        <section className="entrev-lat__caja">
+          <header className="entrev-lat__cab">
+            <span className="port-ico port-ico--sm"><Icon name="crecer" size={16} /></span>
+            <div>
+              <strong>Como mejorar</strong>
+              <span>
+                {recurrentes.length ? 'Lo que mas se te repite' : 'Consejos para empezar'}
+              </span>
+            </div>
+          </header>
+
+          <ul className="entrev-lat__consejos">
+            {recurrentes.length
+              ? recurrentes.map((p) => (
+                  <li key={p.texto}>
+                    {p.texto}
+                    {p.n > 1 && <em className="entrev-lat__veces">{p.n} entrevistas</em>}
+                  </li>
+                ))
+              : CONSEJOS_BASE.map((c) => <li key={c}>{c}</li>)}
+          </ul>
+
+          <button
+            type="button"
+            className="perfil__iabtn"
+            onClick={pedirPlan}
+            disabled={planCargando}
+          >
+            <Icon name="asistente" size={16} />
+            {planCargando ? 'Pensando…' : 'Pedir un plan a la IA'}
+          </button>
+
+          {plan && (
+            <div className="entrev-lat__plan">
+              <RichText texto={plan} />
+            </div>
+          )}
+        </section>
+      </aside>
+      </div>
     );
   }
 
@@ -376,21 +599,96 @@ export default function Entrevista() {
   // presentacion. Al colgar se muestran las recomendaciones.
   if (fase === 'video' && !terminada) {
     return (
-      <VideoLlamada
-        nombreUsuario={nombreDe(perfil?.email)}
-        hablando={hablando}
-        escuchando={escuchando}
-        pregunta={actual?.texto}
-        pulso={pulso}
-        transcripcion={respuesta}
-        error={error}
-        puedeDictar={vozSoportada}
-        respuestaTexto={respuesta}
-        onCambiarTexto={setRespuesta}
-        onEnviarTexto={() => responder(false)}
-        onMic={micVideo}
-        onColgar={() => responder(true)}
-      />
+      <div className="entrev-video">
+        <VideoLlamada
+          nombreUsuario={nombreDe(perfil?.email)}
+          hablando={hablando}
+          escuchando={escuchando}
+          pregunta={actual?.texto}
+          pulso={pulso}
+          transcripcion={respuesta}
+          error={error}
+          puedeDictar={vozSoportada}
+          respuestaTexto={respuesta}
+          onCambiarTexto={setRespuesta}
+          onEnviarTexto={() => responder(false)}
+          onMic={micVideo}
+          onColgar={() => responder(true)}
+          // El texto se escribe en el chat lateral: aqui sobraria un segundo campo.
+          ocultarTexto
+        />
+
+        {/* Chat de la llamada: la transcripcion en vivo y un campo para responder
+            escribiendo. Ocupa la columna que quedaba vacia a la derecha. */}
+        <aside className="entrev-vchat" aria-label="Chat de la entrevista">
+          <header className="entrev-vchat__cab">
+            <span className="port-ico port-ico--sm"><Icon name="teclado" size={16} /></span>
+            <div>
+              <strong>Chat de la entrevista</strong>
+              <span>{cfg.puesto || 'Puesto general'} · {cfg.nivel}</span>
+            </div>
+          </header>
+
+          <div className="entrev-vchat__hilo" aria-live="polite">
+            {hilo.map((m, i) => (
+              <article key={i} className={`burbuja burbuja--${m.role}`}>
+                {m.rep && (
+                  <span className="entrev__rep"><Icon name="chispa" size={13} /> Repregunta</span>
+                )}
+                <p>{m.content}</p>
+              </article>
+            ))}
+            {pensando && (
+              <div className="burbuja burbuja--assistant burbuja--pensando">
+                <span /><span /><span />
+              </div>
+            )}
+            <div ref={finRef} />
+          </div>
+
+          <form
+            className="entrev-chat__barra"
+            onSubmit={(e) => {
+              e.preventDefault();
+              responder(false);
+            }}
+          >
+            <label htmlFor="resp-video" className="sr-only">Tu respuesta</label>
+            <textarea
+              id="resp-video"
+              className="entrev-chat__input"
+              rows={1}
+              value={respuesta}
+              onChange={(e) => {
+                // El micro se abre solo en video y el dictado escribe en este mismo
+                // estado: si el usuario teclea, manda el teclado y se corta el
+                // dictado (si no, la transcripcion le pisa o le vacia lo escrito).
+                if (escuchando) {
+                  ignorarDictado.current = true; // parada a proposito: no autoenvia
+                  detenerDictado();
+                }
+                setRespuesta(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  responder(false);
+                }
+              }}
+              placeholder={escuchando ? 'Te escucho…' : 'Escribe tu respuesta…'}
+              disabled={pensando}
+            />
+            <button
+              type="submit"
+              className="iconbtn iconbtn--enviar"
+              disabled={pensando || !respuesta.trim()}
+              aria-label="Enviar respuesta"
+            >
+              <Icon name="enviar" />
+            </button>
+          </form>
+        </aside>
+      </div>
     );
   }
 

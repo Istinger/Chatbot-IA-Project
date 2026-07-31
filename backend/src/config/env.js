@@ -65,6 +65,19 @@ module.exports = {
     limiteDiario: Number(process.env.LLM_LIMITE_DIARIO ?? 25),
   },
 
+  /**
+   * Fotos de portada de las ofertas e ideas (Pexels).
+   *
+   * Sin clave, el modulo se desactiva solo y la UI cae en su respaldo: la app
+   * funciona igual, solo que con portadas genericas.
+   *
+   * La clave vive SOLO aqui, en el servidor. El navegador nunca la ve: pide las
+   * fotos a nuestra API, que es la que habla con Pexels.
+   */
+  pexels: {
+    apiKey: process.env.PEXELS_API_KEY,
+  },
+
   adzuna: {
     appId: process.env.ADZUNA_APP_ID,
     appKey: process.env.ADZUNA_APP_KEY,

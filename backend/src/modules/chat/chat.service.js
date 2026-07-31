@@ -75,10 +75,26 @@ async function historial(sessionId) {
  * A diferencia del backend original, el paso 1 NO dispara llamadas a APIs
  * externas: la busqueda es una consulta SQL local sobre ofertas ya ingeridas.
  */
-async function recuperar({ mensaje }) {
+/**
+ * Peticiones que NO describen un puesto, sino "algo para mi".
+ *
+ * Buscar por ese texto no sirve de nada: "algo que concuerde con mis gustos" no
+ * se parece a ninguna oferta. Lo que hay que usar es el embedding del PERFIL,
+ * que es justo lo que alimenta la home.
+ */
+const PIDE_PERSONALIZADO =
+  /\b(mi perfil|mis gustos|mis skills|mis habilidades|mi experiencia|para mi|conmigo|me convenga|me convienen|me quede|afin|afines|encaje|encajen)\b/i;
+
+async function recuperar({ mensaje, perfil }) {
   if (!esConsultaDeEmpleo(mensaje)) return [];
 
+  // Si pide algo a su medida y tiene perfil, se busca POR EL PERFIL.
+  const porPerfil = Boolean(perfil?.id) && PIDE_PERSONALIZADO.test(mensaje);
+
   try {
+    if (porPerfil) {
+      return await matching.suggestJobs({ profileId: perfil.id, limit: 5 });
+    }
     return await matching.suggestJobs({ text: mensaje, limit: 5 });
   } catch {
     // Que el matching falle no debe tumbar la conversacion: el chat sigue,
@@ -121,7 +137,7 @@ async function responder({ mensaje, sessionId, user, perfil, jobViendo, contexto
 
   const [previos, jobs] = await Promise.all([
     historial(sesion),
-    recuperar({ mensaje: texto }),
+    recuperar({ mensaje: texto, perfil }),
   ]);
 
   // El contexto recuperado va en un mensaje aparte, delimitado y anunciado como

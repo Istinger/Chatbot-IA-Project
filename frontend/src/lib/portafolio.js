@@ -1,3 +1,5 @@
+import { imagenTema } from './imagen';
+
 /**
  * Catalogo estatico de "Ideas para portafolio".
  *
@@ -374,12 +376,49 @@ export function agregarIdeaCache(idea) {
 export const ideaPorId = (id) =>
   leerIdeasCache().find((i) => i.id === id) || IDEAS.find((i) => i.id === id) || null;
 
+/* La foto sale del mismo sitio que las de las ofertas (ver lib/imagen.js): un
+   solo lugar decide el proveedor y como se mantiene estable. */
 /**
- * Imagen relevante para una idea, servida por LoremFlickr (fotos por palabra
- * clave, sin API key). El `lock` fija la foto para que no cambie en cada carga.
+ * Palabras clave por AREA. El backend ya clasifica cada idea (frontend, backend,
+ * data, ux...), asi que es una señal mucho mas fiable que el `img` en texto libre
+ * que traian algunas: con aquel salian fotos sin relacion (un gato de piedra en
+ * "Tu propio portafolio web").
  */
+const TEMA_AREA = {
+  frontend: 'website',
+  backend: 'server',
+  fullstack: 'programming',
+  data: 'analytics',
+  ux: 'design',
+  mobile: 'smartphone',
+  devops: 'datacenter',
+  branding: 'branding',
+  qa: 'software',
+  marketing: 'marketing',
+};
+
+/** Respaldo por tipo cuando la idea no trae area (p. ej. las estaticas de aqui). */
+const TEMA_TIPO = {
+  web: 'website',
+  backend: 'server',
+  data: 'analytics',
+  'ui/ux': 'design',
+  branding: 'branding',
+  fullstack: 'programming',
+};
+
+/** Imagen de la idea: acorde a su area y estable por su id. */
 export const imagenIdea = (idea, w, h) =>
-  `https://loremflickr.com/${w}/${h}/${encodeURIComponent(idea.img)}?lock=${idea.lock}`;
+  imagenTema(
+    TEMA_AREA[idea?.area] ||
+      TEMA_TIPO[String(idea?.tipo || '').toLowerCase()] ||
+      // Del `img` del backend solo la PRIMERA palabra: la lista entera reduciria
+      // el catalogo y todas las ideas saldrian con la misma foto.
+      String(idea?.img || '').split(',')[0],
+    idea?.id,
+    w,
+    h,
+  );
 
 /* --- Ideas guardadas (persisten en localStorage; se marcan desde el detalle) --- */
 export const CLAVE_GUARDADAS = 'jobia_portafolio_guardadas';

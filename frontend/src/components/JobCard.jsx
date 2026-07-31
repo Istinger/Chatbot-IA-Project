@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import Icon from './Icon';
+import { useVista } from '../lib/vista';
 import { formatearSalario } from '../lib/format';
-import { imagenOferta, imagenFallback } from '../lib/imagen';
+import { creditoOferta, imagenOferta, imagenFallback } from '../lib/imagen';
 
 /**
  * Iniciales de la empresa para el badge (mock: "ID", "AX", "PS"...).
@@ -24,9 +25,15 @@ function iniciales(nombre) {
  * teclado y lo anuncian los lectores de pantalla). El "Ver oferta" y el marcador
  * son visuales — no botones anidados (HTML invalido) — porque la accion es una
  * sola: abrir la oferta.
+ *
+ * El marcador es INDICADOR: se enciende si la oferta esta guardada. Guardarla o
+ * quitarla se hace desde el detalle, justo por lo del boton anidado.
  */
 export default function JobCard({ job, onOpen, destacada = false }) {
   const [imgError, setImgError] = useState(false);
+  const { guardadas } = useVista();
+  const guardada = guardadas?.has(job.id);
+  const credito = creditoOferta(job);
   const salario = formatearSalario(job);
   const score = job.score != null ? Math.round(job.score * 100) : null;
   const ubicacion = [job.location, job.country].filter(Boolean).join(' · ');
@@ -47,6 +54,11 @@ export default function JobCard({ job, onOpen, destacada = false }) {
           width="640"
           height="420"
         />
+        {/* La licencia de Pexels pide acreditar al fotografo. Solo aparece si la
+            foto viene de ahi (con el respaldo no hay a quien acreditar). */}
+        {!imgError && credito?.autor && (
+          <span className="card__credito">Foto: {credito.autor}</span>
+        )}
         <div className="card__chips">
           <span className={`chip chip--${job.isForeign ? 'exterior' : 'local'}`}>
             <Icon name={job.isForeign ? 'globo' : 'brujula'} size={14} />
@@ -112,8 +124,13 @@ export default function JobCard({ job, onOpen, destacada = false }) {
           <span className="card__ver">
             Ver oferta <Icon name="derecha" size={16} />
           </span>
-          <span className="card__marcador" aria-hidden="true">
+          <span
+            className={`card__marcador ${guardada ? 'is-guardada' : ''}`}
+            title={guardada ? 'Guardada' : undefined}
+          >
             <Icon name="marcador" size={18} />
+            {/* Solo para lectores de pantalla: el icono por si solo no lo dice. */}
+            {guardada && <span className="sr-only">Guardada</span>}
           </span>
         </div>
       </div>

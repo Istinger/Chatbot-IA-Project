@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { alternarGuardada, idsGuardadas } from './ofertasGuardadas';
 
 /**
  * Contexto de "lo que el usuario esta viendo ahora mismo". Lo consume el
@@ -24,9 +25,23 @@ export function VistaProvider({ children }) {
   const [ofertaActiva, setOfertaActiva] = useState(null);
   const [contextoPantalla, setContextoPantalla] = useState(null);
   const [peticionIA, setPeticionIA] = useState(null); // { texto, id }
+  // Ofertas guardadas. Vive AQUI y no en cada componente: se guarda desde el
+  // modal pero el indicador esta en las tarjetas, que son otro componente; si
+  // cada uno leyera localStorage por su cuenta, no se enterarian entre ellos.
+  const [guardadas, setGuardadas] = useState(() => idsGuardadas());
+  // Ofertas que el Asistente encontro. No se pintan en el chat (ahi salen
+  // apretadas en una columna estrecha): se mandan a la pantalla de Buscar, que
+  // es la que tiene sitio y filtros.
+  const [ofertasSugeridas, setOfertasSugeridas] = useState(null);
 
   const pedirIA = useCallback((texto) => setPeticionIA({ texto, id: Date.now() }), []);
   const consumirIA = useCallback(() => setPeticionIA(null), []);
+  // Recibe la OFERTA entera, no su id: se guarda una copia para poder listarla
+  // luego (ver lib/ofertasGuardadas).
+  const alternarOfertaGuardada = useCallback(
+    (oferta) => setGuardadas(new Set(alternarGuardada(oferta))),
+    [],
+  );
 
   const valor = useMemo(
     () => ({
@@ -37,8 +52,21 @@ export function VistaProvider({ children }) {
       peticionIA,
       pedirIA,
       consumirIA,
+      guardadas,
+      alternarOfertaGuardada,
+      ofertasSugeridas,
+      setOfertasSugeridas,
     }),
-    [ofertaActiva, contextoPantalla, peticionIA, pedirIA, consumirIA],
+    [
+      ofertaActiva,
+      contextoPantalla,
+      peticionIA,
+      pedirIA,
+      consumirIA,
+      guardadas,
+      alternarOfertaGuardada,
+      ofertasSugeridas,
+    ],
   );
   return <VistaContext.Provider value={valor}>{children}</VistaContext.Provider>;
 }

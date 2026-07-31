@@ -3,8 +3,44 @@
    niebla, glow, particulas y viñeta, todo CSS. Fijo detras de TODO — el rail y
    el panel del asistente lo dejan ver a traves de su blur translucido.
 --------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+   Marco de la app
+   En escritorio la app no ocupa la ventana entera: vive dentro de un rectangulo
+   16:9 centrado y con las esquinas redondeadas, y alrededor se ve el negro del
+   body. Como el marco recorta (overflow), TODO lo de dentro —incluido el fondo
+   animado— queda con esas esquinas.
+
+   Ojo: al no scrollear el documento, el scroll pasa a ser interno (.lienzo). Por
+   eso las pantallas miden con `--alto-app` (el alto del marco) y no con 100dvh.
+--------------------------------------------------------------------------- */
+.marco {
+  position: relative;
+  /* Llena la ventana MENOS el margen. Se probo atarlo a 16:9 y en pantallas
+     anchas dejaba franjas negras enormes: aqui el negro es solo el filo que deja
+     ver las esquinas redondeadas. */
+  width: calc(100vw - 2 * var(--marco-gap));
+  height: var(--alto-app);
+  overflow: hidden;
+  border-radius: var(--marco-radio);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  /* Halos azules del fondo: antes estaban en el body, ahora viven aqui dentro. */
+  background:
+    radial-gradient(circle at 34% 26%, rgba(16, 76, 142, 0.16), transparent 42%),
+    radial-gradient(circle at 82% 10%, rgba(22, 65, 128, 0.12), transparent 30%),
+    var(--bg);
+}
+
+/* En escritorio hay sitio para un margen mas generoso. */
+@media (min-width: 861px) {
+  :root {
+    --marco-gap: 14px;
+    --marco-radio: 22px;
+  }
+}
+
 .ambient {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: var(--z-bg);
   overflow: hidden;
@@ -196,6 +232,14 @@
   transition: background var(--t-fast), color var(--t-fast), opacity var(--t-fast);
 }
 
+/* Dictando: el microfono tiene que verse encendido, o no se sabe si escucha. */
+.iconbtn--escuchando {
+  color: var(--glow);
+  border-color: var(--border-2);
+  background: rgba(79, 163, 255, 0.16);
+  animation: pulso 1.6s ease-in-out infinite;
+}
+
 .iconbtn:hover:not(:disabled) {
   background: var(--glass-2);
   color: var(--glow);
@@ -287,11 +331,13 @@
 .entrada {
   position: relative;
   z-index: var(--z-content);
-  min-height: 100dvh;
+  /* Va directo dentro del marco: scrollea por dentro si no cabe. */
+  height: var(--alto-app);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
   gap: var(--sp-4);
   padding: var(--sp-3);
 }
@@ -415,11 +461,13 @@
 .onb {
   position: relative;
   z-index: var(--z-content);
-  min-height: 100dvh;
+  /* Va directo dentro del marco: scrollea por dentro si no cabe. */
+  height: var(--alto-app);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
   gap: var(--sp-3);
   padding: var(--sp-3);
 }
@@ -568,7 +616,9 @@
 .shell {
   position: relative;
   z-index: var(--z-content);
-  min-height: 100dvh;
+  /* Alto EXACTO del marco (no min-height): el documento ya no scrollea, lo hace
+     la columna de contenido (.lienzo). */
+  height: var(--alto-app);
   display: grid;
   grid-template-columns: 108px minmax(0, 1fr) minmax(340px, var(--asis-ancho));
 }
@@ -577,7 +627,7 @@
   position: sticky;
   top: 0;
   z-index: var(--z-nav);
-  height: 100dvh;
+  height: var(--alto-app);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -686,11 +736,37 @@
 }
 
 .lienzo {
+  /* El padding vertical va en variables porque el scroll-snap necesita saberlo:
+     cada "pagina" mide el alto del scroller MENOS este padding. En movil los
+     valores cambian (la barra inferior ocupa abajo), y si el calculo usara los de
+     escritorio las paginas quedarian mas altas que la pantalla y el snap se
+     atascaria. */
+  --lienzo-pt: var(--sp-5);
+  --lienzo-pb: var(--sp-6);
+
   min-width: 0; /* sin esto, el carrusel desborda y aparece scroll horizontal */
-  padding: var(--sp-5) var(--sp-4) var(--sp-6);
+  /* El scroll de la app vive aqui (el documento ya no scrollea). */
+  min-height: 0;
+  overflow-y: auto;
+
+  /* Barra OCULTA (el scroll sigue funcionando igual, con rueda y teclado).
+     En la home el recorrido lo marcan el snap y la nota "Haz scroll para ver mas
+     ofertas", y ademas quedaba pegada a la barra de la rejilla: dos barras
+     juntas contra el borde del marco. */
+  scrollbar-width: none;
+  padding: var(--lienzo-pt) var(--sp-4) var(--lienzo-pb);
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
+}
+
+.lienzo::-webkit-scrollbar { display: none; }
+
+/** Alto util de una "pagina" de la home: el scroller menos su padding. */
+.ofertas-pagina,
+.ofertas-blink,
+.ofertas__mas {
+  --alto-pagina: calc(var(--alto-app) - var(--lienzo-pt) - var(--lienzo-pb));
 }
 
 /* ---------------------------------------------------------------------------
@@ -699,7 +775,7 @@
 .asis-host {
   position: sticky;
   top: 0;
-  height: 100dvh;
+  height: var(--alto-app);
   border-left: 1px solid var(--border);
   background: rgba(5, 11, 20, 0.4);
   backdrop-filter: blur(20px);
@@ -942,7 +1018,7 @@
 }
 
 .cargando {
-  min-height: 100dvh;
+  min-height: var(--alto-app);
   display: grid;
   place-items: center;
   color: var(--text-3);
@@ -1050,6 +1126,10 @@
 .card__visual {
   position: relative;
   aspect-ratio: 16 / 10;
+  /* No encoge NUNCA. Es un hijo flex y, si la tarjeta queda limitada en alto, se
+     comprimia para dejar sitio al texto: las ofertas con nombre de empresa largo
+     se quedaban sin portada y la rejilla parecia rota. */
+  flex: none;
   overflow: hidden;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(135deg, #071424, #02070d);
@@ -1069,6 +1149,26 @@
   inset: 0;
   background: linear-gradient(to top, rgba(2, 6, 13, 0.9), transparent 46%);
   pointer-events: none;
+}
+
+/* Credito del fotografo: la licencia de Pexels lo pide. Discreto, en la esquina
+   de la portada, para cumplir sin ensuciar la tarjeta. */
+.card__credito {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 1;
+  padding: 2px 7px;
+  border-radius: var(--r-full);
+  background: rgba(2, 7, 13, 0.55);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 10px;
+  line-height: 1.4;
+  pointer-events: none;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .card__chips {
@@ -1155,6 +1255,14 @@
   color: var(--text-2);
   border: 1px solid var(--border);
   background: var(--glass);
+}
+
+/* Guardada: el marcador se enciende. Es solo INDICADOR — se guarda y se quita
+   desde el detalle de la oferta (la tarjeta entera ya es un boton). */
+.card__marcador.is-guardada {
+  color: var(--glow);
+  border-color: rgba(79, 163, 255, 0.5);
+  background: rgba(79, 163, 255, 0.16);
 }
 
 .card__top {
@@ -1381,7 +1489,9 @@
    Modal
 --------------------------------------------------------------------------- */
 .modal {
-  position: fixed;
+  /* absolute y no fixed: asi queda DENTRO del marco de la app (position:fixed se
+     escapa del recorte y taparia tambien el negro de alrededor). */
+  position: absolute;
   inset: 0;
   z-index: var(--z-modal);
   display: grid;
@@ -1402,7 +1512,7 @@
 .modal__caja {
   position: relative;
   width: min(680px, 100%);
-  max-height: 88dvh;
+  max-height: calc(var(--alto-app) * 0.88);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1475,6 +1585,32 @@
   max-width: 68ch;
 }
 
+/* Acciones de IA / guardar dentro del detalle de la oferta. */
+.modal__acciones {
+  align-self: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+}
+.modal__guardar[aria-pressed='true'] {
+  border-color: rgba(110, 231, 183, 0.45);
+  background: rgba(110, 231, 183, 0.12);
+  color: var(--success);
+}
+
+/* Respuesta del analisis: con scroll propio para que no estire el modal. */
+.modal__analisis {
+  align-self: stretch;
+  max-height: calc(var(--alto-app) * 0.32);
+  overflow-y: auto;
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(79, 163, 255, 0.25);
+  background: rgba(79, 163, 255, 0.07);
+  font-size: 13px;
+}
+
 .modal__cta {
   margin-top: var(--sp-3);
   align-self: stretch;
@@ -1484,23 +1620,37 @@
    Movil: el rail lateral pasa a barra inferior
 --------------------------------------------------------------------------- */
 @media (max-width: 860px) {
-  /* Una sola columna: el rail lateral se oculta y navega la barra inferior. */
-  .shell { display: block; }
+  /* Una sola columna: el rail lateral se oculta y navega la barra inferior.
+     Flex y no block: el contenido (.lienzo) tiene que poder scrollear por dentro,
+     porque el documento ya no scrollea. */
+  .shell {
+    display: flex;
+    flex-direction: column;
+  }
+  .lienzo { flex: 1; }
   .rail { display: none; }
 
-  /* El Asistente pasa a HOJA a pantalla completa (se abre desde la barra). */
+  /* El Asistente pasa a HOJA a pantalla completa (se abre desde la barra).
+     absolute y no fixed: asi queda DENTRO del marco (fixed se le escapa y taparia
+     tambien el filo negro con las esquinas redondeadas). */
   .asis-host {
-    position: fixed;
+    display: none;
+    position: absolute;
     inset: 0;
     z-index: var(--z-modal);
-    height: 100dvh;
+    height: var(--alto-app);
     border-left: none;
     background: rgba(2, 7, 13, 0.98);
     transform: translateX(100%);
     transition: transform var(--t-base) var(--ease-out);
+    pointer-events: none;
   }
 
-  .asis-host--abierto { transform: translateX(0); }
+  .asis-host--abierto {
+    display: block;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
 
   .asis-host__cerrar {
     display: grid;
@@ -1520,7 +1670,8 @@
   /* Barra inferior con el Asistente en el centro (el protagonista). */
   .tabbar {
     display: flex;
-    position: fixed;
+    /* absolute (no fixed) por lo mismo que .asis-host: dentro del marco. */
+    position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
@@ -1556,12 +1707,20 @@
   .tabbar__link.active { color: var(--glow); }
   .tabbar__asis { color: var(--glow); }
   .tabbar__asis span { font-weight: 600; }
+  .tabbar__asis:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
 
   .lienzo {
     margin-left: 0;
     /* Reservar el hueco de la barra inferior + aire extra: si no, la ultima
-       tarjeta queda pegada a la barra y se siente apretada. */
-    padding: var(--sp-4) 0 calc(112px + env(safe-area-inset-bottom, 0px)) var(--sp-2);
+       tarjeta queda pegada a la barra y se siente apretada. Va en la variable
+       para que el alto de pagina del scroll-snap lo tenga en cuenta. */
+    --lienzo-pt: var(--sp-4);
+    --lienzo-pb: calc(112px + env(safe-area-inset-bottom, 0px));
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-2);
     gap: var(--sp-5);
   }
 
@@ -1612,7 +1771,7 @@
   flex-direction: column;
   gap: var(--sp-2);
   /* La conversacion ocupa el alto disponible; solo scrollea el hilo. */
-  height: calc(100dvh - var(--sp-5) - var(--sp-6));
+  height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6));
   padding-right: var(--sp-4);
 }
 
@@ -1824,7 +1983,7 @@
 
 @media (max-width: 860px) {
   .chat {
-    height: calc(100dvh - 190px);
+    height: calc(var(--alto-app) - 190px);
     padding-right: var(--sp-2);
   }
 
@@ -1885,15 +2044,20 @@
   list-style: none;
 }
 
+/* La fila clicable (.gap__fila) lleva las columnas; aqui solo se le suma el
+   boton de marcar al lado. Las columnas fijas hacen que las barras arranquen
+   todas en el mismo punto: si no, comparar de un vistazo es imposible. */
 .gap__item {
-  display: grid;
-  /* La skill a la izquierda, la barra ocupando el resto, el % alineado a la
-     derecha. Las tres columnas fijas hacen que las barras arranquen todas en el
-     mismo punto: si no, comparar de un vistazo es imposible. */
-  grid-template-columns: 130px 1fr 44px;
+  display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: 2px;
 }
+
+/* "Lo que ya tienes" no es clicable: sus hijos van sueltos en la fila, asi que
+   se les reparte el ancho aqui (en "Lo que te falta" lo hace .gap__fila). */
+.gap__item > .gap__skill { flex: none; width: 104px; }
+.gap__item > .barra { flex: 1; }
+.gap__item > .gap__pct { flex: none; width: 44px; }
 
 .gap__skill {
   font-size: var(--fs-5);
@@ -1944,6 +2108,17 @@
   margin-top: var(--sp-2);
 }
 
+.crecer__cursos .seccion__cab {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: calc(var(--sp-3) * -1) calc(var(--sp-3) * -1) var(--sp-1);
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  border-radius: var(--r-lg) var(--r-lg) var(--r-sm) var(--r-sm);
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+}
+
 /* Cabecera de seccion (icono + titulo + subtitulo, y pill opcional a la derecha). */
 .seccion__cab {
   align-self: stretch;
@@ -1979,17 +2154,152 @@
 .seccion__titulo { font-size: var(--fs-3); font-weight: 600; line-height: 1.1; }
 .seccion__sub { margin-top: 2px; font-size: 13px; color: var(--text-3); }
 
-/* Asa decorativa (puntitos) en la esquina de las tarjetas del perfil. */
-.panel__grip {
-  flex: none;
-  align-self: flex-start;
-  width: 16px;
-  height: 22px;
-  color: var(--text-3);
-  opacity: 0.45;
-  background-image: radial-gradient(currentColor 1.3px, transparent 1.6px);
-  background-size: 8px 7px;
+/* Crecer: dos columnas para que quepa sin scroll de pagina. Las dos listas de
+   brechas a la izquierda; los cursos a la derecha, con scroll propio si son
+   muchos (asi la pantalla no crece). */
+.crecer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: var(--sp-2);
+  align-items: start;
+  margin-top: calc(var(--sp-4) * -1);
 }
+.crecer__col,
+.crecer__der { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+
+@media (min-width: 861px) {
+  /* Cada columna scrollea por dentro: la pantalla no crece aunque se abra el
+     detalle de una habilidad o el plan (los cursos siguen ahi, debajo). */
+  .crecer__col,
+  .crecer__der {
+    max-height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6) - 90px);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 1000px) {
+  .crecer { grid-template-columns: 1fr; }
+  .crecer__col,
+  .crecer__der { max-height: none; overflow: visible; }
+}
+
+/* --- Fila de brecha: se pulsa para ver el detalle, y se marca el avance --- */
+.gap__fila {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 20px 104px 1fr 44px;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.gap__fila:hover { background: var(--glass-2); }
+
+.gap__marca {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+.gap__marca:hover { background: var(--glass-2); color: var(--text); }
+
+/* En progreso: destacada. Aprendida: tachada y atenuada, ya no es tu problema. */
+.gap__item--progreso .gap__skill { color: var(--glow); }
+.gap__item--progreso .gap__marca { color: var(--glow); }
+.gap__item--aprendida { opacity: 0.55; }
+.gap__item--aprendida .gap__skill { text-decoration: line-through; }
+.gap__item--aprendida .gap__marca { color: var(--success); }
+
+/* Proyeccion de lo marcado. Calculo local (ver lib/crecer.js), sin IA. */
+.gap__proy {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: var(--sp-2);
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: rgba(110, 231, 183, 0.1);
+  border: 1px solid rgba(110, 231, 183, 0.28);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.gap__proy svg { flex: none; color: var(--success); margin-top: 2px; }
+.gap__proy em { color: var(--text-3); font-style: normal; }
+
+/* Detalle de una habilidad / plan: se añaden ARRIBA, sin quitar los cursos. */
+.crecer__detalle { border-color: var(--border-2); }
+.crecer__ia {
+  align-self: stretch;
+  max-height: calc(var(--alto-app) * 0.36);
+  overflow-y: auto;
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(79, 163, 255, 0.25);
+  background: rgba(79, 163, 255, 0.07);
+  font-size: 13px;
+}
+.crecer__detcursos { align-self: stretch; border-top: none; margin-top: 0; }
+
+/* Perfil: dos columnas. Habilidades (lo que mas ocupa) a la izquierda y el resto
+   —Curriculum, Telegram, Sesion— apilado a la derecha. */
+.perfil {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: var(--sp-2);
+  align-items: stretch;
+}
+.perfil__col { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+@media (max-width: 1000px) {
+  .perfil { grid-template-columns: 1fr; }
+}
+
+/* El logo dentro del chip: mas pequeño y menos redondeado que en las tarjetas. */
+.chip .skillogo { border-radius: 5px; box-shadow: none; }
+.chip .skillogo--img { padding: 2px; }
+
+/* Perfil: añadir habilidad + acciones de IA. */
+.perfil__skilladd { display: flex; gap: var(--sp-1); margin-top: var(--sp-2); }
+.perfil__skillinput {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-5);
+}
+.perfil__skillinput::placeholder { color: var(--text-3); }
+.perfil__skillinput:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+
+.perfil__ia { display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-2); }
+.perfil__iabtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--r-full);
+  border: 1px solid rgba(79, 163, 255, 0.3);
+  background: rgba(79, 163, 255, 0.1);
+  color: var(--glow);
+  font-size: var(--fs-5);
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.perfil__iabtn:hover { background: rgba(79, 163, 255, 0.18); }
 
 .seccion__pill {
   flex: none;
@@ -2248,6 +2558,37 @@
 }
 .port-guardadas__vacio svg { flex: none; color: var(--text-3); opacity: 0.7; }
 .port-guardadas__vacio strong { color: var(--text-2); }
+
+/* --- Pantalla "Guardados": ofertas e ideas marcadas --- */
+.guardadas__seccion { display: flex; flex-direction: column; gap: var(--sp-2); }
+.guardadas__seccion + .guardadas__seccion { margin-top: var(--sp-4); }
+/* El boton de comparar se va al extremo de la cabecera, sin empujar el titulo. */
+.guardadas__seccion .seccion__cab .perfil__iabtn { margin-left: auto; flex: none; }
+
+/* Rejilla propia, no la de la home: alli las tarjetas viven en un contenedor con
+   scroll y alto fijo; aqui crecen a lo largo de la pagina. */
+.guardadas__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--sp-2);
+}
+/* Sin tope, con pocas guardadas la tarjeta se estiraba a toda la fila y la
+   portada quedaba desproporcionada. */
+.guardadas__grid .card { max-width: 420px; }
+.guardadas__grid .card__visual { aspect-ratio: auto; height: clamp(150px, 15vw, 200px); }
+.guardadas__vacio {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-md);
+  background: var(--glass);
+  color: var(--text-3);
+  font-size: var(--fs-5);
+}
+.guardadas__vacio svg { flex: none; color: var(--text-3); opacity: 0.7; }
+.guardadas__vacio strong { color: var(--text-2); }
 
 /* --- Etiquetas / iconos / chips comunes --- */
 .port-tags { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 12px; }
@@ -2654,9 +2995,9 @@
 }
 
 @media (max-width: 600px) {
-  .gap__item {
-    grid-template-columns: 96px 1fr 40px;
-  }
+  .gap__fila { grid-template-columns: 20px 76px 1fr 40px; }
+  .gap__item > .gap__skill { width: 76px; }
+  .gap__item > .gap__pct { width: 40px; }
 }
 
 /* ==========================================================================
@@ -2908,22 +3249,60 @@
   padding-right: var(--sp-4);
 }
 
-.ofertas__mas { margin-top: var(--sp-4); }
+/* z-index: la pagina 1 lleva un wrapper sticky con filtros (blink); "Mas ofertas"
+   se pinta ENCIMA, nunca mezclada con ella. Sin fondo propio, para que siga
+   viendose el fondo animado a traves. */
+.ofertas__mas {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--sp-4);
+}
 .ofertas__mas .carrusel__title { font-size: var(--fs-2); }
 
+/* CLAVE del snap: un bloque MAS ALTO que la pantalla no se puede enganchar (el
+   navegador no fuerza el snap sobre el, y el scroll se quedaba a medio camino
+   entre las dos paginas). Asi que "Mas ofertas" mide una pantalla justa y es su
+   rejilla la que scrollea por dentro: sigue viendose todo, y el enganche entre
+   paginas vuelve a ser firme. */
+.ofertas__mas {
+  height: var(--alto-pagina);
+  justify-content: flex-start;
+}
+
+.ofertas__mas .ofertas__rejilla {
+  flex: 1;
+  min-height: 0; /* sin esto un hijo flex no encoge y no aparece el scroll */
+  overflow-y: auto;
+  align-content: start;
+  /* Las filas miden lo que pide su contenido y NO se comprimen. Sin esto, al
+     tener la rejilla un alto fijo, las filas se encogian (la tarjeta permite
+     encogerse con min-height:0) y su overflow:hidden recortaba el cuerpo: se
+     perdian chips, barra de afinidad y boton. Que sobre alto es problema del
+     scroll, no de las tarjetas. */
+  grid-auto-rows: max-content;
+  padding-bottom: var(--sp-2);
+}
+
 /* Buscar ofertas */
+.buscar-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
 .buscar__cab {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   padding-right: var(--sp-4);
-  margin-bottom: var(--sp-3);
   animation: entrar var(--t-slow) var(--ease-out) both;
 }
 
 .buscar__cab h1 { font-size: var(--fs-1); }
 
-.iconbtn--volver { flex: none; }
+.buscar__ver-controles {
+  display: none;
+}
 
 .buscar__barra { max-width: none; margin-right: var(--sp-4); }
 
@@ -2960,8 +3339,77 @@
   background: var(--glass);
   border: 1px solid var(--border);
 }
-.filtro-chip--mas { color: var(--text); }
+.filtro-chip--mas { color: var(--text); cursor: pointer; }
 .filtro-chip__flecha { color: var(--text-3); transform: rotate(90deg); }
+
+/* El chip envuelve un <select> nativo: accesible y con teclado y movil gratis.
+   Se le quita la apariencia del sistema para que parezca el chip del mock. */
+.filtro-chip select {
+  appearance: none;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-5);
+  cursor: pointer;
+  padding-right: 2px;
+  max-width: 150px;
+}
+.filtro-chip select option { background: var(--surface); color: var(--text); }
+.filtro-chip:focus-within { border-color: var(--blue); }
+
+/* Filtro activo: se distingue del que esta en "cualquiera". */
+.filtro-chip--on {
+  color: var(--glow);
+  border-color: rgba(79, 163, 255, 0.5);
+  background: rgba(79, 163, 255, 0.12);
+}
+.filtro-chip--on .filtro-chip__flecha { color: var(--glow); }
+
+.resultados__filtradas { color: var(--text-3); font-weight: 400; }
+
+/* Lleva a "Buscar" con las ofertas que encontro el Asistente: en su columna
+   estrecha salian apretadas. */
+.asis__verofertas {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--sp-1);
+  padding: 8px 14px;
+  border-radius: var(--r-full);
+  border: 1px solid rgba(79, 163, 255, 0.35);
+  background: rgba(79, 163, 255, 0.12);
+  color: var(--glow);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.asis__verofertas:hover { background: rgba(79, 163, 255, 0.22); }
+
+/* Aviso de que la IA reescribio la busqueda, con la salida para deshacerlo. */
+.buscar__reformulado {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px var(--sp-1);
+  margin-top: var(--sp-2);
+  padding: 8px 12px;
+  border-radius: var(--r-full);
+  border: 1px solid rgba(79, 163, 255, 0.25);
+  background: rgba(79, 163, 255, 0.08);
+  color: var(--text-2);
+  font-size: 13px;
+}
+.buscar__reformulado svg { flex: none; color: var(--glow); }
+.buscar__reformulado strong { color: var(--text); font-weight: 600; }
+.buscar__reformulado button {
+  margin-left: auto;
+  color: var(--glow);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
 
 .resultados__barra {
   display: flex;
@@ -2971,62 +3419,74 @@
   padding-right: var(--sp-4);
 }
 
-/* Escritorio: cada seccion de la home es una "pagina" con snap SUAVE. El scroller
-   es el root; solo .ofertas-pagina tiene snap-align, asi que otras rutas no se ven
-   afectadas. */
+/* Cada seccion de la home es una "pagina" con snap. El scroller es .lienzo (la
+ columna de contenido, dentro del marco); solo .ofertas-pagina tiene snap-align,
+ asi que otras rutas no se ven afectadas.
+
+ Aplica en TODOS los tamaños: el alto de pagina sale de --alto-pagina, que ya
+ descuenta el padding real del lienzo en cada breakpoint. */
+.lienzo {
+  /* mandatory: cada gesto ENGANCHA a la pagina, que es lo que da sentido a la
+     nota "Haz scroll para ver mas ofertas". Con proximity el enganche quedaba
+     flojo y parecia una pagina normal.
+     Para que mandatory no atrape, NINGUNA pagina puede ser mas alta que la
+     pantalla: "Mas ofertas" mide una pantalla justa y su rejilla scrollea por
+     dentro (ver .ofertas__mas). */
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+.ofertas-pagina {
+  /* Alto del scroller MENOS su padding vertical: si no, cada pagina desborda y
+     el snap se descuadra. */
+  min-height: var(--alto-pagina);
+  scroll-snap-align: start;
+  scroll-margin-top: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  /* `safe`: si el contenido NO cabe (la rejilla de "Mas ofertas" es mas alta que
+     una pagina), centrar lo desborda por ARRIBA y se monta sobre la pagina
+     anterior. Con safe, en ese caso se alinea al inicio en vez de centrar. */
+  justify-content: safe center;
+  gap: var(--sp-3);
+}
+
+/* --- Efecto "blink" en la primera pagina (scroll-driven animation) ----------
+   La seccion es solo el "riel": expone una scroll timeline con su posicion en
+   el viewport (view-timeline). Su contenido, .ofertas-blink, se queda pegado
+   (sticky) dentro de la columna y se funde con esa timeline: nitido y visible
+   cuando la seccion esta centrada, difuminado e invisible al salir. Como es
+   sticky (no fixed) NO tapa el rail ni el asistente. */
+.ofertas-pagina--blink {
+  /* la seccion deja de centrar: de eso se encarga el wrapper sticky */
+  display: block;
+  view-timeline: --ofertas-1 block;
+  /* Solo la PRIMERA pagina obliga a parar: un gesto rapido no se la salta. En
+     "Mas ofertas" seria un freno, porque ahi se scrollea de largo. */
+  scroll-snap-stop: always;
+}
+
+.ofertas-blink {
+  position: sticky;
+  top: 0;
+  min-height: var(--alto-pagina);
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  gap: var(--sp-3);
+  /* Sin fondo propio: se ve el mismo fondo ambiental que "Mas ofertas". El blur
+     y el fundido bastan para la transicion; no hace falta tapar el body. */
+  background: transparent;
+  animation: ofertas-blink ease-in-out both;
+  animation-timeline: --ofertas-1;
+}
+
+
+/* El scrim del modal no cubre la columna del Asistente: se queda visible y
+   usable mientras hay una oferta abierta, y el dialogo se centra sobre el resto
+   (rail + contenido). */
 @media (min-width: 861px) {
-  html {
-    /* mandatory (no proximity): cada gesto ENGANCHA a la pagina, no se queda a
-       medias. Es lo que da sentido a la nota "Haz scroll para ver mas ofertas". */
-    scroll-snap-type: y mandatory;
-    scroll-behavior: smooth;
-  }
-
-  .ofertas-pagina {
-    min-height: 100dvh;
-    scroll-snap-align: start;
-    /* Cada tanda avanza de una en una: un gesto rapido no salta la pagina. */
-    scroll-snap-stop: always;
-    scroll-margin-top: var(--sp-3);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: var(--sp-3);
-  }
-
-  /* --- Efecto "blink" en la primera pagina (scroll-driven animation) ----------
-     La seccion es solo el "riel": expone una scroll timeline con su posicion en
-     el viewport (view-timeline). Su contenido, .ofertas-blink, se queda pegado
-     (sticky) dentro de la columna y se funde con esa timeline: nitido y visible
-     cuando la seccion esta centrada, difuminado e invisible al salir. Como es
-     sticky (no fixed) NO tapa el rail ni el asistente. */
-  .ofertas-pagina--blink {
-    /* la seccion deja de centrar: de eso se encarga el wrapper sticky */
-    display: block;
-    view-timeline: --ofertas-1 block;
-  }
-
-  .ofertas-blink {
-    position: sticky;
-    top: 0;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: var(--sp-3);
-    /* Sin fondo propio: se ve el mismo fondo ambiental que "Mas ofertas". El blur
-       y el fundido bastan para la transicion; no hace falta tapar el body. */
-    background: transparent;
-    animation: ofertas-blink ease-in-out both;
-    animation-timeline: --ofertas-1;
-  }
-
-  /* El scrim del modal no cubre la columna del Asistente: se queda visible y
-     usable mientras hay una oferta abierta, y el dialogo se centra sobre el
-     resto (rail + contenido). */
-  .modal {
-    right: var(--asis-ancho);
-  }
+  .modal { right: var(--asis-ancho); }
 }
 
 /* Nitido y presente a mitad de recorrido (seccion centrada); difuminado, sin
@@ -3048,25 +3508,157 @@
 /* Movil: apilar la home y la busqueda; sin scroll horizontal ni snap. */
 @media (max-width: 860px) {
   .ofertas__cab { flex-direction: column; }
-  .ofertas__fila { grid-template-columns: 1fr; }
-  .ofertas-pagina { min-height: auto; scroll-snap-align: none; }
-  /* En movil el blink se apaga: sin sticky, sin animacion, sin fondo solido. */
-  .ofertas-blink {
-    position: static;
-    min-height: auto;
-    background: none;
-    animation: none;
-  }
-  .ofertas__fila .card__visual { height: clamp(170px, 45vw, 240px); }
+  /* Tantas columnas como quepan: en un movil estrecho sale 1, en uno apaisado o
+     en tablet salen 2 en vez de una sola tarjeta con medio ancho vacio al lado. */
+  .ofertas__fila { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  /* El snap y el blink funcionan igual que en escritorio (ver el bloque de
+     .ofertas-pagina): antes se apagaban aqui y la home se sentia distinta al
+     estrechar la ventana. */
+  /* En escritorio estos bloques reservan sitio a la derecha; en movil no hay
+     columna que esquivar. OJO: .buscar__barra NO entra aqui — su padding no es
+     margen de escritorio, es el aire interior de la pildora, y al ponerlo a 0
+     el boton "Buscar" quedaba pegado al borde. */
   .ofertas__cab,
   .ofertas__fila,
   .ofertas__rejilla,
   .buscar__cab,
-  .buscar__barra,
   .buscar__filtros,
   .resultados__barra { padding-right: 0; }
+  /* Lo que si sobra de la barra es su margen derecho: la dejaba 24px mas
+     estrecha que la cabecera y que los chips de filtro, y se notaba. */
+  .buscar__barra { margin-right: 0; }
   .ofertas__cab h1,
   .buscar__cab h1 { font-size: var(--fs-2); }
+
+  /* El lienzo ya separa sus hijos con gap; estos margenes lo duplicaban y
+     dejaban bandas vacias alrededor de la barra de busqueda. */
+  .buscar__cab { margin-bottom: 0; }
+  .buscar__filtros { margin-top: 0; }
+
+  /* Las 4 ofertas de la primera pagina, igual que en escritorio. Aqui se apilan
+     y no caben en la pantalla, asi que se aplica la MISMA solucion que ya usa
+     "Mas ofertas": la pagina mide una pantalla EXACTA (height, no min-height) y
+     la fila scrollea por dentro. Si la pagina creciera, scroll-snap-type
+     mandatory la atraparia y no se podria pasar a la siguiente. */
+  .ofertas-blink {
+    height: var(--alto-pagina);
+    justify-content: flex-start;
+  }
+  .ofertas__fila {
+    flex: 1;
+    min-height: 0; /* sin esto un hijo flex no encoge y no aparece el scroll */
+    overflow-y: auto;
+    align-content: start;
+    /* Las filas miden lo que pide su contenido y NO se comprimen: si no, las
+       tarjetas se encogen y su overflow:hidden recorta el cuerpo. */
+    grid-auto-rows: max-content;
+    scrollbar-width: none;
+  }
+  .ofertas__fila::-webkit-scrollbar { display: none; }
+
+  /* Portada mas baja: con 4 tarjetas apiladas, la de escritorio obligaba a
+     scrollear mucho para llegar a la cuarta. */
+  .ofertas__fila .card__visual { height: clamp(120px, 32vw, 170px); }
+
+  /* Cuando solo cabe UNA tarjeta por fila, estirarla a todo el ancho la deja
+     desproporcionada (portada enorme, texto perdido). Se le pone un tope y se
+     centra en la columna; con 2 por fila siguen ocupando su 1fr normal. */
+  .ofertas__fila,
+  .ofertas__rejilla,
+  .guardadas__grid { justify-items: center; }
+  .ofertas__fila .card,
+  .ofertas__rejilla .card,
+  .guardadas__grid .card {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  /* Las habilidades se ocultan en movil: en una columna estrecha la lista se
+     parte y solo cabe "+N", que no dice nada. Estan enteras en el detalle. */
+  .card__skills { display: none; }
+
+  /* --- Titulo fijo al desplazar -------------------------------------------
+     En una pantalla estrecha el titulo se pierde a las dos pasadas de dedo y
+     hay que subir del todo para saber donde estas. Se queda pegado arriba.
+     La home NO entra: su cabecera vive dentro del wrapper sticky del blink y
+     ya se queda quieta gracias al scroll-snap; hacerla sticky ademas pelearia
+     con esa animacion. */
+  /* "Solo el titulo": la cabecera deja de ser una caja (display: contents), asi
+     el h1 y el subtitulo pasan a colgar directamente del lienzo. Importa porque
+     un elemento sticky solo se queda fijo mientras su PADRE esta a la vista: con
+     el h1 dentro de la cabecera se iria con ella, y colgando del lienzo (que
+     abarca todo el scroll) se queda arriba toda la pagina. El subtitulo, en
+     cambio, se va con el scroll como cualquier otro contenido. */
+  .saludo {
+    display: contents;
+  }
+
+  .saludo h1,
+  .entrev-lat__titulo {
+    position: static;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    transition: background-color 180ms ease, backdrop-filter 180ms ease;
+  }
+
+  /* Al colgar del lienzo, el subtitulo hereda su gap (grande, pensado para
+     separar secciones). Se pega de nuevo a su titulo. El selector de hijo
+     directo importa: el mismo .saludo__sub se usa en la home dentro de
+     .ofertas__cab, que NO es display:contents y no debe descuadrarse. */
+  .saludo > .saludo__sub {
+    margin-top: calc(var(--sp-5) * -1 + var(--sp-1));
+  }
+
+  .buscar__cab,
+  .port-cab,
+  .entrev-chat__cab,
+  .portproy__dethead {
+    position: static;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    transition: background-color 180ms ease, backdrop-filter 180ms ease;
+  }
+
+  .buscar__cab {
+    align-items: flex-start;
+  }
+
+  .lienzo--scrolled .buscar__cab {
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .lienzo--scrolled .buscar__ver-controles {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: var(--r-full);
+    color: var(--glow);
+    background: rgba(79, 163, 255, 0.14);
+    border: 1px solid rgba(79, 163, 255, 0.3);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .lienzo--scrolled .saludo h1,
+  .lienzo--scrolled .buscar__cab,
+  .lienzo--scrolled .port-cab,
+  .lienzo--scrolled .entrev-chat__cab,
+  .lienzo--scrolled .portproy__dethead,
+  .lienzo--scrolled .entrev-lat__titulo {
+    position: sticky;
+    top: calc(var(--lienzo-pt) * -1);
+    z-index: var(--z-nav);
+    margin: 0 calc(var(--sp-2) * -1);
+    padding: var(--lienzo-pt) var(--sp-2) var(--sp-1);
+    background-color: rgba(11, 42, 102, 0.82);
+    backdrop-filter: blur(14px);
+  }
+
 }
 
 /* --- Portafolio: pista de personalizacion, "por que ti" y esqueletos --- */
@@ -3105,18 +3697,273 @@
   .shell--full .asis-host { display: none; }
 }
 
+/* Videollamada + chat: la llamada a la izquierda y el chat en la columna que
+   antes quedaba vacia (la ruta /entrevista oculta el panel del Asistente). */
+.entrev-video {
+  /* Flex y no grid: la llamada mide lo que le pide su proporcion, y el chat va
+     PEGADO a su lado (con grid quedaba un hueco entre ambos). El par se centra. */
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+
+/* Dentro del par no se auto-centra: si no, se separa del chat. */
+.entrev-video .vc { flex: 0 1 auto; margin: 0; }
+
+.entrev-video .entrev-vchat { flex: 0 0 clamp(300px, 24vw, 400px); }
+
+.entrev-vchat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  /* Mismo alto que el lienzo de la llamada: el hilo scrollea por dentro. */
+  height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6));
+  min-height: 320px;
+  padding: var(--sp-2);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+}
+
+.entrev-vchat__cab {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding-bottom: var(--sp-1);
+  border-bottom: 1px solid var(--border);
+}
+.entrev-vchat__cab strong { display: block; font-size: var(--fs-5); }
+.entrev-vchat__cab span { font-size: 12px; color: var(--text-3); }
+
+.entrev-vchat__hilo {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+@media (max-width: 1100px) {
+  /* Sin sitio para dos columnas: el chat baja debajo de la llamada. */
+  .entrev-video { flex-direction: column; align-items: stretch; }
+  .entrev-video .entrev-vchat { flex: 1 1 auto; height: auto; max-height: calc(var(--alto-app) * 0.6); }
+}
+
 /* El chat ocupa el alto del lienzo: hilo con scroll propio + barra abajo. */
 .entrev-chat {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  min-height: calc(100dvh - var(--sp-5) - var(--sp-6));
+  min-height: calc(var(--alto-app) - var(--sp-5) - var(--sp-6));
   max-width: 900px;
   width: 100%;
   margin: 0 auto;
 }
 
-.entrev-chat--setup { justify-content: center; }
+.entrev-chat--setup { justify-content: flex-start; }
+
+/* Pantalla inicial: el formulario y, al lado, lo que ya practicaste.
+   El formulario se acota (unos campos de 1200px no se leen bien) y el espacio
+   sobrante se lo queda el panel, que si tiene contenido que lo aprovecha: antes
+   el form se centraba en una columna enorme y quedaba un hueco en medio. */
+.entrev-inicio {
+  display: grid;
+  /* Ambas columnas acotadas y el par centrado. Con el panel a 1fr se comia todo
+     el ancho sobrante y las cajas quedaban larguisimas para el poco texto que
+     llevan. */
+  grid-template-columns: minmax(0, 480px) minmax(0, 620px);
+  justify-content: center;
+  gap: var(--sp-3);
+  align-items: center;
+  width: 100%;
+  min-height: calc(var(--alto-app) - var(--lienzo-pt) - var(--lienzo-pb));
+  align-content: start;
+}
+
+/* Dentro del par no se auto-centra: se pega a su columna. */
+.entrev-inicio .entrev-chat--setup {
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+}
+
+.entrev-inicio__cab {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.entrev-chat__cab.entrev-inicio__cab h1 {
+  font-size: var(--fs-1);
+  line-height: 1.05;
+}
+
+.entrev-inicio__cab .saludo__sub {
+  max-width: 520px;
+}
+
+.entrev-miga-btn,
+.entrev-migas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: var(--r-full);
+  color: var(--glow);
+  background: rgba(79, 163, 255, 0.1);
+  border: 1px solid rgba(79, 163, 255, 0.28);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.entrev-miga-btn:hover,
+.entrev-migas button:hover {
+  background: rgba(79, 163, 255, 0.18);
+  border-color: var(--border-2);
+}
+
+.entrev-migas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+.entrev-migas span {
+  color: var(--text-2);
+}
+
+.entrev-miga-btn,
+.entrev-migas {
+  display: none;
+}
+
+/* Apilados, no lado a lado: en columnas quedaban dos cajas bajas con un hueco
+   grande debajo. Uno encima del otro llenan el alto disponible. */
+.entrev-lat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.entrev-lat__titulo {
+  display: none;
+}
+
+/* Cada caja mide lo que ocupa su contenido. Se probo estirarlas al alto del
+   formulario y quedaba un hueco enorme dentro del historial: mejor que el par
+   quede compacto y centrado. */
+
+.entrev-lat__caja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+}
+
+.entrev-lat__cab { display: flex; align-items: center; gap: var(--sp-1); }
+.entrev-lat__cab strong { display: block; font-size: var(--fs-5); }
+.entrev-lat__cab span { font-size: 12px; color: var(--text-3); }
+
+.entrev-lat__lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  max-height: calc(var(--alto-app) * 0.42);
+  overflow-y: auto;
+}
+
+.entrev-lat__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--glass-2);
+}
+/* Guardada: se distingue de las que se podaran al acumularse. */
+.entrev-lat__item.is-guardada { border-color: rgba(110, 231, 183, 0.45); }
+.entrev-lat__item.is-guardada .iconbtn:first-child { color: var(--success); }
+
+.entrev-lat__txt { flex: 1; min-width: 0; }
+.entrev-lat__txt strong { display: block; font-size: var(--fs-5); }
+.entrev-lat__txt > span { font-size: 12px; color: var(--text-3); }
+.entrev-lat__txt p {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.45;
+  /* El resumen se recorta: la tarjeta es un vistazo, no el informe entero. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.entrev-lat__acc { display: flex; flex: none; gap: 2px; }
+.entrev-lat__vacio { font-size: 13px; color: var(--text-3); line-height: 1.5; }
+
+.entrev-lat__consejos {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.entrev-lat__consejos li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.entrev-lat__consejos li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--glow);
+}
+.entrev-lat__veces {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  background: rgba(79, 163, 255, 0.14);
+  color: var(--glow);
+  font-style: normal;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* Respuesta de la IA dentro del panel (aqui y no en el Asistente, que en
+   /entrevista esta oculto en escritorio). */
+.entrev-lat__plan {
+  max-height: calc(var(--alto-app) * 0.34);
+  overflow-y: auto;
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(79, 163, 255, 0.25);
+  background: rgba(79, 163, 255, 0.07);
+  font-size: 13px;
+}
+
+@media (max-width: 1100px) {
+  .entrev-inicio { grid-template-columns: 1fr; align-items: stretch; }
+}
 
 .entrev-chat__cab {
   display: flex;
@@ -3277,10 +4124,27 @@
 /* Entrevista en movil: la barra inferior de navegacion no debe tapar el input. */
 @media (max-width: 860px) {
   .entrev-chat {
-    min-height: calc(100dvh - 200px);
+    min-height: 0;
     max-width: none;
   }
+  .entrev-inicio,
+  .entrev-inicio .entrev-chat--setup {
+    min-height: 0;
+  }
+  .entrev-inicio .entrev-setup {
+    padding-bottom: calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
+  }
   .entrev-chat__cab h1 { font-size: var(--fs-4); }
+  .entrev-inicio__cab {
+    flex-wrap: wrap;
+    gap: var(--sp-1);
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+  .entrev-inicio__cab .entrev-miga-btn {
+    margin-left: auto;
+    margin-top: 0;
+  }
   /* Con 6 rutas + Asistente la barra va justa: se aprieta un poco el texto. */
   .tabbar__link span,
   .tabbar__asis span { font-size: 10px; }
@@ -3344,7 +4208,11 @@
   flex-direction: column;
   gap: var(--sp-2);
   width: 100%;
-  max-width: 1100px;
+  /* Escala uniforme: la llamada crece hasta llenar el hueco, pero su ancho se
+     deriva del ALTO disponible (lienzo 16/10 + barra de controles). Asi ocupa
+     todo lo que puede sin desbordar, en vez de quedarse en 1100px con la
+     pantalla medio vacia. */
+  max-width: min(1600px, calc((var(--alto-app) - 190px) * 1.6));
   margin: 0 auto;
 }
 
@@ -3375,19 +4243,7 @@
   box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.6);
 }
 
-.vc__escena { position: absolute; inset: 0; }
-.vc__escena canvas { display: block; width: 100%; height: 100%; }
-
-.vc__conectando {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: var(--text-3);
-  font-size: var(--fs-5);
-}
-
-/* Respaldo si no hay WebGL o falla el modelo: la llamada sigue. */
+/* El entrevistador: avatar de iniciales sobre el fondo de sala (sin 3D). */
 .vc__sinvideo { position: absolute; inset: 0; display: grid; place-items: center; }
 .vc__sinvideo-ini {
   width: 120px;
@@ -3400,6 +4256,22 @@
   color: #cfe0ff;
   background: linear-gradient(135deg, rgba(25, 68, 146, 0.9), rgba(14, 32, 78, 0.95));
   border: 1px solid var(--border-2);
+  transition: box-shadow var(--t-fast), transform var(--t-fast);
+}
+
+/* Mientras habla, el halo late al ritmo de la voz (--pulso sube por palabra) y
+   respira de fondo: sin esto la llamada parece congelada. */
+.vc__sinvideo--habla .vc__sinvideo-ini {
+  transform: scale(calc(1 + var(--pulso, 0) * 0.05));
+  box-shadow:
+    0 0 0 calc(6px + var(--pulso, 0) * 10px) rgba(79, 163, 255, calc(0.1 + var(--pulso, 0) * 0.14)),
+    0 0 40px rgba(79, 163, 255, calc(0.35 + var(--pulso, 0) * 0.4));
+  animation: vc-respira 2.4s ease-in-out infinite;
+}
+
+@keyframes vc-respira {
+  0%, 100% { border-color: var(--border-2); }
+  50%      { border-color: rgba(130, 205, 255, 0.9); }
 }
 
 .vc__badge {
@@ -3605,4 +4477,106 @@
 
 @media (prefers-reduced-motion: reduce) {
   .vc__ondas i { animation: none; height: 8px; }
+}
+
+/* ==========================================================================
+   Movil: coherencia de las pantallas nuevas
+   Todo va DENTRO de media queries y al final del archivo: en escritorio no
+   cambia nada. Aqui solo se resuelve lo que en un telefono queda apretado.
+   ========================================================================== */
+@media (max-width: 860px) {
+  /* La escala de escritorio se siente enorme en un telefono: un titulo de 48px y
+     separaciones de 64px se comen la pantalla. Se reescalan los TOKENS, no cada
+     regla, para que baje todo a la vez y siga siendo coherente.
+     El cuerpo (--fs-5) y los espacios pequeños NO se tocan: por debajo de 14px
+     el texto deja de leerse comodo y los objetivos tactiles se quedan cortos. */
+  :root {
+    --fs-1: 34px; /* 48 */
+    --fs-2: 26px; /* 32 */
+    --fs-3: 20px; /* 24 */
+    --fs-4: 17px; /* 18 */
+
+    --sp-3: 20px; /* 24 */
+    --sp-4: 24px; /* 32 */
+    --sp-5: 32px; /* 48 */
+    --sp-6: 40px; /* 64 */
+  }
+
+  /* Aire simetrico: el lienzo tenia 0 a la derecha y los paneles llegaban a
+     tocar el borde de la pantalla. */
+  /* (el padding lateral ya se fija arriba, en el bloque del lienzo movil) */
+
+  /* Cabeceras de seccion: con poco ancho, la pastilla ("Basado en N ofertas")
+     estrujaba el titulo. Que baje debajo en vez de competir por el sitio. */
+  .seccion__cab { flex-wrap: wrap; }
+  .seccion__cab .seccion__txt {
+    order: 2;
+    flex: 1 0 100%;
+  }
+  .seccion__pill { order: 3; }
+
+  /* Perfil: el campo de añadir habilidad y su boton, cada uno en su linea si no
+     caben. */
+  .perfil__skilladd { flex-wrap: wrap; }
+  .perfil__skillinput { flex: 1 1 180px; }
+
+  /* Crecer: el pie de las tarjetas de curso (horas, demanda, gratis, flecha)
+     no cabe en una linea. */
+  .curso__foot { flex-wrap: wrap; }
+  .curso__ir { margin-left: auto; }
+
+  /* Crecer: las columnas ya no scrollean por dentro en movil (lo hace la
+     pagina), asi que tampoco deben limitar el alto de sus paneles. */
+  .crecer__cursos .seccion__cab {
+    position: static;
+  }
+  .crecer__ia { max-height: none; }
+
+  /* Entrevista: el historial no se come la pantalla. */
+  .entrev-miga-btn {
+    display: inline-flex;
+    align-self: flex-end;
+  }
+  .entrev-migas {
+    display: flex;
+    margin-top: var(--sp-3);
+    margin-bottom: var(--sp-1);
+  }
+  .entrev-lat__titulo {
+    display: block;
+    font-size: var(--fs-2);
+    line-height: 1.1;
+    font-weight: 500;
+  }
+  .entrev-inicio--entrevista .entrev-lat {
+    display: none;
+  }
+  .entrev-inicio--historial .entrev-chat--setup {
+    display: none;
+  }
+  .entrev-lat__lista { max-height: 50dvh; }
+
+  /* Portafolio: las tarjetas guardadas a ancho completo. */
+  .port-guardadas__grid .port-card { width: 100%; }
+}
+
+/* Telefonos estrechos: la barra inferior lleva 6 destinos + el Asistente. Con
+   texto no caben, asi que se deja solo el icono. El texto NO se borra: se oculta
+   a la vista pero sigue ahi para los lectores de pantalla. */
+@media (max-width: 560px) {
+  .tabbar__link span,
+  .tabbar__asis span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .tabbar { height: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  .lienzo { --lienzo-pb: calc(96px + env(safe-area-inset-bottom, 0px)); }
 }

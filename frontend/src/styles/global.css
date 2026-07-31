@@ -9,19 +9,22 @@
 }
 
 html,
-body,
+body {
+  height: 100dvh; /* dvh y no vh: en movil, vh se rompe con la barra del navegador */
+}
+
+/* La app se centra dentro de la ventana; alrededor queda el negro del body. */
 #root {
-  min-height: 100dvh; /* dvh y no vh: en movil, vh se rompe con la barra del navegador */
+  height: 100%;
+  display: grid;
+  place-items: center;
 }
 
 body {
-  /* Negro con dos halos azules muy suaves (mock): da profundidad al fondo sin
-     competir con el AmbientBackground animado que va encima. */
-  background:
-    radial-gradient(circle at 34% 26%, rgba(16, 76, 142, 0.16), transparent 42%),
-    radial-gradient(circle at 82% 10%, rgba(22, 65, 128, 0.12), transparent 30%),
-    var(--bg);
-  background-attachment: fixed;
+  /* Negro puro: es lo que se ve ALREDEDOR del marco 16:9 de la app en
+     escritorio. El fondo azul de la app vive dentro del marco (.marco). */
+  background: #000;
+  overflow: hidden; /* no scrollea el documento: scrollea el contenido del marco */
   color: var(--text);
   /* Inter (mock) con degradado a fuentes del sistema mientras carga. */
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -30,6 +33,40 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+/* Scrollbars a juego con el tema: los del sistema salen claros y cantan mucho
+   sobre el fondo oscuro. Firefox usa scrollbar-*, el resto ::-webkit-scrollbar. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(94, 131, 190, 0.45) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  /* El borde transparente + background-clip deja aire alrededor de la barra:
+     parece mas fina sin perder area para agarrarla con el raton. */
+  background: rgba(94, 131, 190, 0.4);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: var(--r-full);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(118, 175, 255, 0.6);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 h1,

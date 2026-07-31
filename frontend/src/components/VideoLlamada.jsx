@@ -1,16 +1,13 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCamara } from '../lib/camara';
 import Icon from './Icon';
-
-// three.js pesa: solo se descarga si el usuario entra en la modalidad video.
-const VideoLlamada3D = lazy(() => import('./VideoLlamada3D'));
 
 const ENTREVISTADOR = { nombre: 'Ana Morales', rol: 'Recursos Humanos' };
 
 const reloj = (s) =>
   `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
-/** Iniciales para el recuadro cuando la camara esta apagada. */
+/** Iniciales: para el avatar del entrevistador y para tu recuadro sin camara. */
 function iniciales(nombre) {
   const p = String(nombre || 'Tu').trim().split(/\s+/);
   return ((p[0]?.[0] || 'T') + (p[1]?.[0] || '')).toUpperCase();
@@ -40,11 +37,11 @@ export default function VideoLlamada({
   onEnviarTexto,
   onMic,
   onColgar,
+  ocultarTexto,
 }) {
   const { videoRef, activa: camaraActiva, error: errorCamara, encender, apagar, alternar } = useCamara();
   const [segundos, setSegundos] = useState(0);
   const [subtitulos, setSubtitulos] = useState(true);
-  const [modo3d, setModo3d] = useState('cargando'); // cargando | listo | error
   const colgarRef = useRef(null);
 
   // Se intenta encender la camara al entrar (es una videollamada). Si el usuario
@@ -68,23 +65,18 @@ export default function VideoLlamada({
 
   return (
     <div className="vc" role="group" aria-label="Entrevista en video simulada">
-      {/* Escenario: el entrevistador 3D. Si no hay WebGL o falla el modelo, queda el
-          fondo de sala con su nombre y el indicador: la llamada nunca se rompe. */}
+      {/* Escenario: el entrevistador. Un avatar de iniciales sobre el fondo de sala
+          (sin 3D: ni descarga de modelo ni WebGL, y se ve igual en cualquier equipo).
+          Late mientras habla, para que la llamada no parezca congelada. */}
       <div className={`vc__lienzo ${hablando ? 'vc__lienzo--habla' : ''}`}>
-        <Suspense fallback={<span className="vc__conectando">Conectando…</span>}>
-          <VideoLlamada3D
-            hablando={hablando}
-            pulso={pulso}
-            onListo={() => setModo3d('listo')}
-            onFallo={() => setModo3d('error')}
-          />
-        </Suspense>
-
-        {modo3d === 'error' && (
-          <div className="vc__sinvideo" aria-hidden="true">
-            <span className="vc__sinvideo-ini">AM</span>
-          </div>
-        )}
+        <div
+          className={`vc__sinvideo ${hablando ? 'vc__sinvideo--habla' : ''}`}
+          /* `pulso` sube en cada palabra del TTS: el halo del avatar sigue la voz. */
+          style={{ '--pulso': Math.min(pulso || 0, 1) }}
+          aria-hidden="true"
+        >
+          <span className="vc__sinvideo-ini">{iniciales(ENTREVISTADOR.nombre)}</span>
+        </div>
 
         <span className="vc__badge">
           <Icon name="aviso" size={13} /> Simulacion · no se graba nada
@@ -143,8 +135,9 @@ export default function VideoLlamada({
       )}
 
       {/* Respaldo escrito: si el navegador no dicta (Firefox) o lo bloquea (Brave),
-          se responde por texto sin salir de la videollamada. */}
-      {!puedeDictar && (
+          se responde por texto sin salir de la videollamada. Se omite si quien nos
+          usa ya ofrece un campo de texto aparte (el chat lateral). */}
+      {!puedeDictar && !ocultarTexto && (
         <form
           className="vc__texto"
           onSubmit={(e) => {

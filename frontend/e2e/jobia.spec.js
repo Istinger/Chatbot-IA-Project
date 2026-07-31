@@ -239,14 +239,10 @@ test.describe('Entrevista en video (simulada)', () => {
     await login(page);
     await entrarALlamada(page);
 
-    // El entrevistador 3D tiene que CARGAR de verdad. Este assert existe porque la
-    // primera version tiraba de un avatar remoto cuyo dominio no resolvia: la llamada
-    // se veia bien pero siempre salia el respaldo con las iniciales. El modelo ahora
-    // es local (public/modelos), asi que aqui se comprueba end-to-end.
-    await expect(page.locator('.vc__escena[data-estado="listo"]')).toBeAttached({
-      timeout: 25_000,
-    });
-    await expect(page.locator('.vc__sinvideo')).toHaveCount(0);
+    // El entrevistador es un avatar de iniciales (ya no hay modelo 3D): no depende
+    // de WebGL ni de descargar nada, asi que tiene que estar siempre.
+    await expect(page.locator('.vc__sinvideo')).toBeVisible();
+    await expect(page.locator('.vc__sinvideo-ini')).toHaveText('AM');
 
     // Cromo de videollamada.
     await expect(page.locator('.vc__quien')).toContainText(/Ana Morales/i);

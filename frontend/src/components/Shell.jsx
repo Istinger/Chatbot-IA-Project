@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { VistaProvider, useVista } from '../lib/vista';
@@ -23,8 +23,12 @@ const RUTAS = [
   { to: '/crecer', icono: 'crecer', texto: 'Crecer' },
   { to: '/portafolio', icono: 'maletin', texto: 'Portafolio' },
   { to: '/entrevista', icono: 'entrevista', texto: 'Entrevista' },
+  { to: '/ofertas-guardadas', icono: 'marcador', texto: 'Guardados' },
   { to: '/perfil', icono: 'usuario', texto: 'Perfil' },
 ];
+
+/** Donde parte la barra de movil: mitad a cada lado del boton del Asistente. */
+const CORTE = Math.ceil(RUTAS.length / 2);
 
 /**
  * Rutas que se ven a PANTALLA COMPLETA: ocupan tambien la columna del Asistente.
@@ -46,13 +50,26 @@ export default function Shell() {
 function ShellInterno() {
   const { salir } = useAuth();
   const [asisAbierto, setAsisAbierto] = useState(false);
+  const [lienzoScrolled, setLienzoScrolled] = useState(false);
+  const lienzoRef = useRef(null);
   const { ofertaActiva, setOfertaActiva } = useVista();
   const { pathname } = useLocation();
 
-  // En las rutas "full" el contenido se come la columna del Asistente. El panel
-  // se sigue MONTANDO (en movil es la hoja que abre la barra inferior); solo se
-  // oculta por CSS en escritorio.
+  // En las rutas "full" el contenido se come la columna del Asistente. La
+  // entrevista ya es un chat, asi que tampoco se abre como hoja en movil.
   const full = RUTAS_FULL.some((r) => pathname.startsWith(r));
+
+  useEffect(() => {
+    const lienzo = lienzoRef.current;
+    if (!lienzo) return;
+    lienzo.scrollTop = 0;
+    setLienzoScrolled(false);
+    setAsisAbierto(false);
+  }, [pathname]);
+
+  const manejarScrollLienzo = (e) => {
+    setLienzoScrolled(e.currentTarget.scrollTop > 8);
+  };
 
   return (
     <div className={`shell ${full ? 'shell--full' : ''}`}>
@@ -83,39 +100,49 @@ function ShellInterno() {
       </nav>
 
       {/* Contenido */}
-      <main className="lienzo">
+      <main
+        ref={lienzoRef}
+        className={`lienzo ${lienzoScrolled ? 'lienzo--scrolled' : ''}`}
+        onScroll={manejarScrollLienzo}
+      >
         <Outlet />
       </main>
 
-      {/* Asistente: fijo a la derecha en escritorio; hoja en movil. */}
-      <div className={`asis-host ${asisAbierto ? 'asis-host--abierto' : ''}`}>
-        <button
-          type="button"
-          className="asis-host__cerrar"
-          onClick={() => setAsisAbierto(false)}
-          aria-label="Cerrar asistente"
-        >
-          <Icon name="cerrar" size={20} />
-        </button>
-        <AsistentePanel />
-      </div>
+      {!full && (
+        <div className={`asis-host ${asisAbierto ? 'asis-host--abierto' : ''}`}>
+          <button
+            type="button"
+            className="asis-host__cerrar"
+            onClick={() => setAsisAbierto(false)}
+            aria-label="Cerrar asistente"
+          >
+            <Icon name="cerrar" size={20} />
+          </button>
+          <AsistentePanel />
+        </div>
+      )}
 
-      {/* Barra inferior (solo movil) con el Asistente en el centro: 3 rutas a cada
-          lado para que quede simetrico. */}
+      {/* Barra inferior (solo movil) con el Asistente en el centro y las rutas
+          repartidas a ambos lados (ver CORTE). */}
       <nav className="tabbar" aria-label="Navegacion">
-        {RUTAS.slice(0, 3).map((r) => (
+        {RUTAS.slice(0, CORTE).map((r) => (
           <NavLink key={r.to} to={r.to} end={r.to === '/'} className="tabbar__link">
             <Icon name={r.icono} size={22} />
             <span>{r.texto}</span>
           </NavLink>
         ))}
 
-        <button type="button" className="tabbar__asis" onClick={() => setAsisAbierto(true)}>
+        <button
+          type="button"
+          className="tabbar__asis"
+          onClick={() => !full && setAsisAbierto(true)}
+          disabled={full}
+        >
           <Icon name="asistente" size={26} />
           <span>Asistente</span>
         </button>
 
-        {RUTAS.slice(3).map((r) => (
+        {RUTAS.slice(CORTE).map((r) => (
           <NavLink key={r.to} to={r.to} className="tabbar__link">
             <Icon name={r.icono} size={22} />
             <span>{r.texto}</span>

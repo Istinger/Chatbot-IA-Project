@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { api } from './lib/api';
+import { cargarFotos } from './lib/imagen';
 import { AuthProvider, useAuth } from './lib/auth';
 import AmbientBackground from './components/AmbientBackground';
 import Shell from './components/Shell';
@@ -12,6 +15,8 @@ import Portafolio from './screens/Portafolio';
 import PortafolioIdea from './screens/PortafolioIdea';
 import PortafolioProyecto from './screens/PortafolioProyecto';
 import Entrevista from './screens/Entrevista';
+import Guardadas from './screens/Guardadas';
+import OfertasGuardadas from './screens/OfertasGuardadas';
 
 /** Ruta protegida: sin sesion, al login. */
 function Privada({ children }) {
@@ -50,6 +55,8 @@ function Rutas() {
         <Route path="/portafolio/:id" element={<PortafolioIdea />} />
         <Route path="/portafolio/:id/proyecto" element={<PortafolioProyecto />} />
         <Route path="/entrevista" element={<Entrevista />} />
+        <Route path="/ofertas-guardadas" element={<OfertasGuardadas />} />
+        <Route path="/guardadas" element={<Guardadas />} />
         <Route path="/perfil" element={<Profile />} />
       </Route>
 
@@ -58,12 +65,37 @@ function Rutas() {
   );
 }
 
+/**
+ * Fotos de portada: se piden UNA vez al arrancar y se reparten entre las ofertas
+ * (ver lib/imagen.js). Si falla o no hay clave de Pexels, cada portada cae en su
+ * respaldo y la app sigue igual.
+ */
+function useFotos() {
+  const [, setListo] = useState(false);
+  useEffect(() => {
+    api
+      .imagenes()
+      .then((r) => {
+        cargarFotos(r.temas);
+        setListo(true); // repinta para que las tarjetas cojan ya la foto buena
+      })
+      .catch(() => {});
+  }, []);
+}
+
 export default function App() {
+  useFotos();
+
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AmbientBackground />
-        <Rutas />
+        {/* Marco de la app: en escritorio es un rectangulo 16:9 redondeado y
+            centrado, con negro alrededor. El fondo animado va DENTRO, asi queda
+            recortado por las esquinas. En movil ocupa la pantalla entera. */}
+        <div className="marco">
+          <AmbientBackground />
+          <Rutas />
+        </div>
       </AuthProvider>
     </BrowserRouter>
   );
